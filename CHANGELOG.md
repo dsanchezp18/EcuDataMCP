@@ -1,6 +1,14 @@
 # Changelog
 
-Este repositorio es un fork de [DweskZ/EcuDataMCP](https://github.com/DweskZ/EcuDataMCP).
+## 0.7.0 — 2026-08-14
+
+### Changed
+- Reconcilia este fork con `upstream/main` tras dos PRs desarrolladas en
+  paralelo: `housekeeping` (0.5.1, mergeada upstream) y la integración de
+  Supercías (0.6.0, mergeada solo en este fork). Sin esto, este fork se
+  hubiera quedado sin los fixes de housekeeping (TLS, WKT/decimales, aviso
+  de series periódicas, `source_url`/`extras`) al haberse cortado la rama de
+  Supercías antes de que housekeeping se mergeara upstream.
 
 ## 0.6.0 — 2026-08-13
 
@@ -36,6 +44,33 @@ Este repositorio es un fork de [DweskZ/EcuDataMCP](https://github.com/DweskZ/Ecu
     esos campos vienen vacíos
   - El índice por RUC se construye de forma perezosa (antes se calculaba en
     cada refresco de caché aunque `search_companias` nunca lo usa)
+
+## 0.5.1 — 2026-08-13
+
+### Added
+- `created` y `last_modified` por recurso en `list_dataset_resources`, para
+  poder identificar el archivo más reciente de un dataset con archivos
+  periódicos sin tener que llamar a `get_resource_info` por cada uno
+- `get_dataset_info` ahora incluye `source_url` (el campo "Fuente" del
+  dataset: link a donde la entidad publicadora mantiene el dato original,
+  fuera del portal) y `extras` (metadatos personalizados que la entidad haya
+  agregado más allá del esquema estándar)
+- `preview_resource_data` (CSV) ahora descarta columnas de geometría/WKT
+  (`geom`, `wkt`, polígonos detectados por contenido) para no inundar el
+  preview con coordenadas, y convierte columnas en formato decimal europeo
+  (`7.760,2` → `7760.2`) a notación estándar. El mismo descarte de columnas
+  de geometría aplica también al preview de JSON plano (arrays de objetos)
+- `list_dataset_resources` ahora avisa cuando 3+ recursos de un dataset
+  parecen ser una serie periódica (nombres casi idénticos, solo cambian
+  números/fechas), para que quien consulte revise si cada archivo nuevo
+  reemplaza a los anteriores o los complementa antes de sumar valores
+
+### Changed
+- `CKAN_INSECURE_TLS` ahora es `0` (desactivado) por defecto — el
+  certificado de `www.datosabiertos.gob.ec` que expiró el 2026-07-28 fue
+  renovado el 2026-08-07 (válido hasta 2026-11-05). Seguía activado por
+  defecto desde que se agregó el fallback; poner `CKAN_INSECURE_TLS=1` solo
+  si el certificado del portal vuelve a fallar
 
 ## 0.5.0 — 2026-08-10
 
