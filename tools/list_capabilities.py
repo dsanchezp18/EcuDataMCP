@@ -5,7 +5,7 @@ from helpers.logging import log_tool
 
 _CAPABILITIES = {
     "name": "Ecuador MCP",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "fuentes": [
         "CKAN datos abiertos",
         "gob.ec trámites/instituciones/regulaciones",
@@ -14,6 +14,7 @@ _CAPABILITIES = {
         "IG-EPN Instituto Geofísico (sismos)",
         "DPA provincias/cantones/parroquias (offline INEC)",
         "ANDA (NADA/IHSN) catálogo de encuestas y censos del INEC",
+        "Supercías directorio de compañías",
     ],
     "entrada": [
         "list_capabilities",
@@ -38,6 +39,7 @@ _CAPABILITIES = {
         "riesgos": ["search_eventos_riesgo", "list_sat_tsunami", "search_sismos"],
         "geo": ["lookup_ubicacion"],
         "encuestas": ["search_anda", "get_anda_survey_info", "download_anda_microdata"],
+        "companias": ["search_companias", "get_compania_info"],
     },
     "resources": [
         "ecuador://fuentes",
@@ -56,6 +58,10 @@ _CAPABILITIES = {
             "no sustituye canales oficiales de alerta"
         ),
         "lookup_ubicacion(nivel='parroquia') requiere query, canton o provincia",
+        (
+            "search_companias/get_compania_info: primer uso tras expirar el "
+            "caché (6h) puede tardar ~30-40s (descarga y parsea ~35 MB, 226k filas)"
+        ),
     ],
 }
 

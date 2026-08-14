@@ -2,6 +2,19 @@
 
 Este repositorio es un fork de [DweskZ/EcuDataMCP](https://github.com/DweskZ/EcuDataMCP).
 
+## 0.6.0 — 2026-08-13
+
+### Added
+- Integración Superintendencia de Compañías (Supercías): tools
+  `search_companias` y `get_compania_info` sobre el directorio nacional de
+  compañías (226k+, actualizado a diario) — situación legal, representante
+  legal, capital suscrito, CIIU, dirección
+- `helpers/supercias_client.py` con parseo propio del export Excel del
+  directorio (bypassea openpyxl `read_only`, cuyo modo streaming se rompe con
+  este archivo por un `<dimension>` mal declarado en el XML) y caché en
+  memoria de 6h (el archivo se actualiza a diario y pesa ~35 MB / 226k filas)
+- Fuente `supercias` en `ecuador://fuentes`
+
 ## 0.5.0 — 2026-08-10
 
 ### Added
