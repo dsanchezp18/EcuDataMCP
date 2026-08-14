@@ -3,6 +3,7 @@ from mcp.server.fastmcp import FastMCP
 from tools.download_anda_microdata import register_download_anda_microdata_tool
 from tools.get_anda_survey_info import register_get_anda_survey_info_tool
 from tools.get_category_info import register_get_category_info_tool
+from tools.get_compania_info import register_get_compania_info_tool
 from tools.get_contrato_info import register_get_contrato_info_tool
 from tools.get_dataset_info import register_get_dataset_info_tool
 from tools.get_institucion_info import register_get_institucion_info_tool
@@ -20,6 +21,7 @@ from tools.lookup_ubicacion import register_lookup_ubicacion_tool
 from tools.preview_resource_data import register_preview_resource_data_tool
 from tools.query_resource_data import register_query_resource_data_tool
 from tools.search_anda import register_search_anda_tool
+from tools.search_companias import register_search_companias_tool
 from tools.search_contratos import register_search_contratos_tool
 from tools.search_datasets import register_search_datasets_tool
 from tools.search_ecuador import register_search_ecuador_tool
@@ -65,3 +67,6 @@ def register_tools(mcp: FastMCP) -> None:
 
     register_search_contratos_tool(mcp)
     register_get_contrato_info_tool(mcp)
+
+    register_search_companias_tool(mcp)
+    register_get_compania_info_tool(mcp)

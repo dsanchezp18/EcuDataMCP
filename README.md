@@ -64,6 +64,7 @@ Este MCP unifica **fuentes gubernamentales** en un solo servidor:
 | **Sismos** (IG-EPN) | Catálogo sísmico del Instituto Geofísico | www.igepn.edu.ec |
 | **Geografía** (DPA) | 24 provincias + 224 cantones (códigos INEC) | referencia offline |
 | **ANDA** (NADA/IHSN) | Catálogo de encuestas y censos del INEC | anda.inec.gob.ec |
+| **Supercías** | Directorio de compañías (226k+): representante legal, capital, CIIU | mercadodevalores.supercias.gob.ec |
 
 **Sin API key. Sin restricciones de acceso. 100% datos públicos.**
 
@@ -247,7 +248,7 @@ uv run python main.py --transport stdio
 
 ---
 
-## Herramientas disponibles (28 tools)
+## Herramientas disponibles (30 tools)
 
 Casi todos los tools aceptan `format="json"` además de texto.
 
@@ -296,6 +297,13 @@ Casi todos los tools aceptan `format="json"` además de texto.
 | `get_regulacion_info` | Detalle de una regulación + enlace al PDF. |
 | `search_contratos` | Buscar procedimientos de contratación pública (SERCOP/OCDS). |
 | `get_contrato_info` | Expediente OCDS: comprador, licitación, adjudicaciones, contratos. |
+
+### Compañías (Supercías)
+
+| Tool | Descripción |
+|------|-------------|
+| `search_companias` | Buscar en el directorio de compañías de la Superintendencia de Compañías (226k+, por nombre/RUC, provincia, situación legal). |
+| `get_compania_info` | Ficha completa de una compañía por RUC: representante legal, capital suscrito, CIIU, dirección. |
 
 ### Riesgos y sismos
 

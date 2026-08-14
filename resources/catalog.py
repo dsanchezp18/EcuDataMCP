@@ -69,6 +69,12 @@ def register_catalog_resources(mcp: FastMCP) -> None:
                     "nombre": "DPA provincias, cantones y parroquias (referencia offline INEC)",
                     "tools": ["lookup_ubicacion"],
                 },
+                {
+                    "id": "supercias",
+                    "nombre": "Superintendencia de Compañías (directorio de compañías)",
+                    "base": "https://mercadodevalores.supercias.gob.ec/reportes/",
+                    "tools": ["search_companias", "get_compania_info"],
+                },
             ]
         }
         return json.dumps(payload, ensure_ascii=False, indent=2)
