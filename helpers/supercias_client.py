@@ -16,18 +16,24 @@ regardless of the bad dimension tag and several times faster.
 The export also has a few title/metadata rows (report name, row count,
 generation timestamp) before the real header row, so the header is detected
 by content — a row containing both "RUC" and "NOMBRE" once normalized — not
-assumed to be a fixed row number.
+assumed to be a fixed row number. The worksheet path itself is resolved from
+`xl/workbook.xml`'s sheet relationships rather than assumed to be
+`sheet1.xml`, so an export that ever gains a second/leading sheet doesn't
+silently get parsed against the wrong one.
 
 Because parsing 226k rows takes several seconds even with the fast path, the
 full parsed table is cached in memory (see `_companias_cache`) rather than
-re-fetched per call. That cache holds the entire registry as one row list
-plus a RUC index, which is a non-trivial amount of memory (roughly a few
-hundred MB) — acceptable since it's built lazily on first use, not at server
-startup, but worth knowing if this process runs somewhere memory-constrained.
+re-fetched per call, guarded by `_fetch_lock` so concurrent callers don't
+independently download+parse the same ~35 MB file. That cache holds the
+entire registry as one row list plus precomputed search indexes, which is a
+non-trivial amount of memory (roughly a few hundred MB) — acceptable since
+it's built lazily on first use, not at server startup, but worth knowing if
+this process runs somewhere memory-constrained.
 """
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 import re
@@ -40,6 +46,7 @@ import httpx
 
 from helpers.cache import TtlCache
 from helpers.logging import MAIN_LOGGER_NAME
+from helpers.tls import should_retry_insecure
 from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
@@ -52,10 +59,21 @@ _DOWNLOAD_TIMEOUT = 90.0
 _MAX_DOWNLOAD_BYTES = 80 * 1024 * 1024
 _HEADER_SCAN_LIMIT = 20
 _NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+_REL_NS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
+_R_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 
 # Refreshed daily upstream; a few hours balances staleness against the cost
 # of re-downloading/re-parsing ~35 MB.
 _companias_cache = TtlCache(ttl_seconds=21600.0, max_entries=1)
+# Guards the cache-miss path so concurrent callers don't each independently
+# download+parse the full export (a ~30-40s, ~35 MB operation).
+_fetch_lock = asyncio.Lock()
+
+# Lazily-built RUC -> row index, invalidated whenever the cached row list is
+# replaced (compared by identity, not equality, so a cache refresh always
+# rebuilds it). Only get_compania_by_ruc needs this; search_companias doesn't,
+# so it isn't computed on every cache refresh regardless of which tool is used.
+_ruc_index_state: tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None = None
 
 
 def _strip(text: str) -> str:
@@ -74,6 +92,46 @@ def _col_index(ref: str) -> int:
     for c in letters:
         idx = idx * 26 + (ord(c.upper()) - ord("A") + 1)
     return idx - 1
+
+
+def _first_worksheet_path(z: zipfile.ZipFile) -> str:
+    """Resolve the first sheet listed in xl/workbook.xml via its relationship.
+
+    Not assumed to be "xl/worksheets/sheet1.xml": that's true for the current
+    export, but only because of how its generator happens to lay out the zip,
+    not because OOXML guarantees it. Reading the actual sheet ->
+    relationship -> target mapping means an export that gains a second or
+    reordered sheet still resolves to the right one instead of silently
+    parsing the wrong worksheet.
+    """
+    try:
+        with z.open("xl/workbook.xml") as f:
+            wb_root = ET.parse(f).getroot()
+        sheet_elem = wb_root.find(f"{_NS}sheets/{_NS}sheet")
+        if sheet_elem is None:
+            raise ValueError("xl/workbook.xml no declara ninguna hoja")
+        r_id = sheet_elem.get(f"{_R_NS}id")
+
+        with z.open("xl/_rels/workbook.xml.rels") as f:
+            rels_root = ET.parse(f).getroot()
+        for rel in rels_root.findall(f"{_REL_NS}Relationship"):
+            if rel.get("Id") == r_id:
+                target = rel.get("Target") or ""
+                # OPC relationship targets are either package-root-relative
+                # ("/xl/worksheets/sheet1.xml", seen from openpyxl) or
+                # relative to the referencing part's directory
+                # ("worksheets/sheet1.xml", relative to "xl/" since this
+                # relates from xl/workbook.xml — seen in the real Supercías
+                # export).
+                if target.startswith("/"):
+                    return target.lstrip("/")
+                return f"xl/{target}"
+        raise ValueError(f"No se encontró la relación '{r_id}' de la primera hoja")
+    except KeyError as exc:
+        raise ValueError(
+            "El export de Supercías no tiene la estructura OOXML esperada "
+            "(falta xl/workbook.xml o xl/_rels/workbook.xml.rels)"
+        ) from exc
 
 
 def _read_shared_strings(z: zipfile.ZipFile) -> list[str]:
@@ -120,15 +178,19 @@ def _parse_xlsx(raw: bytes) -> tuple[tuple[str, ...], list[tuple[str, ...]]]:
     """Parse the Supercías directory export into (fields, rows)."""
     with zipfile.ZipFile(io.BytesIO(raw)) as z:
         shared = _read_shared_strings(z)
+        sheet_path = _first_worksheet_path(z)
         fields: tuple[str, ...] | None = None
         rows: list[tuple[str, ...]] = []
         scanned = 0
-        with z.open("xl/worksheets/sheet1.xml") as f:
+        max_seen_col = -1
+        with z.open(sheet_path) as f:
             for _, elem in ET.iterparse(f, events=("end",)):
                 if elem.tag != _NS + "row":
                     continue
                 cells = _row_cells(elem, shared)
                 elem.clear()
+                row_max = max(cells, default=-1)
+                max_seen_col = max(max_seen_col, row_max)
                 if fields is None:
                     scanned += 1
                     if scanned > _HEADER_SCAN_LIMIT:
@@ -136,9 +198,8 @@ def _parse_xlsx(raw: bytes) -> tuple[tuple[str, ...], list[tuple[str, ...]]]:
                             "No se encontró la fila de encabezado (RUC/NOMBRE) "
                             "en el reporte de Supercías"
                         )
-                    max_col = max(cells, default=-1)
                     candidate = tuple(
-                        _normalize_header(cells.get(i, "")) for i in range(max_col + 1)
+                        _normalize_header(cells.get(i, "")) for i in range(row_max + 1)
                     )
                     if "ruc" in candidate and "nombre" in candidate:
                         fields = candidate
@@ -150,15 +211,29 @@ def _parse_xlsx(raw: bytes) -> tuple[tuple[str, ...], list[tuple[str, ...]]]:
                 "No se encontró la fila de encabezado (RUC/NOMBRE) en el "
                 "reporte de Supercías"
             )
+        if max_seen_col >= len(fields):
+            # A data row has a cell past the last column the header row
+            # produced — the header itself must be missing trailing
+            # columns (most likely a blank header cell dropped entirely
+            # from the row's XML rather than an empty string). Fail loudly
+            # instead of silently truncating every row to fewer columns
+            # than the file actually has.
+            raise ValueError(
+                f"El reporte de Supercías tiene datos en la columna "
+                f"{max_seen_col + 1}, más allá de las {len(fields)} columnas "
+                "detectadas en el encabezado; el encabezado parece estar "
+                "incompleto"
+            )
         return fields, rows
 
 
-async def _download_full(url: str) -> bytes:
+async def _download_once(url: str, verify: bool = True) -> bytes:
     async with (
         httpx.AsyncClient(
             headers={"User-Agent": USER_AGENT},
             follow_redirects=True,
             timeout=_DOWNLOAD_TIMEOUT,
+            verify=verify,
         ) as session,
         session.stream("GET", url) as resp,
     ):
@@ -176,26 +251,88 @@ async def _download_full(url: str) -> bytes:
     return b"".join(chunks)
 
 
+async def _download_full(url: str) -> bytes:
+    try:
+        return await _download_once(url)
+    except httpx.ConnectError as exc:
+        if not should_retry_insecure(exc, url):
+            raise
+        logger.warning(
+            "Fallo la verificación TLS para %s (¿certificado de Supercías con "
+            "problemas?); reintentando sin verificación",
+            url,
+        )
+        return await _download_once(url, verify=False)
+
+
 async def _fetch_companias() -> tuple[
-    tuple[str, ...], list[tuple[str, ...]], dict[str, tuple[str, ...]], list[str]
+    tuple[str, ...], list[tuple[str, ...]], list[str], list[str], list[str]
 ]:
-    """Return (fields, rows, ruc_index, normalized_names), from cache or fresh."""
+    """Return (fields, rows, normalized_names, normalized_provincias,
+    normalized_situaciones), from cache or fresh."""
     cached = _companias_cache.get("companias")
     if cached is not None:
         return cached
 
-    logger.info("Descargando y parseando el directorio de Supercías (~35 MB)")
-    raw = await _download_full(_EXCEL_URL)
-    fields, rows = _parse_xlsx(raw)
-    ruc_pos = fields.index("ruc")
-    nombre_pos = fields.index("nombre")
-    ruc_index = {row[ruc_pos]: row for row in rows if row[ruc_pos]}
-    normalized_names = [_strip(row[nombre_pos]) for row in rows]
+    async with _fetch_lock:
+        # Another coroutine may have populated the cache while this one was
+        # waiting for the lock; re-check before downloading again.
+        cached = _companias_cache.get("companias")
+        if cached is not None:
+            return cached
 
-    bundle = (fields, rows, ruc_index, normalized_names)
-    _companias_cache.set("companias", bundle)
-    logger.info("Directorio de Supercías cargado: %d compañías", len(rows))
-    return bundle
+        logger.info("Descargando y parseando el directorio de Supercías (~35 MB)")
+        try:
+            raw = await _download_full(_EXCEL_URL)
+            fields, rows = _parse_xlsx(raw)
+        except Exception:
+            logger.exception("Fallo al descargar/parsear el directorio de Supercías")
+            raise
+
+        nombre_pos = fields.index("nombre")
+        provincia_pos = fields.index("provincia")
+        situacion_pos = fields.index("situacion_legal")
+        normalized_names = [_strip(row[nombre_pos]) for row in rows]
+        normalized_provincias = [_strip(row[provincia_pos]) for row in rows]
+        normalized_situaciones = [_strip(row[situacion_pos]) for row in rows]
+
+        bundle = (fields, rows, normalized_names, normalized_provincias, normalized_situaciones)
+        _companias_cache.set("companias", bundle)
+        logger.info("Directorio de Supercías cargado: %d compañías", len(rows))
+        return bundle
+
+
+def _ruc_index_for(
+    fields: tuple[str, ...], rows: list[tuple[str, ...]]
+) -> dict[str, tuple[str, ...]]:
+    """Build (and cache, by identity of `rows`) the RUC -> row lookup.
+
+    Built lazily instead of alongside the main table in `_fetch_companias`
+    because only get_compania_by_ruc needs it; search_companias doesn't, so
+    a cache window with only search calls never pays for it.
+    """
+    global _ruc_index_state
+    if _ruc_index_state is not None and _ruc_index_state[0] is rows:
+        return _ruc_index_state[1]
+
+    ruc_pos = fields.index("ruc")
+    index: dict[str, tuple[str, ...]] = {}
+    duplicates = 0
+    for row in rows:
+        ruc = row[ruc_pos]
+        if not ruc:
+            continue
+        if ruc in index:
+            duplicates += 1
+        index[ruc] = row
+    if duplicates:
+        logger.warning(
+            "Directorio de Supercías: %d RUC(s) duplicados en el export; "
+            "se conserva la última fila vista de cada uno",
+            duplicates,
+        )
+    _ruc_index_state = (rows, index)
+    return index
 
 
 def _row_to_dict(fields: tuple[str, ...], row: tuple[str, ...]) -> dict[str, str]:
@@ -219,10 +356,10 @@ async def search_companias(
         limit: Max results returned.
         offset: Pagination offset over the matched set.
     """
-    fields, rows, _, normalized_names = await _fetch_companias()
+    fields, rows, normalized_names, normalized_provincias, normalized_situaciones = (
+        await _fetch_companias()
+    )
     ruc_pos = fields.index("ruc")
-    provincia_pos = fields.index("provincia")
-    situacion_pos = fields.index("situacion_legal")
 
     q = _strip(query)
     prov = _strip(provincia)
@@ -232,9 +369,9 @@ async def search_companias(
     for i, row in enumerate(rows):
         if q and q not in normalized_names[i] and q not in row[ruc_pos]:
             continue
-        if prov and prov not in _strip(row[provincia_pos]):
+        if prov and prov not in normalized_provincias[i]:
             continue
-        if situ and situ not in _strip(row[situacion_pos]):
+        if situ and situ not in normalized_situaciones[i]:
             continue
         matched.append(i)
 
@@ -250,7 +387,8 @@ async def search_companias(
 
 async def get_compania_by_ruc(ruc: str) -> dict[str, str] | None:
     """Look up a single company by exact RUC match."""
-    fields, _, ruc_index, _ = await _fetch_companias()
+    fields, rows, *_ = await _fetch_companias()
+    ruc_index = _ruc_index_for(fields, rows)
     row = ruc_index.get((ruc or "").strip())
     if row is None:
         return None

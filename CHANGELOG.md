@@ -15,6 +15,28 @@ Este repositorio es un fork de [DweskZ/EcuDataMCP](https://github.com/DweskZ/Ecu
   memoria de 6h (el archivo se actualiza a diario y pesa ~35 MB / 226k filas)
 - Fuente `supercias` en `ecuador://fuentes`
 
+### Fixed
+- Post-review sobre la integración de Supercías (`helpers/supercias_client.py`):
+  - RUCs duplicados en el export (8 confirmados en el archivo real) ya no se
+    pierden en silencio: se loguea un aviso con el conteo
+  - Retry con TLS inseguro ante fallo de certificado (mismo mecanismo que
+    CKAN), con el host de Supercías agregado al allowlist en `helpers/tls.py`
+  - La hoja del workbook se resuelve vía `xl/workbook.xml` en vez de asumir
+    `sheet1.xml`
+  - Lock para evitar que llamadas concurrentes descarguen y parseen el
+    archivo (~35 MB) por duplicado tras expirar el caché
+  - Si el encabezado detectado tiene menos columnas que los datos reales,
+    ahora falla con un error claro en vez de truncar filas en silencio
+  - `provincia`/`situacion_legal` se normalizan una sola vez por refresco de
+    caché en lugar de en cada búsqueda filtrada
+  - `search_companias`/`get_compania_info`: los errores devueltos incluyen el
+    parámetro de búsqueda/RUC que los originó, y quedan logueados en el
+    servidor antes de convertirse en el mensaje al usuario
+  - `search_companias` ya no muestra "Tipo:" / "Provincia:" en blanco cuando
+    esos campos vienen vacíos
+  - El índice por RUC se construye de forma perezosa (antes se calculaba en
+    cada refresco de caché aunque `search_companias` nunca lo usa)
+
 ## 0.5.0 — 2026-08-10
 
 ### Added

@@ -25,7 +25,7 @@ def register_get_compania_info_tool(mcp: FastMCP) -> None:
             compania = await supercias_client.get_compania_by_ruc(ruc)
         except Exception as e:
             return render_output(
-                {"error": str(e)},
+                {"error": str(e), "ruc": ruc},
                 format,
                 text_builder=lambda d: (
                     f"Error al consultar el directorio de Supercías: {d['error']}"

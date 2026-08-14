@@ -46,7 +46,12 @@ def register_search_companias_tool(mcp: FastMCP) -> None:
             )
         except Exception as e:
             return render_output(
-                {"error": str(e)},
+                {
+                    "error": str(e),
+                    "query": query or None,
+                    "provincia": provincia or None,
+                    "situacion_legal": situacion_legal or None,
+                },
                 format,
                 text_builder=lambda d: (
                     f"Error al consultar el directorio de Supercías: {d['error']}"
@@ -69,9 +74,13 @@ def register_search_companias_tool(mcp: FastMCP) -> None:
                 parts.append(f"{i}. {c.get('nombre')}")
                 parts.append(f"   RUC: {c.get('ruc')}")
                 parts.append(f"   Situación legal: {c.get('situacion_legal')}")
-                parts.append(
-                    f"   Tipo: {c.get('tipo')}  ·  Provincia: {c.get('provincia')}"
-                )
+                tipo_provincia = [
+                    f"Tipo: {c['tipo']}" if c.get("tipo") else "",
+                    f"Provincia: {c['provincia']}" if c.get("provincia") else "",
+                ]
+                tipo_provincia = [part for part in tipo_provincia if part]
+                if tipo_provincia:
+                    parts.append("   " + "  ·  ".join(tipo_provincia))
                 if c.get("representante"):
                     parts.append(
                         f"   Representante: {c['representante']} ({c.get('cargo')})"

@@ -29,6 +29,16 @@ def test_host_allowlist_can_be_disabled(monkeypatch):
     assert host_allows_insecure_tls("https://www.datosabiertos.gob.ec/api") is False
 
 
+def test_host_allowlist_includes_supercias(monkeypatch):
+    monkeypatch.setenv("CKAN_INSECURE_TLS", "1")
+    assert (
+        host_allows_insecure_tls(
+            "https://mercadodevalores.supercias.gob.ec/reportes/excel/x.xlsx"
+        )
+        is True
+    )
+
+
 def test_should_retry_insecure(monkeypatch):
     monkeypatch.setenv("CKAN_INSECURE_TLS", "1")
     exc = ssl.SSLCertVerificationError("bad")

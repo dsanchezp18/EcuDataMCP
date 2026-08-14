@@ -1,5 +1,7 @@
 import io
+import ssl
 
+import httpx
 import openpyxl
 import pytest
 
@@ -46,9 +48,33 @@ def _build_xlsx() -> bytes:
     return buf.getvalue()
 
 
+def _build_xlsx_with_duplicate_ruc() -> bytes:
+    dup_row = (
+        3, "3", "1790013731001", "ACEITES TROPICALES (EXPEDIENTE DUPLICADO)",
+        "ACTIVA", "20/07/1951", "ANÓNIMA", "ECUADOR", "SIERRA", "PICHINCHA",
+        "QUITO", "QUITO", "VIA QUININDE KM 37", "SN", "SN", "", "022762426",
+        "OTRO REPRESENTANTE", "GERENTE GENERAL", "48.200,00", "A",
+        "A0126.01", "2025", "NO APLICA", "NO APLICA",
+    )
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(("SUPERINTENDENCIA DE COMPAÑÍAS, VALORES Y SEGUROS",))
+    ws.append(("DIRECTORIO DE COMPAÑÍAS",))
+    ws.append(("No. DE FILAS: 3",))
+    ws.append(("FECHA DE ACTUALIZACION: 13/08/2026 00:53:11",))
+    ws.append(_HEADER)
+    ws.append(_ROW_1)
+    ws.append(_ROW_2)
+    ws.append(dup_row)
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
 @pytest.fixture(autouse=True)
 def _reset_cache():
     supercias_client._companias_cache = TtlCache(ttl_seconds=60)
+    supercias_client._ruc_index_state = None
     yield
 
 
@@ -127,3 +153,79 @@ async def test_get_compania_by_ruc_found_and_not_found(httpx_mock):
 
     missing = await supercias_client.get_compania_by_ruc("0000000000000")
     assert missing is None
+
+
+def test_parse_xlsx_raises_when_data_row_exceeds_header_width():
+    # Simulate a header row whose last cell is blank (dropped from the row's
+    # XML entirely) by writing the real header minus its last column, while
+    # a data row still has a value in that trailing column.
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(("SUPERINTENDENCIA DE COMPAÑÍAS, VALORES Y SEGUROS",))
+    ws.append(("DIRECTORIO DE COMPAÑÍAS",))
+    ws.append(("No. DE FILAS: 1",))
+    ws.append(("FECHA DE ACTUALIZACION: 13/08/2026 00:53:11",))
+    ws.append(_HEADER[:-1])
+    ws.append(_ROW_1)
+    buf = io.BytesIO()
+    wb.save(buf)
+
+    with pytest.raises(ValueError, match="incompleto"):
+        supercias_client._parse_xlsx(buf.getvalue())
+
+
+async def test_duplicate_ruc_keeps_last_row_and_logs_warning(httpx_mock, caplog):
+    httpx_mock.add_response(
+        url=supercias_client._EXCEL_URL, content=_build_xlsx_with_duplicate_ruc()
+    )
+
+    with caplog.at_level("WARNING"):
+        found = await supercias_client.get_compania_by_ruc("1790013731001")
+
+    assert found is not None
+    assert found["nombre"] == "ACEITES TROPICALES (EXPEDIENTE DUPLICADO)"
+    assert any("duplicado" in rec.message for rec in caplog.records)
+
+
+async def test_ruc_index_is_cached_across_lookups(httpx_mock):
+    httpx_mock.add_response(url=supercias_client._EXCEL_URL, content=_build_xlsx())
+
+    await supercias_client.get_compania_by_ruc("1790013731001")
+    state_after_first = supercias_client._ruc_index_state
+    assert state_after_first is not None
+
+    # A second lookup (and an unrelated search) must reuse the same index
+    # object rather than rebuilding it, since the underlying rows haven't
+    # changed.
+    await supercias_client.get_compania_by_ruc("1790004724001")
+    await supercias_client.search_companias(query="aceria")
+    assert supercias_client._ruc_index_state is state_after_first
+
+
+async def test_download_full_retries_insecurely_on_cert_failure(monkeypatch):
+    calls: list[bool] = []
+
+    async def fake_download_once(url: str, verify: bool = True) -> bytes:
+        calls.append(verify)
+        if verify:
+            exc = httpx.ConnectError("cert failure")
+            exc.__context__ = ssl.SSLCertVerificationError("bad cert")
+            raise exc
+        return b"ok"
+
+    monkeypatch.setattr(supercias_client, "_download_once", fake_download_once)
+
+    result = await supercias_client._download_full(supercias_client._EXCEL_URL)
+
+    assert result == b"ok"
+    assert calls == [True, False]
+
+
+async def test_download_full_does_not_retry_non_cert_connect_errors(monkeypatch):
+    async def fake_download_once(url: str, verify: bool = True) -> bytes:
+        raise httpx.ConnectError("connection refused")
+
+    monkeypatch.setattr(supercias_client, "_download_once", fake_download_once)
+
+    with pytest.raises(httpx.ConnectError):
+        await supercias_client._download_full(supercias_client._EXCEL_URL)

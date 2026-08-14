@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 _INSECURE_TLS_HOST_SUFFIXES = (
     "datosabiertos.gob.ec",
     "datosabiertos.presidencia.gob.ec",
+    "mercadodevalores.supercias.gob.ec",
 )
 
 
