@@ -203,6 +203,9 @@ async def test_ruc_index_is_cached_across_lookups(httpx_mock):
 
 
 async def test_download_full_retries_insecurely_on_cert_failure(monkeypatch):
+    # CKAN_INSECURE_TLS defaults to off (post-cert-renewal); opt in explicitly
+    # to exercise the retry path itself.
+    monkeypatch.setenv("CKAN_INSECURE_TLS", "1")
     calls: list[bool] = []
 
     async def fake_download_once(url: str, verify: bool = True) -> bytes:
