@@ -258,6 +258,11 @@ uv run python scripts/build_supercias_financials_db.py
 Guarda `data/supercias_financials.sqlite3` (gitignored). Repetir cuando
 pase de una semana — los tools avisan si la base está vieja o no existe.
 
+Si el script falla al descargar `bi_ranking.csv`, ver la nota sobre
+geografía de la conexión en la sección
+["Problema conocido"](#problema-conocido-el-portal-de-datos-abiertos-a-veces-bloquea-conexiones)
+más abajo.
+
 ---
 
 ## Herramientas disponibles (32 tools)
@@ -382,6 +387,18 @@ En nuestras pruebas:
 Las herramientas de trámites e instituciones (`search_tramites`, `list_instituciones`, `get_institucion_info`, etc.) usan otro portal (`gob.ec`) y no tienen este problema.
 
 **Si ves errores 403 en las herramientas de Datos Abiertos:** intenta correr el servidor desde una conexión (por ejemplo, una VPN) con salida en algún país de Latinoamérica.
+
+**Nota — Supercías (`search_ranking`/`get_financials`):** aparte del problema
+de cifrado TLS que ya maneja `legacy_cipher_context()`
+(`appscvsmovil.supercias.gob.ec` exige un mínimo de cifrado que OpenSSL 3
+rechaza por defecto), este host parece comportarse igual que
+`datosabiertos.gob.ec` en cuanto a geografía de la conexión. Si
+`scripts/build_supercias_financials_db.py` falla incluso con el fix de
+cifrado aplicado, probá correrlo también desde una conexión con salida en
+Latinoamérica antes de asumir que es otro problema — no confirmado de forma
+exhaustiva (el fix de cifrado sí resolvió la conexión en las pruebas de esta
+sesión, corriendo desde una IP de la región), pero vale la pena descartarlo
+primero si falla desde otra región.
 
 ---
 
