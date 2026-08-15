@@ -67,6 +67,14 @@ Ver [Completado recientemente](#completado-recientemente) para el detalle.
       restricciones de acceso/privacidad más estrictas que otros datasets
       del portal — confirmar qué es realmente publicable como dato abierto
       antes de diseñar una conexión.
+- [ ] **ECU 911 (Servicio Integrado de Seguridad)** — pedido explícitamente
+      por Daniel. Estadísticas de incidentes/emergencias atendidas,
+      tiempos de respuesta, cobertura territorial. Verificar solapamiento
+      con `search_eventos_riesgo`/SGR (ya integrado, eventos del COE) antes
+      de diseñar nada — puede que ECU 911 sea una fuente distinta
+      (seguridad ciudadana/emergencias 911) del SGR (gestión de riesgos de
+      desastres), no redundante, pero hay que confirmarlo. Portal propio sin
+      investigar.
 
 ### Datasets anticorrupción
 
