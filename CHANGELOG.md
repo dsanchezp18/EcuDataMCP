@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.8.1 — 2026-08-15
+
+Producto de un review externo sobre el estado de `main` — arreglos de bajo
+esfuerzo/alto valor, sin tocar arquitectura grande (SSRF, metadata de
+compañía en el SQLite financiero) que queda para después.
+
+### Fixed
+- **Bug real:** `get_financials(expediente)` resolvía nombre/RUC vía
+  `search_companias(query=str(expediente))`, pero esa búsqueda solo
+  matchea nombre/RUC, nunca expediente — el lookup casi siempre fallaba en
+  silencio y devolvía `nombre`/`ruc` en `None`. El test existente no lo
+  agarraba porque mockeaba la función equivocada. Nuevo
+  `get_compania_by_expediente()` en `helpers/supercias_client.py` con su
+  propio índice (mismo patrón lazy-por-identidad que el de RUC), verificado
+  contra data real (expediente 384 → Corporación Favorita).
+- **Refresh no atómico de la DB financiera:** `scripts/build_supercias_financials_db.py`
+  borraba el archivo antes de reconstruirlo — un build fallido a la mitad
+  dejaba el MCP sin datos. Ahora construye en `<db>.building`, corre
+  `_verify_build()` (integridad, columnas requeridas, `ranking` no vacío) y
+  recién entonces hace `os.replace()` atómico; un build fallido nunca toca
+  la base que ya funciona.
+- **Event loop bloqueado:** `_parse_xlsx()` (parseo CPU-bound del directorio,
+  ~35 MB) corría sync dentro de `_fetch_companias()`, bloqueando el loop
+  completo para todo cliente HTTP concurrente durante el parseo. Ahora corre
+  en `asyncio.to_thread`.
+
+### Changed
+- `uv.lock` ahora se commitea (`.gitignore` tenía `*.lock` sin excepción);
+  CI usa `uv sync --locked` y corre en Python 3.11/3.12/3.13 (antes solo
+  3.12, pese a que `pyproject.toml` declara `>=3.11` y el Dockerfile usa
+  3.13).
+- Dockerfile: copiaba `pyproject.toml` e instalaba antes de copiar el código
+  fuente — `pip install .` corría sin los paquetes (`helpers/`, `tools/`,
+  etc.) ni el `README.md` que el propio `pyproject.toml` declara, y solo
+  "funcionaba" porque el `COPY . .` posterior ponía los archivos crudos en
+  el path de Python. Ahora usa `uv sync --locked --no-dev` con el código
+  copiado antes.
+- `docker-compose.yml`: volumen persistente para `/app/data` (antes cada
+  recreación del contenedor perdía `supercias_financials.sqlite3`).
+- Nuevo `.dockerignore` (`.git/`, `.env`, caches, `tests/`, `data/` no
+  entraban al build context antes).
+
 ## 0.8.0 — 2026-08-14
 
 ### Added

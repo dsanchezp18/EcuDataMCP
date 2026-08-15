@@ -201,16 +201,8 @@ async def get_financials(
         expediente = int(compania["expediente"])
     else:
         # Best-effort name lookup for display; not fatal if it fails since
-        # the RUC/expediente given may predate the directory's own coverage.
-        directory = await supercias_client.search_companias(
-            query=str(expediente), limit=1
-        )
-        matches = [
-            c
-            for c in directory.get("companias", [])
-            if c.get("expediente") == str(expediente)
-        ]
-        compania = matches[0] if matches else None
+        # the expediente given may predate the directory's own coverage.
+        compania = await supercias_client.get_compania_by_expediente(str(expediente))
 
     years = await asyncio.to_thread(
         _query_financials_by_expediente, expediente, anio

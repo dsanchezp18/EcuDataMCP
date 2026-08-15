@@ -155,6 +155,18 @@ async def test_get_compania_by_ruc_found_and_not_found(httpx_mock):
     assert missing is None
 
 
+async def test_get_compania_by_expediente_found_and_not_found(httpx_mock):
+    httpx_mock.add_response(url=supercias_client._EXCEL_URL, content=_build_xlsx())
+
+    found = await supercias_client.get_compania_by_expediente("1")
+    assert found is not None
+    assert found["nombre"] == "ACEITES TROPICALES SOCIEDAD ANONIMA ATSA"
+    assert found["ruc"] == "1790013731001"
+
+    missing = await supercias_client.get_compania_by_expediente("999999")
+    assert missing is None
+
+
 def test_parse_xlsx_raises_when_data_row_exceeds_header_width():
     # Simulate a header row whose last cell is blank (dropped from the row's
     # XML entirely) by writing the real header minus its last column, while

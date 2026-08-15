@@ -74,6 +74,9 @@ _fetch_lock = asyncio.Lock()
 # rebuilds it). Only get_compania_by_ruc needs this; search_companias doesn't,
 # so it isn't computed on every cache refresh regardless of which tool is used.
 _ruc_index_state: tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None = None
+_expediente_index_state: (
+    tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None
+) = None
 
 
 def _strip(text: str) -> str:
@@ -284,7 +287,11 @@ async def _fetch_companias() -> tuple[
         logger.info("Descargando y parseando el directorio de Supercías (~35 MB)")
         try:
             raw = await _download_full(_EXCEL_URL)
-            fields, rows = _parse_xlsx(raw)
+            # _parse_xlsx is CPU-bound (streaming XML parse over ~35 MB) and
+            # takes seconds; running it inline would block the event loop for
+            # every other concurrent request on this server for that whole
+            # window, not just this one.
+            fields, rows = await asyncio.to_thread(_parse_xlsx, raw)
         except Exception:
             logger.exception("Fallo al descargar/parsear el directorio de Supercías")
             raise
@@ -332,6 +339,30 @@ def _ruc_index_for(
             duplicates,
         )
     _ruc_index_state = (rows, index)
+    return index
+
+
+def _expediente_index_for(
+    fields: tuple[str, ...], rows: list[tuple[str, ...]]
+) -> dict[str, tuple[str, ...]]:
+    """Build (and cache, by identity of `rows`) the expediente -> row lookup.
+
+    Same lazy-by-identity pattern as `_ruc_index_for`; kept as a separate
+    dict rather than folded into it since the two id spaces don't overlap
+    (expediente is a small integer string, RUC is 13 digits) but callers
+    look up by one or the other, not both.
+    """
+    global _expediente_index_state
+    if _expediente_index_state is not None and _expediente_index_state[0] is rows:
+        return _expediente_index_state[1]
+
+    expediente_pos = fields.index("expediente")
+    index: dict[str, tuple[str, ...]] = {}
+    for row in rows:
+        expediente = row[expediente_pos]
+        if expediente:
+            index[expediente] = row
+    _expediente_index_state = (rows, index)
     return index
 
 
@@ -390,6 +421,22 @@ async def get_compania_by_ruc(ruc: str) -> dict[str, str] | None:
     fields, rows, *_ = await _fetch_companias()
     ruc_index = _ruc_index_for(fields, rows)
     row = ruc_index.get((ruc or "").strip())
+    if row is None:
+        return None
+    return _row_to_dict(fields, row)
+
+
+async def get_compania_by_expediente(expediente: str) -> dict[str, str] | None:
+    """Look up a single company by exact expediente match.
+
+    search_companias's free-text query only matches name/RUC, not
+    expediente, so it cannot be used as a substitute for this -- a caller
+    that tried `search_companias(query=str(expediente))` would silently
+    get no match for almost every real expediente.
+    """
+    fields, rows, *_ = await _fetch_companias()
+    expediente_index = _expediente_index_for(fields, rows)
+    row = expediente_index.get((expediente or "").strip())
     if row is None:
         return None
     return _row_to_dict(fields, row)

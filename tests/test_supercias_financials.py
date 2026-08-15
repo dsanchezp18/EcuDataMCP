@@ -68,19 +68,40 @@ def test_check_db_fresh_stale_file(tmp_path):
 
 
 async def test_get_financials_by_expediente(db_path, monkeypatch):
-    async def fake_search_companias(query="", limit=1):
-        return {"companias": [{"expediente": "1", "nombre": "ACME", "ruc": "999"}]}
+    async def fake_get_by_expediente(expediente):
+        assert expediente == "1"
+        return {"expediente": "1", "nombre": "ACME", "ruc": "999"}
 
     monkeypatch.setattr(
         supercias_financials.supercias_client,
-        "search_companias",
-        fake_search_companias,
+        "get_compania_by_expediente",
+        fake_get_by_expediente,
     )
 
     result = await supercias_financials.get_financials("1")
 
     assert result["expediente"] == 1
     assert result["nombre"] == "ACME"
+    assert [y["anio"] for y in result["years"]] == [2025, 2024]
+
+
+async def test_get_financials_by_expediente_not_in_directory(db_path, monkeypatch):
+    # Financial data must still come back even if the company predates the
+    # directory's own coverage -- only nombre/ruc display is best-effort.
+    async def fake_get_by_expediente(expediente):
+        return None
+
+    monkeypatch.setattr(
+        supercias_financials.supercias_client,
+        "get_compania_by_expediente",
+        fake_get_by_expediente,
+    )
+
+    result = await supercias_financials.get_financials("1")
+
+    assert result["expediente"] == 1
+    assert result["nombre"] is None
+    assert result["ruc"] is None
     assert [y["anio"] for y in result["years"]] == [2025, 2024]
 
 

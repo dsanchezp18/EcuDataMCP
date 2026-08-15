@@ -213,6 +213,14 @@ MCP_PORT=8007 LOG_LEVEL=DEBUG docker compose up -d
 docker compose down
 ```
 
+Los datos financieros de Supercías (`search_ranking`/`get_financials`) no
+se descargan solos ni bajo Docker — corré el build script dentro del
+contenedor, contra el volumen persistente `supercias_data:/app/data`:
+
+```bash
+docker compose exec mcp uv run python scripts/build_supercias_financials_db.py
+```
+
 ### Instalación manual
 
 Requiere Python 3.11+ y [uv](https://docs.astral.sh/uv/).

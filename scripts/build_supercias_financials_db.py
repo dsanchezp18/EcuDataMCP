@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import csv
+import os
 import sqlite3
 import sys
 import time
@@ -134,10 +135,57 @@ def _load_csv_table(
     return header
 
 
+def _verify_build(db_path: Path) -> None:
+    """Sanity-check a freshly built DB before it replaces the live one.
+
+    Cheap checks only (structural integrity, non-empty required tables,
+    expected columns) -- not a substitute for the row-level data-quality
+    reporting a future pass could add (see ROADMAP), but enough to catch
+    "the build silently produced garbage" before it overwrites a working DB.
+    """
+    conn = sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True)
+    try:
+        ok = conn.execute("PRAGMA integrity_check").fetchone()[0]
+        if ok != "ok":
+            raise RuntimeError(f"PRAGMA integrity_check falló: {ok}")
+
+        for table, required_cols in (
+            ("ranking", {"anio", "expediente", "posicion_general"}),
+            ("segmentos", {"id_segmento", "segmento"}),
+            ("ciiu", {"ciiu", "descripcion"}),
+            ("indicadores_sector", {"anio", "ciiu_n1"}),
+        ):
+            cols = {row[1] for row in conn.execute(f'PRAGMA table_info("{table}")')}
+            missing = required_cols - cols
+            if missing:
+                raise RuntimeError(f"Tabla '{table}' sin columnas {missing}")
+
+        ranking_rows = conn.execute("SELECT COUNT(*) FROM ranking").fetchone()[0]
+        if ranking_rows == 0:
+            raise RuntimeError(
+                "La tabla 'ranking' quedó vacía tras el build -- "
+                "probablemente el CSV fuente vino roto/truncado esta vez"
+            )
+        min_anio, max_anio = conn.execute(
+            "SELECT MIN(anio), MAX(anio) FROM ranking"
+        ).fetchone()
+        print(
+            f"  Verificación OK: {ranking_rows} filas en 'ranking', "
+            f"años {min_anio}-{max_anio}",
+            flush=True,
+        )
+    finally:
+        conn.close()
+
+
 def main() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     tmp_dir = DB_PATH.parent / "tmp_supercias_financials"
     tmp_dir.mkdir(parents=True, exist_ok=True)
+    # Built alongside the live DB (not under tmp_dir, which gets removed
+    # below) so the final os.replace() is a same-filesystem rename, never a
+    # cross-filesystem copy that could itself fail partway through.
+    build_path = DB_PATH.parent / f"{DB_PATH.name}.building"
 
     with _client() as client:
         ranking_csv = tmp_dir / "bi_ranking.csv"
@@ -152,9 +200,8 @@ def main() -> None:
         ):
             _download_to(client, name, dest)
 
-    if DB_PATH.exists():
-        DB_PATH.unlink()
-    conn = sqlite3.connect(DB_PATH)
+    build_path.unlink(missing_ok=True)
+    conn = sqlite3.connect(build_path)
     try:
         print("Cargando bi_ranking.csv a SQLite (tabla 'ranking')...", flush=True)
         _load_csv_table(conn, ranking_csv, "ranking", _RANKING_INT_COLUMNS, _RANKING_TEXT_COLUMNS)
@@ -199,8 +246,27 @@ def main() -> None:
 
         print("VACUUM...", flush=True)
         conn.execute("VACUUM")
-    finally:
+    except Exception:
         conn.close()
+        build_path.unlink(missing_ok=True)
+        raise
+    else:
+        conn.close()
+
+    print("Verificando la base construida antes de reemplazar la anterior...", flush=True)
+    try:
+        _verify_build(build_path)
+    except Exception:
+        build_path.unlink(missing_ok=True)
+        raise
+
+    # Atomic on both POSIX and Windows, and same-filesystem (build_path
+    # lives next to DB_PATH) so this can't fail partway through the way a
+    # plain unlink()-then-write to DB_PATH directly could -- a reader
+    # opening DB_PATH mid-build would either see the old file or the new
+    # one, never a half-written one, and a failed build never touches the
+    # previously-working database at all.
+    os.replace(build_path, DB_PATH)
 
     for f in (ranking_csv, segmento_csv, ciiu_csv, sector_csv):
         f.unlink(missing_ok=True)
