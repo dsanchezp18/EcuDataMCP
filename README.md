@@ -65,6 +65,7 @@ Este MCP unifica **fuentes gubernamentales** en un solo servidor:
 | **Geografía** (DPA) | 24 provincias + 224 cantones (códigos INEC) | referencia offline |
 | **ANDA** (NADA/IHSN) | Catálogo de encuestas y censos del INEC | anda.inec.gob.ec |
 | **Supercías** | Directorio de compañías (226k+): representante legal, capital, CIIU | mercadodevalores.supercias.gob.ec |
+| **Supercías Ranking** | Financieros por balance (ingresos, activos, ROE, ~38 ratios), últimos años; requiere build local | appscvsmovil.supercias.gob.ec |
 
 **Sin API key. Sin restricciones de acceso. 100% datos públicos.**
 
@@ -246,9 +247,20 @@ Stdio local:
 uv run python main.py --transport stdio
 ```
 
+**Opcional — datos financieros de Supercías** (`search_ranking`/`get_financials`):
+a diferencia del resto de fuentes, esto no se descarga solo. Corre una vez
+antes de usarlos (tarda varios minutos, descarga ~356 MB):
+
+```bash
+uv run python scripts/build_supercias_financials_db.py
+```
+
+Guarda `data/supercias_financials.sqlite3` (gitignored). Repetir cuando
+pase de una semana — los tools avisan si la base está vieja o no existe.
+
 ---
 
-## Herramientas disponibles (30 tools)
+## Herramientas disponibles (32 tools)
 
 Casi todos los tools aceptan `format="json"` además de texto.
 
@@ -304,6 +316,8 @@ Casi todos los tools aceptan `format="json"` además de texto.
 |------|-------------|
 | `search_companias` | Buscar en el directorio de compañías de la Superintendencia de Compañías (226k+, por nombre/RUC, provincia, situación legal). |
 | `get_compania_info` | Ficha completa de una compañía por RUC: representante legal, capital suscrito, CIIU, dirección. |
+| `search_ranking` | Rankear/filtrar compañías por indicadores financieros (año, CIIU, cualquier columna) — requiere `scripts/build_supercias_financials_db.py` corrido de antemano. |
+| `get_financials` | Historial financiero de una compañía por expediente o RUC: ingresos, activos, patrimonio, ~38 ratios (liquidez, endeudamiento, rentabilidad), últimos años cacheados. |
 
 ### Riesgos y sismos
 
