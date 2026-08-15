@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.8.2 — 2026-08-15
+
+Segunda tanda del mismo review externo — los dos ítems de mayor esfuerzo que
+quedaron pendientes en 0.8.1 (guardia SSRF, desacople de la DB financiera).
+
+### Added
+- `helpers/safe_download.py`: guardia SSRF centralizada (`assert_public_url`,
+  `safe_stream`) para descargas cuya URL viene de metadata externa no
+  confiable — hoy solo `preview_resource_data` (URLs de recursos CKAN,
+  definidas por quien publica el dataset, no por este código). Valida la URL
+  inicial y cada hop de redirección contra IPs privadas/loopback/link-local/
+  multicast/reservadas/no especificadas antes de conectar; tope de 5
+  redirecciones. No cubre DNS rebinding (documentado explícitamente en el
+  docstring del módulo) — cerrar eso requeriría fijar la IP validada y
+  conectar directo a ella, un cambio más profundo que queda fuera de esta
+  entrega.
+- `helpers/csv_reader.py`: `download_bytes()` ahora usa `safe_stream()` en
+  vez de `httpx` con `follow_redirects=True`.
+
+### Changed
+- `helpers/supercias_financials.py` ya no depende de
+  `helpers/supercias_client.py` para resolver nombre/RUC. La DB financiera
+  (`data/supercias_financials.sqlite3`) ahora tiene su propia tabla
+  `companias` (expediente, ruc, nombre), cargada desde `bi_compania.csv` por
+  `scripts/build_supercias_financials_db.py` junto con `bi_ranking.csv`.
+  Elimina el acoplamiento entre los dos módulos — cada uno se refresca a su
+  propio ritmo (diario vs. semanal/manual) sin depender del cache del otro.
+  `search_ranking` ahora hace `LEFT JOIN companias` y devuelve `nombre`/`ruc`
+  en cada resultado directamente, sin necesitar una consulta aparte a
+  `get_compania_info`.
+
 ## 0.8.1 — 2026-08-15
 
 Producto de un review externo sobre el estado de `main` — arreglos de bajo

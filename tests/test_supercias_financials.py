@@ -20,6 +20,19 @@ def _build_db(path) -> None:
             (2025, 1, 10, "C", "C1010.01", 1000.0, 5000.0, 0.1),
             (2024, 1, 15, "C", "C1010.01", 900.0, 4800.0, 0.09),
             (2025, 2, 3, "G", "G4510.01", 3000.0, 9000.0, 0.2),
+            # expediente 3 has financials but no matching companias row --
+            # tests the LEFT JOIN / "predates directory coverage" case.
+            (2025, 3, 20, "C", "C1010.01", 500.0, 2000.0, 0.05),
+        ],
+    )
+    conn.execute(
+        "CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)"
+    )
+    conn.executemany(
+        "INSERT INTO companias VALUES (?, ?, ?)",
+        [
+            (1, "1790013731001", "ACME"),
+            (2, "1790004724001", "OTRA S.A."),
         ],
     )
     conn.execute("CREATE TABLE segmentos (id_segmento INTEGER, segmento TEXT)")
@@ -67,68 +80,36 @@ def test_check_db_fresh_stale_file(tmp_path):
         supercias_financials._check_db_fresh(path)
 
 
-async def test_get_financials_by_expediente(db_path, monkeypatch):
-    async def fake_get_by_expediente(expediente):
-        assert expediente == "1"
-        return {"expediente": "1", "nombre": "ACME", "ruc": "999"}
-
-    monkeypatch.setattr(
-        supercias_financials.supercias_client,
-        "get_compania_by_expediente",
-        fake_get_by_expediente,
-    )
-
+async def test_get_financials_by_expediente(db_path):
     result = await supercias_financials.get_financials("1")
 
     assert result["expediente"] == 1
     assert result["nombre"] == "ACME"
+    assert result["ruc"] == "1790013731001"
     assert [y["anio"] for y in result["years"]] == [2025, 2024]
 
 
-async def test_get_financials_by_expediente_not_in_directory(db_path, monkeypatch):
-    # Financial data must still come back even if the company predates the
-    # directory's own coverage -- only nombre/ruc display is best-effort.
-    async def fake_get_by_expediente(expediente):
-        return None
+async def test_get_financials_by_expediente_not_in_companias(db_path):
+    # Financial data must still come back even if the company is missing
+    # from the companias table (bi_ranking.csv and bi_compania.csv aren't
+    # guaranteed to be in perfect lockstep) -- only nombre/ruc is best-effort.
+    result = await supercias_financials.get_financials("3")
 
-    monkeypatch.setattr(
-        supercias_financials.supercias_client,
-        "get_compania_by_expediente",
-        fake_get_by_expediente,
-    )
-
-    result = await supercias_financials.get_financials("1")
-
-    assert result["expediente"] == 1
+    assert result["expediente"] == 3
     assert result["nombre"] is None
     assert result["ruc"] is None
-    assert [y["anio"] for y in result["years"]] == [2025, 2024]
+    assert [y["anio"] for y in result["years"]] == [2025]
 
 
-async def test_get_financials_by_ruc(db_path, monkeypatch):
-    async def fake_get_by_ruc(ruc):
-        assert ruc == "1790013731001"
-        return {"expediente": "2", "nombre": "OTRA S.A.", "ruc": ruc}
-
-    monkeypatch.setattr(
-        supercias_financials.supercias_client, "get_compania_by_ruc", fake_get_by_ruc
-    )
-
-    result = await supercias_financials.get_financials("1790013731001")
+async def test_get_financials_by_ruc(db_path):
+    result = await supercias_financials.get_financials("1790004724001")
 
     assert result["expediente"] == 2
     assert result["nombre"] == "OTRA S.A."
     assert len(result["years"]) == 1
 
 
-async def test_get_financials_ruc_not_found(db_path, monkeypatch):
-    async def fake_get_by_ruc(ruc):
-        return None
-
-    monkeypatch.setattr(
-        supercias_financials.supercias_client, "get_compania_by_ruc", fake_get_by_ruc
-    )
-
+async def test_get_financials_ruc_not_found(db_path):
     result = await supercias_financials.get_financials("0000000000000")
 
     assert result["error"] == "not_found"
@@ -137,15 +118,27 @@ async def test_get_financials_ruc_not_found(db_path, monkeypatch):
 
 async def test_search_ranking_filters_and_sorts(db_path):
     result = await supercias_financials.search_ranking(anio=2025)
-    assert result["total"] == 2
+    assert result["total"] == 3
     # Sorted ascending by posicion_general by default.
-    assert [c["expediente"] for c in result["companias"]] == [2, 1]
+    assert [c["expediente"] for c in result["companias"]] == [2, 1, 3]
+
+
+async def test_search_ranking_includes_company_name_and_ruc(db_path):
+    result = await supercias_financials.search_ranking(anio=2025, ciiu_n1="c")
+    by_expediente = {c["expediente"]: c for c in result["companias"]}
+
+    assert by_expediente[1]["nombre"] == "ACME"
+    assert by_expediente[1]["ruc"] == "1790013731001"
+    # expediente 3 has no companias row -- LEFT JOIN must still return the
+    # ranking row, with nombre/ruc as None, not drop it.
+    assert by_expediente[3]["nombre"] is None
+    assert by_expediente[3]["ruc"] is None
 
 
 async def test_search_ranking_filters_by_ciiu(db_path):
-    result = await supercias_financials.search_ranking(anio=2025, ciiu_n1="c")
+    result = await supercias_financials.search_ranking(anio=2025, ciiu_n1="g")
     assert result["total"] == 1
-    assert result["companias"][0]["expediente"] == 1
+    assert result["companias"][0]["expediente"] == 2
 
 
 async def test_search_ranking_rejects_unknown_order_by(db_path):
@@ -153,7 +146,7 @@ async def test_search_ranking_rejects_unknown_order_by(db_path):
     result = await supercias_financials.search_ranking(
         anio=2025, order_by="DROP TABLE ranking;--"
     )
-    assert result["total"] == 2
+    assert result["total"] == 3
 
 
 async def test_get_sector_benchmark(db_path):

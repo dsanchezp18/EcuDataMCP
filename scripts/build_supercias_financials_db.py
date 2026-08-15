@@ -1,7 +1,8 @@
 """Build/refresh data/supercias_financials.sqlite3 from the Supercías ranking export.
 
 Downloads bi_ranking.csv (~356 MB, ~9M rows, 2008-present) plus the small
-lookup tables (bi_segmento.csv, bi_ciiu.csv, indicadores_sector.csv) from
+lookup tables (bi_compania.csv, bi_segmento.csv, bi_ciiu.csv,
+indicadores_sector.csv) from
 https://appscvsmovil.supercias.gob.ec/ranking/reporte.html, loads them into a
 local SQLite database, then prunes `ranking`/`indicadores_sector` down to the
 last 5 fiscal years present in the data (not a hardcoded year, so this
@@ -13,9 +14,15 @@ Run it manually before deploying, or on a periodic schedule (the underlying
 filings change far less often than the daily company directory) --
 helpers/supercias_financials.py refuses to serve data older than 7 days.
 
-bi_compania.csv is deliberately NOT downloaded: it's the same company
-fields (expediente, ruc, nombre, tipo, provincia) already covered by
-helpers/supercias_client.py's directory cache, joined on `expediente`.
+bi_compania.csv (expediente, ruc, nombre, tipo, pro_codigo, provincia) IS
+downloaded, as the `companias` table -- an earlier version of this script
+skipped it on the theory that helpers/supercias_client.py's directory cache
+already has the same fields, joined on `expediente`. That created a real
+coupling bug: get_financials()/search_ranking() need a live, separately
+warmed, separately-TTL'd cache from a different module just to show a
+company's name next to its financials. Duplicating three small columns for
+~226k rows is cheap (a few MB) next to the ~180 MB this DB already is, and
+makes this module fully self-contained.
 
 Usage:
     uv run python scripts/build_supercias_financials_db.py
@@ -52,6 +59,9 @@ _RANKING_TEXT_COLUMNS = {"ciiu_n1", "ciiu_n6"}
 
 _SECTOR_INT_COLUMNS = {"anio"}
 _SECTOR_TEXT_COLUMNS = {"ciiu_n1", "descripcion"}
+
+_COMPANIA_INT_COLUMNS = {"expediente"}
+_COMPANIA_TEXT_COLUMNS = {"ruc", "nombre", "tipo", "pro_codigo", "provincia"}
 
 
 def _client() -> httpx.Client:
@@ -151,6 +161,7 @@ def _verify_build(db_path: Path) -> None:
 
         for table, required_cols in (
             ("ranking", {"anio", "expediente", "posicion_general"}),
+            ("companias", {"expediente", "ruc", "nombre"}),
             ("segmentos", {"id_segmento", "segmento"}),
             ("ciiu", {"ciiu", "descripcion"}),
             ("indicadores_sector", {"anio", "ciiu_n1"}),
@@ -159,6 +170,13 @@ def _verify_build(db_path: Path) -> None:
             missing = required_cols - cols
             if missing:
                 raise RuntimeError(f"Tabla '{table}' sin columnas {missing}")
+
+        companias_rows = conn.execute("SELECT COUNT(*) FROM companias").fetchone()[0]
+        if companias_rows == 0:
+            raise RuntimeError(
+                "La tabla 'companias' quedó vacía tras el build -- "
+                "probablemente bi_compania.csv vino roto/truncado esta vez"
+            )
 
         ranking_rows = conn.execute("SELECT COUNT(*) FROM ranking").fetchone()[0]
         if ranking_rows == 0:
@@ -170,8 +188,8 @@ def _verify_build(db_path: Path) -> None:
             "SELECT MIN(anio), MAX(anio) FROM ranking"
         ).fetchone()
         print(
-            f"  Verificación OK: {ranking_rows} filas en 'ranking', "
-            f"años {min_anio}-{max_anio}",
+            f"  Verificación OK: {ranking_rows} filas en 'ranking' "
+            f"({companias_rows} en 'companias'), años {min_anio}-{max_anio}",
             flush=True,
         )
     finally:
@@ -189,11 +207,13 @@ def main() -> None:
 
     with _client() as client:
         ranking_csv = tmp_dir / "bi_ranking.csv"
+        compania_csv = tmp_dir / "bi_compania.csv"
         segmento_csv = tmp_dir / "bi_segmento.csv"
         ciiu_csv = tmp_dir / "bi_ciiu.csv"
         sector_csv = tmp_dir / "indicadores_sector.csv"
         for name, dest in (
             ("bi_ranking.csv", ranking_csv),
+            ("bi_compania.csv", compania_csv),
             ("bi_segmento.csv", segmento_csv),
             ("bi_ciiu.csv", ciiu_csv),
             ("indicadores_sector.csv", sector_csv),
@@ -219,6 +239,11 @@ def main() -> None:
                 flush=True,
             )
 
+        print("Cargando bi_compania.csv (tabla 'companias')...", flush=True)
+        _load_csv_table(
+            conn, compania_csv, "companias", _COMPANIA_INT_COLUMNS, _COMPANIA_TEXT_COLUMNS
+        )
+
         print("Cargando bi_segmento.csv (tabla 'segmentos')...", flush=True)
         _load_csv_table(conn, segmento_csv, "segmentos", {"id_segmento"}, {"segmento"})
 
@@ -242,6 +267,8 @@ def main() -> None:
         conn.execute(
             "CREATE INDEX idx_sector_anio_ciiu ON indicadores_sector(anio, ciiu_n1)"
         )
+        conn.execute("CREATE INDEX idx_companias_expediente ON companias(expediente)")
+        conn.execute("CREATE INDEX idx_companias_ruc ON companias(ruc)")
         conn.commit()
 
         print("VACUUM...", flush=True)
@@ -268,7 +295,7 @@ def main() -> None:
     # previously-working database at all.
     os.replace(build_path, DB_PATH)
 
-    for f in (ranking_csv, segmento_csv, ciiu_csv, sector_csv):
+    for f in (ranking_csv, compania_csv, segmento_csv, ciiu_csv, sector_csv):
         f.unlink(missing_ok=True)
     tmp_dir.rmdir()
 

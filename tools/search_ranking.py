@@ -24,11 +24,12 @@ def register_search_ranking_tool(mcp: FastMCP) -> None:
         Rank/filter Supercías companies by financial indicators for a fiscal year.
 
         Filter by year and/or CIIU level-1 economic activity (single letter,
-        e.g. "C" for manufacturing — see bi_ciiu.csv via get_financials for
-        codes), sorted by any indicator column (defaults to the dataset's own
-        precomputed posicion_general). Covers only the last few cached fiscal
-        years, not the full history. Use get_financials for one company's
-        detail, or get_compania_info for legal/registry data.
+        e.g. "C" for manufacturing), sorted by any indicator column (defaults
+        to the dataset's own precomputed posicion_general). Each result
+        includes the company's nombre/ruc alongside its financials. Covers
+        only the last few cached fiscal years, not the full history. Use
+        get_financials for one company's full detail, or get_compania_info
+        for legal/registry data (address, legal representative, etc.).
 
         Args:
             anio: Optional fiscal year filter.
@@ -81,10 +82,15 @@ def register_search_ranking_tool(mcp: FastMCP) -> None:
                 parts.append("Sin resultados.")
                 return "\n".join(parts)
             for i, c in enumerate(companias, 1):
+                nombre = c.get("nombre") or f"Expediente {c.get('expediente')}"
                 parts.append(
-                    f"{i}. Expediente {c.get('expediente')} — año {c.get('anio')} "
+                    f"{i}. {nombre} — año {c.get('anio')} "
                     f"— posición {c.get('posicion_general')}"
                 )
+                if c.get("ruc"):
+                    parts.append(f"   RUC: {c['ruc']}  ·  Expediente: {c.get('expediente')}")
+                else:
+                    parts.append(f"   Expediente: {c.get('expediente')}")
                 parts.append(f"   CIIU: {c.get('ciiu_n1')} / {c.get('ciiu_n6')}")
                 if c.get("ingresos_ventas") is not None:
                     parts.append(f"   Ingresos por ventas: {c['ingresos_ventas']}")
@@ -95,7 +101,7 @@ def register_search_ranking_tool(mcp: FastMCP) -> None:
                 parts.append("")
             parts.append(
                 "Tip: usa get_financials(expediente_or_ruc=...) para el detalle "
-                "completo de una compañía, o get_compania_info para su nombre/RUC."
+                "completo de una compañía."
             )
             return "\n".join(parts)
 
