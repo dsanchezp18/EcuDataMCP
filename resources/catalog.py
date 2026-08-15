@@ -75,6 +75,12 @@ def register_catalog_resources(mcp: FastMCP) -> None:
                     "base": "https://mercadodevalores.supercias.gob.ec/reportes/",
                     "tools": ["search_companias", "get_compania_info"],
                 },
+                {
+                    "id": "supercias-financials",
+                    "nombre": "Superintendencia de Compañías (ranking financiero, últimos años)",
+                    "base": "https://appscvsmovil.supercias.gob.ec/ranking/",
+                    "tools": ["search_ranking", "get_financials"],
+                },
             ]
         }
         return json.dumps(payload, ensure_ascii=False, indent=2)

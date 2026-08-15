@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.8.0 — 2026-08-14
+
+### Added
+- Integración del ranking financiero de Supercías (dataset distinto del
+  directorio): tools `search_ranking` y `get_financials` sobre indicadores
+  derivados de balances reales — ingresos, activos, patrimonio, utilidad,
+  empleados y ~38 ratios financieros (liquidez, endeudamiento, rentabilidad)
+  por compañía y año fiscal
+- `helpers/supercias_financials.py`: capa de consulta contra un SQLite local
+  (`data/supercias_financials.sqlite3`, gitignored) construido de antemano
+  por `scripts/build_supercias_financials_db.py` — la fuente
+  (`bi_ranking.csv`) pesa ~356 MB / ~9M filas, demasiado grande para cachear
+  en memoria como el directorio; el script la recorta a los últimos 5 años
+  fiscales disponibles (autoajustable, no hardcodeado) al construir la DB
+- `scripts/build_supercias_financials_db.py`: script aparte (no se corre
+  perezosamente dentro de un tool call — tarda varios minutos) que descarga
+  `bi_ranking.csv`, `bi_segmento.csv`, `bi_ciiu.csv` e `indicadores_sector.csv`
+  y arma la base SQLite con índices. Reutiliza el directorio ya cacheado
+  (`helpers/supercias_client.py`) para resolver nombre/RUC en vez de
+  duplicar `bi_compania.csv`, que tiene los mismos campos
+- `helpers/tls.py`: `legacy_cipher_context()`, mecanismo nuevo y separado del
+  fallback de certificados vencidos — `appscvsmovil.supercias.gob.ec` (host
+  distinto del directorio) falla el handshake TLS bajo la configuración por
+  defecto de OpenSSL 3 (cifrados legados); este sigue verificando el
+  certificado, solo baja el mínimo de fuerza de cifrado aceptado
+- Fuente `supercias-financials` en `ecuador://fuentes`
+
 ## 0.7.0 — 2026-08-14
 
 ### Changed

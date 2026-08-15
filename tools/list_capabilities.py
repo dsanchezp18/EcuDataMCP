@@ -5,7 +5,7 @@ from helpers.logging import log_tool
 
 _CAPABILITIES = {
     "name": "Ecuador MCP",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "fuentes": [
         "CKAN datos abiertos",
         "gob.ec trámites/instituciones/regulaciones",
@@ -15,6 +15,7 @@ _CAPABILITIES = {
         "DPA provincias/cantones/parroquias (offline INEC)",
         "ANDA (NADA/IHSN) catálogo de encuestas y censos del INEC",
         "Supercías directorio de compañías",
+        "Supercías ranking financiero (últimos años, requiere build local)",
     ],
     "entrada": [
         "list_capabilities",
@@ -40,6 +41,7 @@ _CAPABILITIES = {
         "geo": ["lookup_ubicacion"],
         "encuestas": ["search_anda", "get_anda_survey_info", "download_anda_microdata"],
         "companias": ["search_companias", "get_compania_info"],
+        "financieros": ["search_ranking", "get_financials"],
     },
     "resources": [
         "ecuador://fuentes",
@@ -61,6 +63,12 @@ _CAPABILITIES = {
         (
             "search_companias/get_compania_info: primer uso tras expirar el "
             "caché (6h) puede tardar ~30-40s (descarga y parsea ~35 MB, 226k filas)"
+        ),
+        (
+            "search_ranking/get_financials: requieren que el operador del "
+            "servidor haya corrido scripts/build_supercias_financials_db.py "
+            "de antemano (no se construye solo); cubren solo los últimos "
+            "años cacheados, no el histórico completo desde 2008"
         ),
     ],
 }
