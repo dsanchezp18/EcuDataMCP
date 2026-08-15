@@ -307,15 +307,3 @@ pero devuelven 403; solo `www.datosabiertos.gob.ec` está conectado. Ya
 corregido en el repo; los 27 tools funcionan. (No confundir con el bloqueo
 geográfico real que sí sigue pendiente, ver "Burlar el bloqueo geográfico del
 portal" arriba.)
-
-**Repo hermano:** [`datosec-mcp`](../datosec-mcp) es un MCP propio de Daniel
-sobre la misma fuente de datos (portal CKAN de Ecuador). Su `ROADMAP.md`
-(2026-08-13) era mucho más extenso porque partía de cero: incluía trámites,
-SERCOP, ANDA, SAT tsunami, eventos de riesgo y ubicaciones DPA, que aquí en
-EcuDataMCP ya están resueltos y por eso no se repiten en esta lista. Todo lo
-demás que sí seguía pendiente ahí — búsqueda semántica, expansión de
-consultas, detección acumulado/incremental, formatos de archivo, verificación
-end-to-end y arquitectura — se consolidó arriba en este archivo el
-2026-08-13, y el `ROADMAP.md` de `datosec-mcp` se eliminó para no mantener dos
-listas por separado. Este archivo es ahora la única fuente de pendientes para
-ambos.
