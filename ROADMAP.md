@@ -5,8 +5,10 @@ diseño e instalación (no existía este archivo hasta ahora).
 
 Leyenda de estado: **[ ]** sin empezar · **[~]** parcial · **[x]** hecho
 
-**Estado actual:** 8 hechos recientemente · 2 parciales · el resto sin empezar.
-Ver [Completado recientemente](#completado-recientemente) para el detalle.
+**Estado actual (revisado 2026-08-15):** 8 hechos · 4 parciales (3 de ellos —
+Registro Civil, Salud, Interior — ya reachable hoy sin código nuevo, vía los
+tools CKAN genéricos) · el resto sin empezar. Ver
+[Completado recientemente](#completado-recientemente) para el detalle.
 
 ---
 
@@ -23,12 +25,39 @@ Ver [Completado recientemente](#completado-recientemente) para el detalle.
       estadísticas. Requiere un diseño de conexión aparte (API/sistema propio
       del BCE, no CKAN).
 - [ ] **Ecuador en Cifras / portal BI del INEC** — sin investigar todavía.
-- [ ] **Registro Civil** — pedido explícitamente por Daniel. Sin investigar:
-      hay que distinguir entre datos agregados publicables (ej. estadísticas
-      de nacimientos/matrimonios/defunciones por provincia y año) y consultas
-      individuales de identidad, que son datos personales y no deberían
-      exponerse vía este MCP. Portal propio (`registrocivil.gob.ec`) sin
-      revisar todavía.
+- [~] **Registro Civil** — pedido explícitamente por Daniel. **Revisado
+      2026-08-15: ya reachable hoy, sin código nuevo,** vía los tools CKAN
+      genéricos (`search_organizations`/`get_organization_info`/
+      `search_datasets` con `organization="registro-civil"` en
+      `datosabiertos.gob.ec`) — 6 datasets: transacciones de cedulación,
+      pasaportes electrónicos, copias de actas registrales, certificado de
+      firma electrónica, catálogo de agencias. **Ojo:** son conteos de
+      transacciones de servicios, no las estadísticas vitales
+      (nacimientos/matrimonios/defunciones) que se esperaban — esas sí
+      existen pero via INEC/ANDA (`search_anda`; ej. "Estadística de
+      Defunciones Generales" por año, ya indexado). Portal propio
+      `registrocivil.gob.ec/datos-abiertos/` sin revisar — puede tener más
+      que el CKAN. La distinción datos-agregados-vs-consulta-individual del
+      pedido original sigue aplicando: nada de esto expone identidad
+      individual, es agregado por diseño.
+- [~] **Ministerio de Salud Pública** — **no pedido explícitamente, agregado
+      2026-08-15 tras pregunta de Daniel sobre cobertura de ministerios.**
+      Ya reachable hoy vía CKAN genérico
+      (`organization="ministerio-de-salud-publica"`) — 8 datasets: MSP_Nutrición,
+      MSP_Vacunas, Anestesias e Intervenciones Quirúrgicas, Exámenes de
+      laboratorio, Emergencias, Vacuna COVID-19, Casos COVID, Consulta
+      Externa. La plataforma propia "Salud en Cifras"
+      (`salud.gob.ec/salud-en-cifras`) puede tener series más largas o
+      geolocalizadas — sin revisar si vale la pena una conexión dedicada
+      aparte del CKAN.
+- [~] **Ministerio del Interior** — **no pedido explícitamente, agregado
+      2026-08-15 tras pregunta de Daniel.** Ya reachable hoy vía CKAN
+      genérico (`organization="ministerio-del-interior"`) — 6 datasets:
+      Homicidios Intencionales, Personas Detenidas y Aprehendidas, Personas
+      Desaparecidas, Armas Ilícitas, Sustancias Catalogadas, Trata de
+      Personas y Tráfico Ilícito de Migrantes. Cubre lo que el ítem de "ECU
+      911" de abajo probablemente NO cubre (seguridad/criminalidad vs.
+      emergencias 911).
 - [ ] **Cuenca en Datos** (`https://cuencaendatos.cuenca.gob.ec`) — CKAN 2.9.6,
       92 datasets, portal municipal independiente del nacional. Sin probar.
 - [ ] **Sitios de ministerios individuales** — sin alcance definido; falta
@@ -58,15 +87,25 @@ Ver [Completado recientemente](#completado-recientemente) para el detalle.
       portal CKAN ya publica algo de MINEDUC (ver ejemplo "Registro de
       Matrícula" en el manual de usuarios del portal), pero sin confirmar
       cobertura completa. Falta verificar qué falta fuera del CKAN genérico.
-- [ ] **Ministerio de Gobierno** — pedido explícitamente por Daniel. Sin
-      alcance definido ni portal identificado; falta investigar qué publica
-      y si vale la pena una conexión dedicada en vez de depender del CKAN
-      central.
+- [ ] **Ministerio de Gobierno** — pedido explícitamente por Daniel.
+      **Revisado 2026-08-15:** el slug `ministerio-de-gobierno` no existe en
+      el CKAN (`organization_show` da 404) — a diferencia de Salud e
+      Interior, este no tiene organización propia en el portal. Puede que
+      sus funciones estén repartidas entre Interior y otras carteras
+      (reorganización institucional) o que simplemente no publique ahí;
+      falta confirmar si el ministerio existe como entidad separada hoy y,
+      si es así, dónde publica.
 - [ ] **Fiscalía General del Estado** — pedido explícitamente por Daniel.
-      Sin investigar; datos de causas penales probablemente tienen
-      restricciones de acceso/privacidad más estrictas que otros datasets
-      del portal — confirmar qué es realmente publicable como dato abierto
-      antes de diseñar una conexión.
+      **Revisado 2026-08-15:** no tiene organización en el CKAN (`fiscalia`,
+      `fiscalia-general-del-estado` dan 404). Sí existe un catálogo propio
+      en ANDA (`anda.inec.gob.ec/anda/index.php/catalog/FGE/about`,
+      repositorio `FGE`), pero búsquedas de prueba vía `search_anda` con
+      "Fiscalía General" y términos relacionados no lo encontraron —
+      confirmar si el repositorio FGE tiene contenido real o está vacío/casi
+      vacío antes de invertir en esto. Aparte, la Fiscalía atiende pedidos de
+      estadística por trámite formal (`fiscalia.gob.ec/estadisticas-fge/`),
+      no vía API — la restricción de privacidad de causas penales
+      individuales sigue aplicando igual que antes.
 - [ ] **ECU 911 (Servicio Integrado de Seguridad)** — pedido explícitamente
       por Daniel. Estadísticas de incidentes/emergencias atendidas,
       tiempos de respuesta, cobertura territorial. Verificar solapamiento
@@ -109,14 +148,12 @@ todavía:
 
 ## Cabos operativos sueltos
 
-- [~] **Revisar renovación del certificado TLS** de `www.datosabiertos.gob.ec`
-      (había vencido 2026-07-28). **Verificado 2026-08-13: el gobierno ya lo
-      renovó** — el certificado vigente es válido desde el 7 de agosto hasta
-      el 5 de noviembre de 2026 (`CN=datosabiertos.gob.ec`). Falta el paso de
-      código: `helpers/tls.py` tiene `CKAN_INSECURE_TLS` en `"1"` (fallback
-      inseguro activado) por defecto — apagarlo (default `"0"`) ahora que el
-      cert es válido, para no dejar ese fallback abierto más tiempo del
-      necesario. Pendiente de confirmación antes de tocar el default.
+- [x] **Revisar renovación del certificado TLS** de `www.datosabiertos.gob.ec`
+      (había vencido 2026-07-28). Verificado 2026-08-13: el gobierno ya lo
+      renovó — válido del 7 de agosto al 5 de noviembre de 2026
+      (`CN=datosabiertos.gob.ec`). **Hecho:** `CKAN_INSECURE_TLS` ahora
+      defaultea a `"0"` en `helpers/tls.py` (antes `"1"`) — el fallback
+      inseguro solo se activa si se pone la variable explícitamente.
 - [ ] **Burlar el bloqueo geográfico del portal** — pedido explícitamente por
       Daniel. `www.datosabiertos.gob.ec` a veces rechaza conexiones que vienen
       de fuera de Latinoamérica con 403 (documentado en el README, afecta a
@@ -131,6 +168,22 @@ todavía:
       hostea el MCP fuera de la región, (c) retry automático contra un mirror
       o vía un proxy configurable por variable de entorno. Sin diseño
       todavía.
+- [ ] **`get_financials`/`search_ranking` — buscar en todos los años
+      fiscales, no solo los últimos 5** — pedido explícitamente por Daniel.
+      Decisión original (ver plan de la sesión que lo diseñó): recortar
+      `bi_ranking.csv` a los últimos 5 años fiscales al construir el SQLite,
+      autoajustable pero fijo en el build. La fuente real
+      (`bi_ranking.csv`) cubre 2008-presente (~9M filas sin recortar) — el
+      histórico completo existe, solo no se carga. Para exponerlo hay que
+      decidir: (a) cargar el histórico completo en el mismo SQLite (~9M
+      filas sin recorte, mucho más grande que los ~660k filas actuales de 5
+      años — revisar tamaño resultante en disco antes de decidir), o (b) un
+      parámetro opcional (ej. `anio_desde`) que dispare una carga bajo
+      demanda de años fuera del rango cacheado, o (c) un segundo build
+      "histórico completo" aparte del recortado, seleccionable por
+      variable de entorno. Sin diseño todavía — empezar por confirmar el
+      tamaño en disco de la opción (a), que es la más simple de implementar
+      si el tamaño no es un problema real.
 
 ---
 
@@ -250,8 +303,8 @@ truenan:
 
 - [x] **Superintendencia de Compañías (Supercías) — directorio de compañías**
       — PR [dsanchezp18/EcuDataMCP#5](https://github.com/dsanchezp18/EcuDataMCP/pull/5)
-      (2026-08-13, rama `feature/supercias-directorio`, sin mergear
-      todavía). Link encontrado por Daniel
+      (2026-08-13, rama `feature/supercias-directorio`), **mergeado a `main`
+      del fork el 2026-08-14.** Link encontrado por Daniel
       (`mercadodevalores.supercias.gob.ec/reportes/excel/directorio_companias.xlsx`)
       resultó ser un Excel estático descargable de una sola vez (226,289
       compañías, sin auth ni paginación), no había que scrapear el JSF.
@@ -260,12 +313,50 @@ truenan:
       `ElementTree.iterparse` (el `<dimension>` del archivo viene mal
       declarado y rompe el modo `read_only` de openpyxl) y caché de 6h.
       Verificado contra el archivo real del portal.
+- [x] **Superintendencia de Compañías (Supercías) — ranking financiero**
+      — PR [dsanchezp18/EcuDataMCP#6](https://github.com/dsanchezp18/EcuDataMCP/pull/6)
+      (2026-08-15), **mergeado a `main` del fork.** Segundo dataset de
+      Supercías (`bi_ranking.csv`, ~356 MB / ~9M filas) — ingresos, activos,
+      patrimonio y ~38 ratios financieros por compañía y año fiscal, desde
+      balances reales. Nuevos tools `get_financials`/`search_ranking` sobre
+      un SQLite local (`scripts/build_supercias_financials_db.py`, recortado
+      a los últimos 5 años fiscales, autoajustable). Requiere
+      `legacy_cipher_context()` nuevo en `helpers/tls.py` para el handshake
+      TLS de `appscvsmovil.supercias.gob.ec` (mecanismo separado del de
+      certificados vencidos). Extendido después con dos rondas de
+      endurecimiento producto de un review externo:
+      - PR [dsanchezp18/EcuDataMCP#7](https://github.com/dsanchezp18/EcuDataMCP/pull/7)
+        (abierto): bug real en `get_financials` (lookup de nombre/RUC fallaba
+        en silencio), refresh no atómico del build, event loop bloqueado por
+        el parseo XLSX del directorio, `uv.lock` committeado + CI en
+        3.11/3.12/3.13, fixes de Dockerfile/`.dockerignore`/`docker-compose.yml`.
+      - PR [dsanchezp18/EcuDataMCP#8](https://github.com/dsanchezp18/EcuDataMCP/pull/8)
+        (abierto, sobre el #7): guardia SSRF centralizada
+        (`helpers/safe_download.py`) para descargas con URL de metadata
+        externa no confiable, y desacople de `helpers/supercias_financials.py`
+        respecto al directorio — la DB financiera ahora tiene su propia
+        tabla `companias` cargada de `bi_compania.csv`.
+      Todo esto también se mandó a upstream: PR
+      [DweskZ/EcuDataMCP#6](https://github.com/DweskZ/EcuDataMCP/pull/6)
+      (abierto, acumulativo — incluye directorio + financiero + las dos
+      rondas de endurecimiento + auditores externos, ver abajo).
+- [x] **Superintendencia de Compañías (Supercías) — registro de auditores
+      externos** — PR [dsanchezp18/EcuDataMCP#9](https://github.com/dsanchezp18/EcuDataMCP/pull/9)
+      (2026-08-15, abierto). Tercer dataset de Supercías, encontrado por
+      Daniel (`mercadodevalores.supercias.gob.ec/reportes/auditoresExternos.jsf`),
+      mismo host y mismo patrón que el directorio (export Excel estático,
+      sin auth, actualizado a diario) pero mucho más chico: 1,447 filas /
+      ~190 KB. Nuevos tools `search_auditores`/`get_auditor_info`.
+      `_parse_xlsx` generalizado para aceptar `header_markers`
+      configurables (este export usa `IDENTIFICACION` como columna de
+      identificación, no `RUC`). También mandado a upstream, agregado al
+      mismo PR [DweskZ/EcuDataMCP#6](https://github.com/DweskZ/EcuDataMCP/pull/6)
+      acumulativo.
 - [x] **Instituto Geofísico (IG-EPN)** — hecho antes de este archivo, via
       `search_sismos` + `helpers/igepn_client.py` (CHANGELOG 0.5.0,
-      2026-08-10), con caché y tests (`tests/test_igepn_client.py`). El PR a
-      *upstream* (`DweskZ/EcuDataMCP` [#4](https://github.com/DweskZ/EcuDataMCP/pull/4))
-      sigue abierto — el tool ya funciona en este fork, falta que lo
-      mergeen aguas arriba.
+      2026-08-10), con caché y tests (`tests/test_igepn_client.py`). PR a
+      *upstream* [DweskZ/EcuDataMCP#4](https://github.com/DweskZ/EcuDataMCP/pull/4)
+      **mergeado el 2026-08-12** — ya vive en ambos repos.
 - [x] **Housekeeping de tools de lectura — PR [#5](https://github.com/DweskZ/EcuDataMCP/pull/5)
       a upstream** (2026-08-13, rama `housekeeping`):
     - `list_dataset_resources` incluye `created`/`last_modified` por recurso
@@ -304,6 +395,6 @@ truenan:
 bloqueo geográfico/upstream era en realidad un bug de vhost — el apex
 `datosabiertos.gob.ec` y el subdominio `presidencia` resuelven a la misma IP
 pero devuelven 403; solo `www.datosabiertos.gob.ec` está conectado. Ya
-corregido en el repo; los 27 tools funcionan. (No confundir con el bloqueo
+corregido en el repo. (No confundir con el bloqueo
 geográfico real que sí sigue pendiente, ver "Burlar el bloqueo geográfico del
 portal" arriba.)
