@@ -71,10 +71,45 @@ def _build_xlsx_with_duplicate_ruc() -> bytes:
     return buf.getvalue()
 
 
+_AUDITORES_HEADER = (
+    "RNAE", "IDENTIFICACIÓN", "NOMBRE", "NÚMERO DE RESOLUCIÓN",
+    "FECHA DE RESOLUCIÓN", "NACIONALIDAD", "PROVINCIA", "CANTÓN",
+    "DIRECCIÓN", "TELÉFONO", "CORREO ELECTRÓNICO",
+)
+
+_AUDITOR_ROW_1 = (
+    "1379", "1792904471001", "'ACG' ATTESTING & CONSULTING GROUP C.L.",
+    "35791", "25/10/2019", "ECUADOR", "PICHINCHA", "QUITO",
+    "AV. SOLANDA S24-37", "025129335", "info@acg-ec.com",
+)
+_AUDITOR_ROW_2 = (
+    "1424", "0993226475001", "'ADVANCED AUDIT ECUADOR' AAE CIA.LTDA.",
+    "11854", "15/06/2026", "ECUADOR", "GUAYAS", "GUAYAQUIL",
+    "AV. FRANCISCO DE ORELLANA", "042443199", "corellana@advanced.ec",
+)
+
+
+def _build_auditores_xlsx() -> bytes:
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(("SUPERINTENDENCIA DE COMPAÑÍAS, VALORES Y SEGUROS",))
+    ws.append(("LISTADO DE AUDITORES EXTERNOS",))
+    ws.append(("No. DE FILAS: 2",))
+    ws.append(("FECHA DE ACTUALIZACION: 15/08/2026 00:05:14",))
+    ws.append(_AUDITORES_HEADER)
+    ws.append(_AUDITOR_ROW_1)
+    ws.append(_AUDITOR_ROW_2)
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
 @pytest.fixture(autouse=True)
 def _reset_cache():
     supercias_client._companias_cache = TtlCache(ttl_seconds=60)
     supercias_client._ruc_index_state = None
+    supercias_client._auditores_cache = TtlCache(ttl_seconds=60)
+    supercias_client._identificacion_index_state = None
     yield
 
 
@@ -232,3 +267,64 @@ async def test_download_full_does_not_retry_non_cert_connect_errors(monkeypatch)
 
     with pytest.raises(httpx.ConnectError):
         await supercias_client._download_full(supercias_client._EXCEL_URL)
+
+
+def test_parse_xlsx_uses_identificacion_header_marker_for_auditores():
+    fields, rows = supercias_client._parse_xlsx(
+        _build_auditores_xlsx(), header_markers=("identificacion", "nombre")
+    )
+
+    assert "identificacion" in fields
+    assert "nombre" in fields
+    assert len(rows) == 2
+    assert rows[0][fields.index("identificacion")] == "1792904471001"
+
+
+async def test_search_auditores_by_name_and_identificacion(httpx_mock):
+    httpx_mock.add_response(
+        url=supercias_client._AUDITORES_EXCEL_URL, content=_build_auditores_xlsx()
+    )
+
+    by_name = await supercias_client.search_auditores(query="advanced")
+    assert by_name["total"] == 1
+    assert by_name["auditores"][0]["identificacion"] == "0993226475001"
+
+    by_id = await supercias_client.search_auditores(query="1792904471001")
+    assert by_id["total"] == 1
+    assert "ACG" in by_id["auditores"][0]["nombre"]
+
+
+async def test_search_auditores_filters_by_provincia(httpx_mock):
+    httpx_mock.add_response(
+        url=supercias_client._AUDITORES_EXCEL_URL, content=_build_auditores_xlsx()
+    )
+
+    result = await supercias_client.search_auditores(provincia="guayas")
+    assert result["total"] == 1
+    assert result["auditores"][0]["provincia"] == "GUAYAS"
+
+
+async def test_get_auditor_info_found_and_not_found(httpx_mock):
+    httpx_mock.add_response(
+        url=supercias_client._AUDITORES_EXCEL_URL, content=_build_auditores_xlsx()
+    )
+
+    found = await supercias_client.get_auditor_info("1792904471001")
+    assert found is not None
+    assert found["rnae"] == "1379"
+
+    missing = await supercias_client.get_auditor_info("0000000000000")
+    assert missing is None
+
+
+async def test_auditores_and_companias_caches_are_independent(httpx_mock):
+    httpx_mock.add_response(url=supercias_client._EXCEL_URL, content=_build_xlsx())
+    httpx_mock.add_response(
+        url=supercias_client._AUDITORES_EXCEL_URL, content=_build_auditores_xlsx()
+    )
+
+    companias = await supercias_client.search_companias(query="aceria")
+    auditores = await supercias_client.search_auditores(query="advanced")
+
+    assert companias["total"] == 1
+    assert auditores["total"] == 1

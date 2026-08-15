@@ -71,9 +71,17 @@ def register_catalog_resources(mcp: FastMCP) -> None:
                 },
                 {
                     "id": "supercias",
-                    "nombre": "Superintendencia de Compañías (directorio de compañías)",
+                    "nombre": (
+                        "Superintendencia de Compañías (directorio de compañías, "
+                        "auditores externos)"
+                    ),
                     "base": "https://mercadodevalores.supercias.gob.ec/reportes/",
-                    "tools": ["search_companias", "get_compania_info"],
+                    "tools": [
+                        "search_companias",
+                        "get_compania_info",
+                        "search_auditores",
+                        "get_auditor_info",
+                    ],
                 },
                 {
                     "id": "supercias-financials",

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.1 — 2026-08-15
+
+### Added
+- Tercer dataset de Supercías: registro de auditores externos autorizados
+  (`https://mercadodevalores.supercias.gob.ec/reportes/excel/auditores_externos.xlsx`,
+  1,447 registros, ~190 KB). Nuevos tools `search_auditores`/
+  `get_auditor_info` en `helpers/supercias_client.py`, mismo host y mismo
+  patrón de parseo (título/metadata antes del encabezado real) que el
+  directorio de compañías, pero con columna de identificación distinta
+  (`IDENTIFICACION` en vez de `RUC`) — `_parse_xlsx` ahora acepta
+  `header_markers` configurables en vez de asumir siempre RUC/NOMBRE.
+  Cacheado igual que el directorio (TtlCache de 6h), con su propio candado
+  de fetch e índice de identificación, independientes de los del directorio.
+
 ## 0.8.0 — 2026-08-14
 
 ### Added

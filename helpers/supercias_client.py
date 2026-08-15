@@ -29,6 +29,13 @@ entire registry as one row list plus precomputed search indexes, which is a
 non-trivial amount of memory (roughly a few hundred MB) — acceptable since
 it's built lazily on first use, not at server startup, but worth knowing if
 this process runs somewhere memory-constrained.
+
+The same host also publishes a second, much smaller export: the registry of
+firms/individuals authorized to act as external auditors (~190 KB / 1,447
+rows). Same title-rows-before-header quirk, same parsing approach, but a
+different id column ("IDENTIFICACION" instead of "RUC") — see
+`_fetch_auditores`/`search_auditores`/`get_auditor_info` below. Small enough
+that no memory tradeoff worth documenting applies to it.
 """
 
 from __future__ import annotations
@@ -174,8 +181,17 @@ def _row_cells(elem: ET.Element, shared: list[str]) -> dict[int, str]:
     return cells
 
 
-def _parse_xlsx(raw: bytes) -> tuple[tuple[str, ...], list[tuple[str, ...]]]:
-    """Parse the Supercías directory export into (fields, rows)."""
+def _parse_xlsx(
+    raw: bytes, header_markers: tuple[str, ...] = ("ruc", "nombre")
+) -> tuple[tuple[str, ...], list[tuple[str, ...]]]:
+    """Parse a Supercías Excel export into (fields, rows).
+
+    `header_markers` are the normalized column names used to detect which
+    scanned row is the real header — every Supercías export has a few
+    title/metadata rows before it. Different reports use different id
+    columns (the company directory has "RUC", the external-auditors report
+    has "IDENTIFICACION" instead), so this isn't hardcoded to one report.
+    """
     with zipfile.ZipFile(io.BytesIO(raw)) as z:
         shared = _read_shared_strings(z)
         sheet_path = _first_worksheet_path(z)
@@ -183,6 +199,7 @@ def _parse_xlsx(raw: bytes) -> tuple[tuple[str, ...], list[tuple[str, ...]]]:
         rows: list[tuple[str, ...]] = []
         scanned = 0
         max_seen_col = -1
+        header_label = "/".join(m.upper() for m in header_markers)
         with z.open(sheet_path) as f:
             for _, elem in ET.iterparse(f, events=("end",)):
                 if elem.tag != _NS + "row":
@@ -195,20 +212,20 @@ def _parse_xlsx(raw: bytes) -> tuple[tuple[str, ...], list[tuple[str, ...]]]:
                     scanned += 1
                     if scanned > _HEADER_SCAN_LIMIT:
                         raise ValueError(
-                            "No se encontró la fila de encabezado (RUC/NOMBRE) "
+                            f"No se encontró la fila de encabezado ({header_label}) "
                             "en el reporte de Supercías"
                         )
                     candidate = tuple(
                         _normalize_header(cells.get(i, "")) for i in range(row_max + 1)
                     )
-                    if "ruc" in candidate and "nombre" in candidate:
+                    if all(marker in candidate for marker in header_markers):
                         fields = candidate
                     continue
                 width = len(fields)
                 rows.append(tuple(cells.get(i, "") for i in range(width)))
         if fields is None:
             raise ValueError(
-                "No se encontró la fila de encabezado (RUC/NOMBRE) en el "
+                f"No se encontró la fila de encabezado ({header_label}) en el "
                 "reporte de Supercías"
             )
         if max_seen_col >= len(fields):
@@ -390,6 +407,125 @@ async def get_compania_by_ruc(ruc: str) -> dict[str, str] | None:
     fields, rows, *_ = await _fetch_companias()
     ruc_index = _ruc_index_for(fields, rows)
     row = ruc_index.get((ruc or "").strip())
+    if row is None:
+        return None
+    return _row_to_dict(fields, row)
+
+
+# Separate, much smaller export (~190 KB / 1,447 rows vs. ~35 MB / 226k) --
+# the registry of firms/individuals authorized to act as external auditors
+# in Ecuador. Same host, same title-rows-before-header quirk, but its id
+# column is "IDENTIFICACION" rather than "RUC", so it needs its own header
+# markers when calling the shared _parse_xlsx.
+_AUDITORES_EXCEL_URL = (
+    "https://mercadodevalores.supercias.gob.ec/reportes/excel/auditores_externos.xlsx"
+)
+_auditores_cache = TtlCache(ttl_seconds=21600.0, max_entries=1)
+_auditores_fetch_lock = asyncio.Lock()
+
+_identificacion_index_state: (
+    tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None
+) = None
+
+
+async def _fetch_auditores() -> tuple[
+    tuple[str, ...], list[tuple[str, ...]], list[str], list[str]
+]:
+    """Return (fields, rows, normalized_names, normalized_provincias), from cache or fresh."""
+    cached = _auditores_cache.get("auditores")
+    if cached is not None:
+        return cached
+
+    async with _auditores_fetch_lock:
+        cached = _auditores_cache.get("auditores")
+        if cached is not None:
+            return cached
+
+        logger.info("Descargando y parseando el listado de auditores externos de Supercías")
+        try:
+            raw = await _download_full(_AUDITORES_EXCEL_URL)
+            fields, rows = _parse_xlsx(raw, header_markers=("identificacion", "nombre"))
+        except Exception:
+            logger.exception("Fallo al descargar/parsear el listado de auditores externos")
+            raise
+
+        nombre_pos = fields.index("nombre")
+        provincia_pos = fields.index("provincia")
+        normalized_names = [_strip(row[nombre_pos]) for row in rows]
+        normalized_provincias = [_strip(row[provincia_pos]) for row in rows]
+
+        bundle = (fields, rows, normalized_names, normalized_provincias)
+        _auditores_cache.set("auditores", bundle)
+        logger.info("Listado de auditores externos cargado: %d registros", len(rows))
+        return bundle
+
+
+def _identificacion_index_for(
+    fields: tuple[str, ...], rows: list[tuple[str, ...]]
+) -> dict[str, tuple[str, ...]]:
+    """Build (and cache, by identity of `rows`) the identificación -> row lookup."""
+    global _identificacion_index_state
+    if _identificacion_index_state is not None and _identificacion_index_state[0] is rows:
+        return _identificacion_index_state[1]
+
+    id_pos = fields.index("identificacion")
+    index: dict[str, tuple[str, ...]] = {}
+    for row in rows:
+        identificacion = row[id_pos]
+        if identificacion:
+            index[identificacion] = row
+    _identificacion_index_state = (rows, index)
+    return index
+
+
+async def search_auditores(
+    query: str = "",
+    provincia: str = "",
+    limit: int = 20,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """
+    Search the Supercías external-auditors registry client-side.
+
+    Args:
+        query: Free text matched (accent-insensitive) against auditor name
+            or identificación (RUC/cédula).
+        provincia: Optional substring filter on province (accent-insensitive).
+        limit: Max results returned.
+        offset: Pagination offset over the matched set.
+    """
+    fields, rows, normalized_names, normalized_provincias = await _fetch_auditores()
+    id_pos = fields.index("identificacion")
+
+    q = _strip(query)
+    prov = _strip(provincia)
+
+    matched: list[int] = []
+    for i, row in enumerate(rows):
+        if q and q not in normalized_names[i] and q not in row[id_pos]:
+            continue
+        if prov and prov not in normalized_provincias[i]:
+            continue
+        matched.append(i)
+
+    page = matched[offset : offset + limit]
+    return {
+        "total": len(matched),
+        "offset": offset,
+        "source": (
+            "Superintendencia de Compañías, Valores y Seguros — "
+            "Listado de Auditores Externos"
+        ),
+        "url_fuente": _AUDITORES_EXCEL_URL,
+        "auditores": [_row_to_dict(fields, rows[i]) for i in page],
+    }
+
+
+async def get_auditor_info(identificacion: str) -> dict[str, str] | None:
+    """Look up a single external auditor by exact identificación (RUC/cédula) match."""
+    fields, rows, *_ = await _fetch_auditores()
+    id_index = _identificacion_index_for(fields, rows)
+    row = id_index.get((identificacion or "").strip())
     if row is None:
         return None
     return _row_to_dict(fields, row)

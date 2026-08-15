@@ -265,7 +265,7 @@ más abajo.
 
 ---
 
-## Herramientas disponibles (32 tools)
+## Herramientas disponibles (34 tools)
 
 Casi todos los tools aceptan `format="json"` además de texto.
 
@@ -323,6 +323,8 @@ Casi todos los tools aceptan `format="json"` además de texto.
 | `get_compania_info` | Ficha completa de una compañía por RUC: representante legal, capital suscrito, CIIU, dirección. |
 | `search_ranking` | Rankear/filtrar compañías por indicadores financieros (año, CIIU, cualquier columna) — requiere `scripts/build_supercias_financials_db.py` corrido de antemano. |
 | `get_financials` | Historial financiero de una compañía por expediente o RUC: ingresos, activos, patrimonio, ~38 ratios (liquidez, endeudamiento, rentabilidad), últimos años cacheados. |
+| `search_auditores` | Buscar en el registro de auditores externos autorizados (1,447 firmas/personas, por nombre o identificación, provincia). |
+| `get_auditor_info` | Ficha completa de un auditor externo por identificación: resolución de autorización, nacionalidad, dirección, contacto. |
 
 ### Riesgos y sismos
 
