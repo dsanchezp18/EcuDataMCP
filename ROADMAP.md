@@ -5,10 +5,11 @@ diseño e instalación (no existía este archivo hasta ahora).
 
 Leyenda de estado: **[ ]** sin empezar · **[~]** parcial · **[x]** hecho
 
-**Estado actual (revisado 2026-08-15):** 8 hechos · 4 parciales (3 de ellos —
-Registro Civil, Salud, Interior — ya reachable hoy sin código nuevo, vía los
-tools CKAN genéricos) · el resto sin empezar. Ver
-[Completado recientemente](#completado-recientemente) para el detalle.
+**Estado actual (revisado 2026-08-15):** 8 hechos · 7 parciales (6 de ellos —
+Registro Civil, Salud, Interior, INAMHI, Energía/Minas, SENAE — ya
+reachable hoy sin código nuevo, vía los tools CKAN genéricos) · el resto sin
+empezar. Ver [Completado recientemente](#completado-recientemente) para el
+detalle.
 
 ---
 
@@ -58,6 +59,60 @@ tools CKAN genéricos) · el resto sin empezar. Ver
       Personas y Tráfico Ilícito de Migrantes. Cubre lo que el ítem de "ECU
       911" de abajo probablemente NO cubre (seguridad/criminalidad vs.
       emergencias 911).
+- [~] **INAMHI (meteorología e hidrología)** — **no pedido explícitamente,
+      agregado 2026-08-15 al buscar nuevas fuentes candidatas.** Ya
+      reachable hoy vía CKAN genérico
+      (`organization="instituto-nacional-de-meteorologia-e-hidrologia-inamhi"`)
+      — 4 datasets: Temperatura Máxima/Mínima Absoluta, Temperatura Media
+      Mensual, Precipitación Total Mensual. Solo la punta del iceberg: INAMHI
+      tiene un geoportal propio (`geoservicios.inamhi.gob.ec`) con red
+      hidrológica, calidad de agua y zonas de riesgo de inundación, más
+      pronósticos hidrometeorológicos en `inamhi.geoglows.org` — ninguno de
+      los dos investigado todavía. Clima/tiempo es un tipo de dato muy
+      pedido en general; vale la pena evaluar una conexión dedicada más
+      allá de los 4 datasets del CKAN.
+- [~] **Ministerio de Energía y Minas (hidrocarburos)** — **no pedido
+      explícitamente, agregado 2026-08-15.** Ya reachable hoy vía CKAN
+      genérico (`organization="ministerio-de-energia"`) — 14 datasets:
+      precios teóricos de crudo, perforación de pozos petroleros (series
+      mensuales). El "Banco de Información Petrolera del Ecuador" (BIPE,
+      ~13,000 GB, ~74,000 documentos) es un repositorio mucho más grande y
+      completo, sin investigar si expone algo consultable
+      programáticamente o es solo un archivo documental. Dado el peso del
+      petróleo en la economía ecuatoriana, este es un candidato de alto
+      valor si BIPE resulta consultable.
+- [~] **SENAE (aduanas / comercio exterior)** — **no pedido explícitamente,
+      agregado 2026-08-15.** Ya reachable hoy vía CKAN genérico
+      (`organization="senae"`) — 3 datasets: recaudaciones de tributos de
+      comercio exterior, importaciones aduaneras (régimen general y
+      simplificado). El sistema "ECX" (BCE + SENAE, consultable por país,
+      producto y período) puede tener más detalle que estos 3 datasets —
+      sin investigar si expone API propia o solo interfaz web.
+- [ ] **Superintendencia de Bancos** — **no pedido explícitamente, agregado
+      2026-08-15.** Distinta de Supercías (que regula compañías, no
+      bancos) — sin organización en el CKAN (`organization_show` da 404
+      para `superintendencia-de-bancos`). Portal Estadístico propio
+      (`superbancos.gob.ec/estadisticas/portalestudios/`) con balances,
+      indicadores financieros, estructura de cartera de crédito por línea
+      de negocio, matrices de riesgo — mencionan acceso vía API pero sin
+      documentación confirmada todavía. Sin investigar a fondo.
+- [ ] **SEPS (economía popular y solidaria)** — **no pedido explícitamente,
+      agregado 2026-08-15.** Cooperativas, cajas y bancos comunales — sin
+      organización en el CKAN. Portal propio
+      (`estadisticas.seps.gob.ec`, "Data SEPS" portal interactivo) con
+      número de organizaciones/socios y balances anuales (17,415
+      organizaciones activas al 2026-03). Sin API documentada encontrada
+      todavía.
+- [ ] **ARCERNNR/ARCONEL (regulación eléctrica)** — **no pedido
+      explícitamente, agregado 2026-08-15.** Distinto del ítem "CENACE y
+      sector eléctrico" de abajo: CENACE opera generación/despacho,
+      mientras que ARCERNNR (antes ARCONEL) es el regulador — estadísticas
+      de generación/transmisión/distribución/alumbrado público. Sin
+      organización en el CKAN, pero **sí aparece en ANDA** (catálogos
+      "Estadística del Sector Eléctrico Ecuatoriano 2022/2023/2024",
+      `anda.inec.gob.ec/anda/index.php/catalog/1080` y similares) — antes
+      de diseñar una conexión dedicada, confirmar si `search_anda` ya los
+      encuentra. También tienen un geoportal propio, GeoSISDAT.
 - [ ] **Cuenca en Datos** (`https://cuencaendatos.cuenca.gob.ec`) — CKAN 2.9.6,
       92 datasets, portal municipal independiente del nacional. Sin probar.
 - [ ] **Sitios de ministerios individuales** — sin alcance definido; falta
@@ -80,6 +135,9 @@ tools CKAN genéricos) · el resto sin empezar. Ver
       del sector (demanda, tarifas, cobertura). Portal(es) propio(s) sin
       investigar; no queda claro si CENACE publica algo fuera de reportes
       operativos internos — verificar alcance real antes de diseñar nada.
+      Ver también el ítem separado de ARCERNNR/ARCONEL arriba (el
+      regulador, no el operador) — probablemente se resuelven juntos si se
+      diseña una conexión al sector eléctrico.
 - [ ] **SENESCYT** — pedido explícitamente por Daniel. Datos de educación
       superior, becas, registro de títulos. Sin investigar disponibilidad ni
       si expone API propia.
@@ -193,7 +251,16 @@ todavía:
       palabra clave de CKAN, que es débil frente al catálogo completo (ejemplo
       real contra el mismo portal: "cacao" devuelve muy pocos resultados).
       Falta una capa de similitud/embeddings que mejore el recall sin
-      reemplazar la búsqueda en vivo.
+      reemplazar la búsqueda en vivo. **Precedente técnico concreto
+      (2026-08-15):** [opendata.fyi](https://www.opendata.fyi/#how) (MCP
+      equivalente para datos públicos de Canadá) resuelve esto indexando
+      metadata de sus fuentes como vectores de 384 dimensiones en DuckDB, y
+      combina esa búsqueda semántica con consultas en vivo a sus catálogos
+      CKAN mediante Reciprocal Rank Fusion (RRF) — un solo ranking unificado
+      de ambas señales en vez de elegir una u otra. DuckDB ya es liviano y
+      embebible (mismo perfil que SQLite, que este repo ya usa para
+      `supercias_financials.py`), así que no es una dependencia de
+      infraestructura pesada si se decide seguir este camino.
 - [ ] **Expansión de siglas/acrónimos en la consulta** — los usuarios escriben
       "ENEMDU", "ENSANUT", "RUC"; el catálogo los tiene deletreados completos
       en los metadatos. Falta expandir la consulta antes de buscar (por
@@ -290,12 +357,30 @@ truenan:
       Depende de tener el hosting público del ítem de arriba resuelto
       primero — la mayoría de registries piden una URL viva, no solo
       instrucciones de instalación local.
-- [ ] **Sitio web propio para el MCP** — pedido explícitamente por Daniel,
-      con [opendata.fyi](https://opendata.fyi) como referencia de qué tan
-      cuidado debería verse. Landing page que explique qué hace el servidor,
-      liste las fuentes de datos y tools, y facilite la conexión (copiar
-      config para cada cliente MCP) — hoy esa información solo vive en el
-      README. Sin diseño ni stack decidido todavía.
+- [ ] **Sitio web propio para el MCP** — pedido explícitamente por Daniel.
+      **Referencia concreta (2026-08-15): [opendata.fyi](https://www.opendata.fyi/#how)
+      es el tipo de sitio que quiere construir**, no solo una referencia de
+      diseño visual — es un MCP casi idéntico en propósito (ayuda a
+      asistentes de IA a descubrir/consultar datos públicos abiertos,
+      federal/provincial en su caso, Canadá) con una landing page que
+      explica:
+      - **Un flujo de 4 pasos** (Discover → Inspect → Query → Cite):
+        descubrimiento semántico del catálogo, validación de metadata antes
+        de traer datos, filtrado server-side al consultar, y enlace directo
+        a la fuente oficial para trazabilidad/cita.
+      - **Privacidad por defecto** ("telemetry off by default") como
+        argumento de venta explícito en la landing.
+      - **Instalación simple** documentada en la página misma, no solo en
+        el README del repo.
+      - **Credibilidad open-source** vía link directo a GitHub.
+      Aplicable directo a este MCP: landing page que explique qué hace el
+      servidor, liste fuentes/tools, muestre el mismo tipo de flujo
+      (buscar → inspeccionar → consultar → citar la fuente oficial) y
+      facilite la conexión (copiar config por cliente MCP) — hoy esa info
+      solo vive en el README. Sin diseño ni stack decidido todavía. Ver
+      también la nota técnica de opendata.fyi sobre búsqueda semántica en
+      "Búsqueda semántica" abajo — su arquitectura de discovery es
+      relevante para ese ítem también, no solo para el sitio.
 
 ---
 
