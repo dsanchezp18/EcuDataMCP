@@ -81,6 +81,12 @@ def register_catalog_resources(mcp: FastMCP) -> None:
                     "base": "https://appscvsmovil.supercias.gob.ec/ranking/",
                     "tools": ["search_ranking", "get_financials"],
                 },
+                {
+                    "id": "bce",
+                    "nombre": "Banco Central del Ecuador (BCEData, catálogo estadístico)",
+                    "base": "https://contenido.bce.fin.ec/wp-json/bcedata/v1/",
+                    "tools": ["search_indicadores_bce", "get_indicador_bce"],
+                },
             ]
         }
         return json.dumps(payload, ensure_ascii=False, indent=2)

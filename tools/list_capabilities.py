@@ -5,7 +5,7 @@ from helpers.logging import log_tool
 
 _CAPABILITIES = {
     "name": "Ecuador MCP",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "fuentes": [
         "CKAN datos abiertos",
         "gob.ec trámites/instituciones/regulaciones",
@@ -16,6 +16,7 @@ _CAPABILITIES = {
         "ANDA (NADA/IHSN) catálogo de encuestas y censos del INEC",
         "Supercías directorio de compañías",
         "Supercías ranking financiero (últimos años, requiere build local)",
+        "BCE (BCEData) catálogo estadístico: monetario, fiscal, externo, real",
     ],
     "entrada": [
         "list_capabilities",
@@ -42,6 +43,7 @@ _CAPABILITIES = {
         "encuestas": ["search_anda", "get_anda_survey_info", "download_anda_microdata"],
         "companias": ["search_companias", "get_compania_info"],
         "financieros": ["search_ranking", "get_financials"],
+        "macro": ["search_indicadores_bce", "get_indicador_bce"],
     },
     "resources": [
         "ecuador://fuentes",

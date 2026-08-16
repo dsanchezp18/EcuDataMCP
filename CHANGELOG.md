@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.1 — 2026-08-15
+
+### Added
+- Integración con el Banco Central del Ecuador vía BCEData
+  (`contenido.bce.fin.ec/wp-json/bcedata/v1/`): API REST pública y sin
+  autenticación, no documentada oficialmente pero descubierta inspeccionando
+  el tráfico de red de la app JS del propio BCE (`contenido.bce.fin.ec/bcedata/`)
+  y verificada con `curl` plano. Nuevos tools `search_indicadores_bce` (busca
+  en el catálogo de ~78 grupos de indicadores: monetario/financiero, finanzas
+  públicas, sector externo, sector real) y `get_indicador_bce` (serie de
+  tiempo de un grupo, con frecuencia/unidad/rango configurables y defaults
+  tomados de la metadata propia del grupo).
+- `helpers/bce_client.py`: cachea el árbol completo del catálogo en memoria
+  (~98 nodos, TTL 24h — es efectivamente estático) y cada bundle de metadata
+  por grupo consultado; la serie de tiempo en sí no se cachea, se pide fresca
+  cada vez.
+
 ## 0.8.0 — 2026-08-14
 
 ### Added
