@@ -5,7 +5,7 @@ diseño e instalación (no existía este archivo hasta ahora).
 
 Leyenda de estado: **[ ]** sin empezar · **[~]** parcial · **[x]** hecho
 
-**Estado actual (revisado 2026-08-15):** 8 hechos · 7 parciales (6 de ellos —
+**Estado actual (revisado 2026-08-15):** 9 hechos · 7 parciales (6 de ellos —
 Registro Civil, Salud, Interior, INAMHI, Energía/Minas, SENAE — ya
 reachable hoy sin código nuevo, vía los tools CKAN genéricos) · el resto sin
 empezar. Ver [Completado recientemente](#completado-recientemente) para el
@@ -21,10 +21,6 @@ detalle.
       la lista: el SRI hoy solo aparece parcialmente vía el portal CKAN
       genérico. Reafirmado por `Relevancia_Datos_Abiertos_2023.pdf` (ver
       subsección de abajo), que lo repite tres veces como fuente prioritaria.
-- [ ] **Banco Central del Ecuador (BCE)** — el portal CKAN solo publica 4
-      datasets del BCE; su data real vive en su propio sistema de
-      estadísticas. Requiere un diseño de conexión aparte (API/sistema propio
-      del BCE, no CKAN).
 - [ ] **Ecuador en Cifras / portal BI del INEC** — sin investigar todavía.
 - [~] **Registro Civil** — pedido explícitamente por Daniel. **Revisado
       2026-08-15: ya reachable hoy, sin código nuevo,** vía los tools CKAN
@@ -91,11 +87,27 @@ detalle.
 - [ ] **Superintendencia de Bancos** — **no pedido explícitamente, agregado
       2026-08-15.** Distinta de Supercías (que regula compañías, no
       bancos) — sin organización en el CKAN (`organization_show` da 404
-      para `superintendencia-de-bancos`). Portal Estadístico propio
-      (`superbancos.gob.ec/estadisticas/portalestudios/`) con balances,
-      indicadores financieros, estructura de cartera de crédito por línea
-      de negocio, matrices de riesgo — mencionan acceso vía API pero sin
-      documentación confirmada todavía. Sin investigar a fondo.
+      para `superintendencia-de-bancos`). **Investigado a fondo
+      2026-08-15: NO tiene una API REST como BCE (ver ítem de arriba) —
+      contrario a lo que sugerían resultados de búsqueda genéricos.**
+      Confirmado inspeccionando el tráfico de red real de
+      `superbancos.gob.ec/estadisticas/portalestudios/`: es un sitio
+      WordPress corriente (Elementor + TablePress), sin ningún plugin tipo
+      `bcedata-grid`. Los "Boletines de Series" (ej. página "Bancos
+      Privados", series históricas desde diciembre 2002 — balances,
+      P&G, cartera de crédito por línea, matrices de riesgo, número de
+      depositantes) se navegan con un widget de explorador de
+      carpetas en JS (plugin de compartición de OneDrive/SharePoint,
+      `admin-ajax.php` con acción propia, no una API REST versionada) que
+      resuelve a archivos `.zip` con series en Excel alojados en OneDrive
+      (ej. `Total Series Bancos Privados JULIO 2026.zip`, ~7 MB, URL
+      firmada con `account_id`/`drive_id`/`listtoken`). Integrarlo sería
+      más parecido a lo que ya hicimos para el directorio de Supercías
+      (descargar y parsear Excel) que a una API real, pero con el paso
+      extra de primero resolver la URL del ZIP del mes vigente — sea
+      replicando la llamada AJAX del widget, sea con un browser headless
+      corriendo periódicamente. Más esfuerzo que BCE para una prioridad
+      similar; si se hace alguno de los dos primero, empezar por BCE.
 - [ ] **SEPS (economía popular y solidaria)** — **no pedido explícitamente,
       agregado 2026-08-15.** Cooperativas, cajas y bancos comunales — sin
       organización en el CKAN. Portal propio
@@ -386,6 +398,25 @@ truenan:
 
 ## Completado recientemente
 
+- [x] **Banco Central del Ecuador (BCE) — catálogo estadístico (BCEData)**
+      — PR [dsanchezp18/EcuDataMCP#10](https://github.com/dsanchezp18/EcuDataMCP/pull/10)
+      (2026-08-15, rama `feature/bce-indicadores`, abierto). El portal CKAN
+      solo publicaba 4 datasets del BCE; investigando a fondo apareció
+      **BCEData**, la app de consulta estadística del propio BCE
+      (`contenido.bce.fin.ec/bcedata/`), que resultó tener una REST API
+      pública sin autenticación bajo `/wp-json/bcedata/v1/` — no
+      documentada oficialmente, encontrada inspeccionando el tráfico de
+      red de la app y confirmada con `curl` plano. Nuevos tools
+      `search_indicadores_bce`/`get_indicador_bce` en
+      `helpers/bce_client.py`, sobre `/tree` (catálogo completo, ~98
+      nodos, cacheado 24h), `/bundle/{id_grupo}` (metadata: frecuencias,
+      unidades, rango de fechas) y `/grid` (la serie de tiempo). Cubre
+      Estadísticas Monetarias y Financieras, Finanzas Públicas, Sector
+      Externo (comercio exterior) y Sector Real (PIB, inflación,
+      desempleo, confianza del consumidor). Verificado en vivo:
+      `search_indicadores_bce("producto interno bruto")` → 7 resultados;
+      `get_indicador_bce(id_grupo=82, ...)` → serie mensual real del
+      índice de confianza del consumidor.
 - [x] **Superintendencia de Compañías (Supercías) — directorio de compañías**
       — PR [dsanchezp18/EcuDataMCP#5](https://github.com/dsanchezp18/EcuDataMCP/pull/5)
       (2026-08-13, rama `feature/supercias-directorio`), **mergeado a `main`
