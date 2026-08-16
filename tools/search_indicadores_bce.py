@@ -22,16 +22,25 @@ def register_search_indicadores_bce_tool(mcp: FastMCP) -> None:
         Search the Banco Central del Ecuador (BCE) statistical catalog.
 
         Covers monetary/financial statistics, public finances, external
-        sector (foreign trade), and real sector (GDP, inflation,
-        unemployment, consumer confidence, cement production, and more) —
-        each result is an indicator group (id_grupo) whose time series data
-        you fetch with get_indicador_bce. Some groups hold a single series,
-        others dozens (e.g. consumer confidence broken out by
-        nacional/urbano/rural).
+        sector (foreign trade), and real sector (GDP, employment/
+        unemployment, consumer confidence, oil production, cement
+        production, and more) — each result is an indicator group
+        (id_grupo) whose time series data you fetch with get_indicador_bce.
+        Some groups hold a single series, others dozens under a broader
+        title (e.g. "desempleo" is a series inside the "mercado laboral"
+        group, not a group of its own — matched here too, not just group
+        titles). Does NOT cover Ecuador's own inflation (CPI) or poverty
+        statistics — those are INEC's domain, try search_anda instead.
+
+        First call after the cache expires (24h) takes ~10-15s: matching
+        against series names, not just group titles, means fetching every
+        group's metadata (~78 groups) once to build the search index.
+        Cached after that.
 
         Args:
-            query: Free text matched against the group's description and
-                its section/subsection in the catalog (accent-insensitive)
+            query: Free text matched against the group's description, its
+                section/subsection, and its individual series labels
+                (accent-insensitive)
             limit: Max results (default 20, max 100)
             offset: Pagination offset over the matched set
             format: text | json
@@ -75,6 +84,11 @@ def register_search_indicadores_bce_tool(mcp: FastMCP) -> None:
                 )
                 if ubicacion:
                     parts.append(f"   {ubicacion}")
+                if ind.get("series_coincidentes"):
+                    parts.append(
+                        "   Coincide vía serie: "
+                        + ", ".join(ind["series_coincidentes"])
+                    )
                 parts.append("")
             parts.append(
                 "Tip: usa get_indicador_bce(id_grupo=...) para la serie de tiempo."

@@ -21,7 +21,14 @@ Three endpoints, used together:
   the list of individual series inside it (a group can hold a single
   series or dozens, broken out under section headers -- e.g. consumer
   confidence split by nacional/urbano/rural x situacion
-  presente/futura/confianza del consumidor).
+  presente/futura/confianza del consumidor). Search needs this too, not
+  just the tree: some topics only show up as a *series* inside a
+  differently-named group -- "desempleo" isn't in any group title, it's a
+  series inside group 68 ("Indicadores del mercado laboral nacional,
+  urbano y rural"), alongside empleo/subempleo counterparts. So
+  `search_indicadores` fetches every leaf group's bundle once (concurrently,
+  cached alongside the tree) and matches against series labels too, not
+  just group descriptions.
 - `GET /grid?id_grupo=X&frecuencia=Y&unidad=Z&desde=YYYY-MM&hasta=YYYY-MM`
   -- the actual time series: one column per period, one row per series.
   Verified that desde/hasta outside the real data range are silently
@@ -38,6 +45,7 @@ frecuencia") without needing bespoke validation for every combination.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 from unicodedata import category, normalize
@@ -58,6 +66,11 @@ _TIMEOUT = 30.0
 _tree_cache = TtlCache(ttl_seconds=86400.0, max_entries=1)
 # Bundles (per-group metadata) change even less often than the tree itself.
 _bundle_cache = TtlCache(ttl_seconds=86400.0, max_entries=256)
+# The tree's leaf groups enriched with their series labels (see
+# _fetch_catalog_with_series) -- same lifetime as the tree/bundles it's
+# built from, cached separately since building it costs ~78 concurrent
+# bundle fetches, not worth repeating per search.
+_catalog_cache = TtlCache(ttl_seconds=86400.0, max_entries=1)
 
 
 def _strip(text: str) -> str:
@@ -134,15 +147,62 @@ def _index_tree(tree: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return indexed
 
 
-async def _fetch_bundle(id_grupo: int) -> dict[str, Any]:
+async def _fetch_bundle(
+    id_grupo: int, session: httpx.AsyncClient | None = None
+) -> dict[str, Any]:
     cached = _bundle_cache.get(id_grupo)
     if cached is not None:
         return cached
-    bundle = await _get_json(f"bundle/{id_grupo}")
+    bundle = await _get_json(f"bundle/{id_grupo}", session=session)
     if not isinstance(bundle, dict):
         raise TypeError("BCEData /bundle devolvió un formato inesperado")
     _bundle_cache.set(id_grupo, bundle)
     return bundle
+
+
+async def _fetch_catalog_with_series() -> list[dict[str, Any]]:
+    """Leaf groups from the tree, each enriched with its series labels.
+
+    One bundle fetch per leaf group (~78), done concurrently over a shared
+    session -- a group whose bundle fails to load (network hiccup, or a
+    genuinely empty group) just gets an empty series list rather than
+    failing the whole search.
+    """
+    cached = _catalog_cache.get("catalog")
+    if cached is not None:
+        return cached
+
+    tree = await _fetch_tree()
+    groups = _index_tree(tree)
+
+    async with httpx.AsyncClient(
+        headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT
+    ) as session:
+        bundles = await asyncio.gather(
+            *(_fetch_bundle(g["id_grupo"], session=session) for g in groups),
+            return_exceptions=True,
+        )
+
+    enriched: list[dict[str, Any]] = []
+    for group, bundle in zip(groups, bundles, strict=True):
+        series_labels: list[str] = []
+        if isinstance(bundle, dict):
+            series_labels = [
+                row.get("label", "")
+                for row in bundle.get("rows", [])
+                if row.get("tipo") == "Series"
+            ]
+        elif isinstance(bundle, BaseException):
+            logger.warning(
+                "No se pudo cargar el bundle del grupo %d para el índice de "
+                "búsqueda: %s",
+                group["id_grupo"],
+                bundle,
+            )
+        enriched.append({**group, "series": series_labels})
+
+    _catalog_cache.set("catalog", enriched)
+    return enriched
 
 
 async def search_indicadores(
@@ -151,26 +211,50 @@ async def search_indicadores(
     """
     Search the BCEData catalog of statistical indicator groups.
 
+    Matches against each group's own description/section/subsection *and*
+    the labels of the individual series inside it -- some topics (e.g.
+    "desempleo") only exist as one series among several inside a
+    differently-named group ("Indicadores del mercado laboral..."), not as
+    a group title of their own.
+
     Args:
         query: Free text matched (accent-insensitive) against the group's
-            description and its section/subsection in the catalog tree.
+            description, its section/subsection, and its series labels.
         limit: Max results returned.
         offset: Pagination offset over the matched set.
     """
-    tree = await _fetch_tree()
-    indexed = _index_tree(tree)
+    catalog = await _fetch_catalog_with_series()
 
     q = _strip(query)
-    if q:
+    if not q:
         matched = [
-            item
-            for item in indexed
-            if q in _strip(item["descripcion"])
-            or q in _strip(item["seccion"])
-            or q in _strip(item["subseccion"])
+            {k: v for k, v in item.items() if k != "series"} for item in catalog
         ]
     else:
-        matched = indexed
+        matched = []
+        for item in catalog:
+            group_hit = (
+                q in _strip(item["descripcion"])
+                or q in _strip(item["seccion"])
+                or q in _strip(item["subseccion"])
+            )
+            # A group broken out by nacional/urbano/rural (or by city) often
+            # repeats the exact same series label under each breakdown --
+            # e.g. "DESEMPLEO" appears once per region/city, all with
+            # identical text. Dedup (order-preserving) so a result doesn't
+            # list "DESEMPLEO" nine times for what's really one concept.
+            series_hits = list(
+                dict.fromkeys(s for s in item["series"] if q in _strip(s))
+            )
+            if not group_hit and not series_hits:
+                continue
+            entry = {k: v for k, v in item.items() if k != "series"}
+            if series_hits and not group_hit:
+                # Only attach when the group title itself didn't match, so
+                # a plain group-title hit doesn't get cluttered with every
+                # series in a group that can hold dozens of them.
+                entry["series_coincidentes"] = series_hits
+            matched.append(entry)
 
     page = matched[offset : offset + limit]
     return {"total": len(matched), "offset": offset, "indicadores": page}

@@ -16,6 +16,15 @@
   (~98 nodos, TTL 24h — es efectivamente estático) y cada bundle de metadata
   por grupo consultado; la serie de tiempo en sí no se cachea, se pide fresca
   cada vez.
+- `search_indicadores_bce` también busca en los nombres de las series
+  individuales dentro de cada grupo, no solo en el título del grupo —
+  verificado que "desempleo" no aparece en ningún título de grupo (vive
+  como serie dentro de "Indicadores del mercado laboral..."), así que una
+  búsqueda por título solo se lo hubiera perdido. Arma un índice
+  consultando el bundle de los ~78 grupos concurrentemente (primer uso
+  tras expirar el caché de 24h tarda ~10-15s), deduplicando series con
+  nombre idéntico repetido entre desagregaciones (ej. "DESEMPLEO" aparece
+  igual en nacional/urbano/rural).
 
 ## 0.8.0 — 2026-08-14
 

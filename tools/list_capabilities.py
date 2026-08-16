@@ -72,6 +72,12 @@ _CAPABILITIES = {
             "de antemano (no se construye solo); cubren solo los últimos "
             "años cacheados, no el histórico completo desde 2008"
         ),
+        (
+            "search_indicadores_bce: primer uso tras expirar el caché (24h) "
+            "puede tardar ~10-15s (arma el índice de búsqueda sobre ~78 "
+            "grupos); no cubre inflación (CPI) ni pobreza de Ecuador, eso es "
+            "INEC vía search_anda"
+        ),
     ],
 }
 
