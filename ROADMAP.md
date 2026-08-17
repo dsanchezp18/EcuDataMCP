@@ -309,15 +309,20 @@ todavía:
 - [ ] **Tool `read_pdf(url, pages)`** — no hay soporte para leer PDFs del
       portal. Pocos casos hoy, pero es el desbloqueo para fuentes curadas más
       adelante.
-- [ ] **Prompts de flujo de trabajo adicionales** (`@mcp.prompt()`) — hoy solo
-      hay uno; falta al menos un segundo prompt guiado para exploración
-      temática (ej. "explorar_tema").
-- [ ] **Soporte `.rar`** — decisión pendiente: implementarlo (necesita binario
-      `unrar`) o documentar el rechazo como definitivo.
+- [x] **Prompts de flujo de trabajo adicionales** (`@mcp.prompt()`) — agregado
+      `explorar_tema`, guía transversal a todas las fuentes (datasets,
+      trámites, regulaciones, contratos, riesgos) en una sola pasada.
+- [x] **Soporte `.rar`** — **decidido: rechazo definitivo, sin implementar.**
+      No vale la pena la dependencia del binario `unrar` para el volumen de
+      casos que se ve hoy. `preview_resource_data` ahora devuelve un mensaje
+      explícito (`rar_no_soportado`) con el link de descarga directa, en vez
+      de caer en el genérico "formato no soportado".
 - [ ] **Recursos sin extensión** — requieren sniffing de content-type; sin
       implementar ni probar.
-- [ ] **Soporte `.xls` legacy** — hoy `preview_resource_data` lo rechaza
-      explícitamente; decidir si vale la pena soportarlo.
+- [x] **Soporte `.xls` legacy** — **decidido: rechazo definitivo, sin
+      implementar.** Ya estaba así en el código (`xls_no_soportado`, pide
+      convertir a XLSX o descargar); este ítem solo formaliza que es
+      intencional, no un pendiente por resolver.
 
 ---
 
