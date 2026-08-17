@@ -265,7 +265,7 @@ más abajo.
 
 ---
 
-## Herramientas disponibles (32 tools)
+## Herramientas disponibles (33 tools)
 
 Casi todos los tools aceptan `format="json"` además de texto.
 
@@ -287,6 +287,7 @@ Casi todos los tools aceptan `format="json"` además de texto.
 | `list_dataset_resources` | Listar todos los archivos (recursos) de un dataset con formato, tamaño, URL y fechas de creación/modificación. |
 | `get_resource_info` | Información detallada de un archivo específico. |
 | `preview_resource_data` | Preview de CSV/TSV, JSON/GeoJSON o XLSX como tabla (máx. 5 MB). |
+| `download_resource` | Baja el archivo crudo de un recurso en base64 (máx. 5 MB) — para formatos que no se pueden previsualizar como tabla (`.rar`, `.xls` legacy, etc.). |
 | `query_resource_data` | Consulta tabular vía CKAN DataStore (filtros, texto, paginación) sin descargar el archivo. |
 
 ### Trámites Gubernamentales
