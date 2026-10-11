@@ -1,6 +1,8 @@
 # Herramientas disponibles
 
-Referencia detallada de las 113 herramientas MCP de EcuDataMCP. Casi todas
+Referencia detallada de las 83 herramientas MCP del perfil público (por defecto)
+de EcuDataMCP, más 2 herramientas de mantenimiento (`audit_bce_catalog` y
+`compare_bce_sources`) que solo se registran con otro `MCP_PROFILE`. Casi todas
 aceptan `format="json"` además de texto.
 
 ## Entrada unificada
@@ -98,11 +100,11 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 
 | Tool | Descripción |
 |------|-------------|
-| `audit_bce_catalog` | Audita en vivo el catálogo BCEData y reporta su cobertura. |
-| `compare_bce_sources` | Construye un mapa cauteloso de equivalencias candidatas entre BCEData e IEM. |
+| `audit_bce_catalog` (mantenimiento) | Audita en vivo el catálogo BCEData y reporta su cobertura. |
+| `compare_bce_sources` (mantenimiento) | Construye un mapa cauteloso de equivalencias candidatas entre BCEData e IEM. |
 | `get_bce_iem_table` | Inspecciona una tabla XLSX oficial del boletín IEM más reciente del BCE. |
 | `get_bce_indicador_diario` | Obtiene la serie temporal de un indicador diario/mensual del BCE (ej. Riesgo País). |
-| `list_catalogo` (`fuente="bce_diarios"|"arconel"|"contraloria"|"iess"|"sut"`) | Catálogo previo al `get_*` de cada fuente: widgets diarios/mensuales del BCE (Riesgo País desde 2004), reportes de ARCONEL, informes de Contraloría, colecciones del IESS y tableros del SUT. |
+| `list_catalogo` (`fuente="bce_diarios"|"arconel"|"contraloria"|"iess"|"sut"|"judicatura"`) | Catálogo previo al `get_*` de cada fuente: widgets diarios/mensuales del BCE (Riesgo País desde 2004), reportes de ARCONEL, informes de Contraloría, colecciones del IESS, tableros del SUT y tableros del Consejo de la Judicatura. |
 | `search_archivos` (`fuente="bce_remesas"|"bce_precios_comex"|"bce_publicaciones"`) | Enlaces a archivos de remesas, índices de precios de comercio exterior y las publicaciones recientes del BCE. |
 | `get_aviso_aeronautico` (`tipo="metar"|"notam"|"sigmet"`) | METAR/SPECI y NOTAM de un aeródromo (código ICAO) y SIGMET activos del FIR ecuatoriano, desde DGAC/AIS. |
 | `get_serie_internacional` (`fuente="wdi"|"irena"|"xm"`) | Series con Ecuador del Banco Mundial (WDI), IRENA (capacidad y generación) y XM Colombia (flujos horarios Colombia-Ecuador desde 2003). |
@@ -160,8 +162,8 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 | `get_cortes_horarios` | Convierte un PDF de cortes en filas: fecha, bloques horarios sin luz, ubicación (subestación o provincia/cantón/zona) y sectores. |
 | `get_energia_ecuador_snapshot` | Snapshot (2024-04-24, Wayback Machine) del portal nacional de horarios de apagones energia-ecuador.com; solo sobrevivió la rotación de EEQ. |
 | `get_informe_igepn` | Descarga y extrae el texto de un informe del IG-EPN encontrado vía search_informes_igepn. |
-| `get_sut_indicador_schema` | Lista las columnas/medidas/niveles de fecha consultables de un tablero Power BI del SUT, descubiertos desde la definición propia del reporte (la consulta subyacente de cada visual), no por adivinanza. |
-| `query_sut_indicador` | Ejecuta una consulta en vivo contra el modelo de datos subyacente de un tablero Power BI del SUT — cualquier combinación de sus campos, ej. mes y provincia juntos. |
+| `get_sut_indicador_schema` | Lista las columnas/medidas/niveles de fecha consultables de un tablero Power BI del SUT o de la Judicatura (`fuente`), descubiertos desde la definición propia del reporte (la consulta subyacente de cada visual), no por adivinanza. |
+| `query_sut_indicador` | Ejecuta una consulta en vivo contra el modelo de datos subyacente de un tablero Power BI del SUT o de la Judicatura (`fuente`) — cualquier combinación de sus campos, ej. mes y provincia juntos. |
 | `search_informes_igepn` | Busca en el archivo de informes PDF del IG-EPN (Instituto Geofísico): boletines sísmicos diarios/semanales/mensuales/especiales, alertas volcánicas "IG Al Instante", informes de campo/anuales, etc. |
 
 ## Utilidades de investigación
@@ -184,6 +186,7 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 | Tool | Descripción |
 |------|-------------|
 | `get_iess_archivos` | Documentos de una colección del IESS. |
+| `get_certificado_cumplimiento_patronal` | Verifica si un empleador (RUC) o una persona (cédula) está al día en sus aportes al IESS (certificado de cumplimiento de obligaciones patronales). No es un conteo de empleados. |
 
 ## INEVAL: evaluación educativa
 

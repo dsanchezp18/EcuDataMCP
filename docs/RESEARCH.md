@@ -6186,6 +6186,116 @@ expuestas como `fuente="bvg"` y `fuente="bvq"` en `list_archivo_secciones` /
   pantallas en vivo de ofertas/demandas y operaciones cerradas (no son
   descargas).
 
+## Trigésimo séptima pasada — Comtrade, FMI, OMS, OIT y ACNUR sin key (2026-10-10)
+
+Pedido: sumar cinco fuentes internacionales como `fuente` nuevas de
+`get_serie_internacional` (sin tools nuevas), todas verificadas en vivo sin
+clave, con VPN de Ecuador disponible y ritmo cuidadoso.
+
+**UN Comtrade (`comtradeapi.un.org/public/v1/preview/C/{A|M}/HS`).**
+`reporterCode=218` (Ecuador), `period`, `partnerCode`, `cmdCode`, `flowCode`
+(`X`, `M` o `X,M`). Límites de la vista previa pública, todos observados:
+**tope de 500 filas por llamada**; **un solo período** (`period=2022,2023` →
+400 "Maximum number of periods for preview is 1"); una segunda llamada
+inmediata da **429 "Rate limit is exceeded. Try again in 2 seconds."** (se
+reintenta esperando los segundos del mensaje más uno); `reporterDesc`,
+`partnerDesc` y `cmdDesc` vienen `null`, así que solo hay códigos. Sin
+`partnerCode` devuelve todos los socios (31 filas para `cmdCode=27` en 2023).
+Los códigos son M49, no ISO numérico: EE. UU. 842, India 699, Francia 251.
+Prueba: Ecuador↔EE. UU. 2023, total: exportaciones USD 7.402.729.241,5 e
+importaciones USD 8.286.838.550,3; mensual 202401 total exportaciones al
+mundo USD 2.610.810.784.
+
+**FMI (`api.imf.org/external/sdmx/2.1`).** `GET /dataflow/IMF.STA` lista 190
+flujos (varias versiones "VINTAGE" por flujo). `GET
+/data/IMF.STA,CPI/ECU.CPI._T.IX.M?lastNObservations=3` con `Accept:
+application/json` devuelve SDMX-JSON 1.0 con el bloque `structure`. El orden
+de dimensiones **cambia por flujo** (CPI: COUNTRY, INDEX_TYPE, COICOP_1999,
+TYPE_OF_TRANSFORMATION, FREQUENCY; ER: COUNTRY, INDICATOR,
+TYPE_OF_TRANSFORMATION, FREQUENCY), pero una **clave corta funciona como
+prefijo** (`ECU` = todo Ecuador; CPI da 78 series), mientras que una clave con
+más partes que dimensiones da 400 "has more than expected 5 dimension(s)". Por
+eso el cliente usa `ECU` por defecto y devuelve el orden de dimensiones leído
+de `structure` para que se pueda acotar la clave. Los `datastructure/...`
+probados devuelven 204. No hay un flujo "IFS" único: tipo de cambio (`ER`),
+balanza de pagos (`BOP`), dinero y banca (`MFS_*`), precios (`CPI`).
+
+**OMS GHO (`ghoapi.azureedge.net/api`).** `/api/Indicator` (3.099
+indicadores) se cachea y se busca localmente. `/api/WHOSIS_000001?$filter=
+SpatialDim eq 'ECU'` devuelve una fila por año y sexo (esperanza de vida al
+nacer, 2015: 78,2 total / 80,9 mujeres / 75,5 hombres). Filtros de año con
+`TimeDim ge/le`. Un código inexistente da 404.
+
+**OIT ILOSTAT (`sdmx.ilo.org/rest`).** `/dataflow/ILO?detail=allstubs` →
+1.215 flujos (~560 KB; sin `detail` son 3,6 MB con descripciones HTML). El
+dato `/data/ILO,DF_UNE_DEAP_SEX_AGE_RT/ECU.A...?lastNObservations=1&format=
+jsondata` usa sdmx-json 2.0 (`data.structures[0]`, `data.dataSets[0]`). **La
+clave debe tener exactamente tantas partes como dimensiones** (422 "Not
+enough key values in query, expecting 5 got 1"); el cliente rellena con
+comodines usando el número del mensaje de error y repite una vez. Desempleo
+2025 (total 15+): 3,232 %.
+
+**ACNUR (`api.unhcr.org/population/v1/population/`).** `coa=ECU` fija el país
+de asilo; sin `coo` devuelve una fila de totales por año; `coo=VEN` el origen
+Venezuela; `coo_all=true` una fila por origen (40 filas en 2024). Paginada
+(`page`, `maxPages`, `limit` hasta 1000). **`year=2023,2024` solo devuelve el
+primer año**; el rango correcto es `yearFrom`/`yearTo`. Los conteos llegan
+mezclados (enteros, `"0"`, `"-"` = no disponible). 2024, origen Venezuela:
+2.493 refugiados, 3.188 solicitantes de asilo, 439.097 otras personas que
+necesitan protección internacional.
+
+**Descartado/pendiente.** Ember sigue pendiente (ver ROADMAP). El FMI también
+publica SDMX 3.0, no probado; Comtrade con clave de suscripción (sin tope de
+500 filas ni de períodos) queda fuera por requerir key.
+
+## Judicatura Power BI — Portal de Estadística Judicial (2026-10-10)
+
+Se cierra el pendiente "Consejo de la Judicatura — Portal de Estadística Judicial"
+(ver Vigésimo tercera pasada) reutilizando el protocolo Power BI del SUT
+(`helpers/sut_powerbi_client.py`, Décima pasada).
+
+- Cada página `fsweb.funcionjudicial.gob.ec/estadisticas/<nombre>.html` incrusta un
+  `<iframe src="https://app.powerbi.com/view?r=<base64>">`; el base64 decodifica a
+  `{"k": resource_key, "t": tenant}`. Las diez páginas con reporte comparten el
+  tenant `a134599a-61d5-4dee-b39f-305311f215a9`: `audiencias`, `boletas`,
+  `capacitaciones`, `destituciones`, `escritos`, `mediacion`, `notarial`,
+  `productividadjueces`, `rematesjudiciales`, `supa`.
+- **Clúster distinto al del SUT.** Estas llaves solo resuelven en
+  `https://wabi-paas-1-scus-api.analysis.windows.net`; en el clúster del SUT
+  (`wabi-south-central-us-c-primary-api`) devuelven 401
+  `UnableToFindKeyInDBorCacheException`. Por eso el registro de indicadores
+  admite un `base` opcional por entrada (default: el del SUT).
+- `modelsAndExploration` y `querydata?synchronous=true` funcionan igual que en el
+  SUT (sin login, cabecera `X-PowerBI-ResourceKey`). Verificado en vivo con los
+  diez tableros: esquema y una consulta con filas reales en todos.
+- **Layouts nuevos.** `productividadjueces` y `supa` entregan los visuales
+  como documento PBIR (`exploration.explorationContent.explorationDocument`) y los
+  contenedores solo traen `objectName`; el resto tiene `config` pero sus consultas
+  incluyen `Aggregation` (sumas de `Contador`, etc.) que el parser original no
+  leía. `get_indicador_schema` ahora lee `Aggregation` como campos
+  `[suma]`/`[promedio]` y, si no encuentra nada, recorre el layout buscando
+  `Entity`/`Property` (Column/Measure/Aggregation), ignorando las tablas ocultas
+  `LocalDateTable_*`.
+- **Resultado de una sola columna.** Con un único campo, `querydata` no usa el
+  empaquetado `C`/`R`/`Ø` sino `{"G0": valor}` (el valor repetido omite la clave);
+  `_decode_dsr` lo maneja.
+- Campos útiles vistos: `CUB EST_CUB_AUDIENCIAS` (Provincia, Canton, Materia,
+  Tipo, Estado, Periodo [Año], Contador [suma]; 2017-2026, Pichincha ~95 mil por
+  año), `CUB EST_CUB_PRODUCTIVIDAD_NACIONAL_PORTAL` (Provincia, Canton, Materia,
+  Juez, Tramite, `Promedio` y `Tasa de Resolucion` como medidas),
+  `CUB EST_CUB_SUPA_*` (boletas, incidentes, recaudación, recaudación por IFI,
+  usuarios).
+- **Callejones sin salida.** `causas.html` es un stub vacío (8 KB, sin reporte ni
+  enlaces). `medidasdeproteccion.html` no usa iframe sino botones que enlazan un
+  reporte (`k=d740a133-…`) de **otro tenant** (`t=b720ecd0-…`, `c=4`); su llave
+  da 401 `UnableToFindKeyInDBorCacheException` en los clústeres alcanzables
+  (`wabi-south-central-us-c-primary`, `wabi-paas-1-scus`, `wabi-us-east2-b-primary`),
+  otros hosts no resuelven o cortan la conexión. No se registra hasta hallar su
+  clúster.
+- Códigos de `Aggregation.Function` vistos: 0 (suma) y 1 (promedio) se exponen;
+  3 y 5 aparecen sobre fechas/texto (`Corte`, `Entidad`) y se dejan como columna
+  plana.
+
 ## Notas históricas
 
 **Corrección de diagnóstico (2026-08-13):** el 403 de CKAN que se creía un

@@ -352,6 +352,20 @@ def _all_fuentes() -> dict:
                 ],
             },
             {
+                "id": "judicatura",
+                "nombre": (
+                    "Consejo de la Judicatura (Portal de Estadística Judicial: "
+                    "tableros Power BI en vivo de audiencias, mediación, "
+                    "notarial, productividad de jueces, SUPA)"
+                ),
+                "base": "https://fsweb.funcionjudicial.gob.ec/estadisticas/",
+                "tools": [
+                    "list_catalogo",
+                    "get_sut_indicador_schema",
+                    "query_sut_indicador",
+                ],
+            },
+            {
                 "id": "arcotel",
                 "nombre": (
                     "ARCOTEL (estadísticas del sector de telecomunicaciones: "
@@ -453,7 +467,7 @@ def _all_fuentes() -> dict:
             },
             {
                 "id": "series_internacionales",
-                "nombre": "Series internacionales con Ecuador: Banco Mundial WDI, IRENA, XM Colombia",
+                "nombre": "Series internacionales con Ecuador: Banco Mundial WDI, IRENA, XM Colombia, UN Comtrade, FMI, OMS, OIT, ACNUR",
                 "base": "https://api.worldbank.org/v2",
                 "tools": ["get_serie_internacional"],
             },
@@ -486,7 +500,7 @@ def register_catalog_resources(mcp: MCPServer) -> None:
         name="referencia_herramienta",
         title="Referencia completa de una herramienta",
         description=(
-            "Documentación completa de una tool (alcance, parámetros, límites de "
+            "Documentación completa de un tool (alcance, parámetros, límites de "
             "la fuente); tools/list solo lleva un resumen."
         ),
         mime_type="text/plain",

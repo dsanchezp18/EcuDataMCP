@@ -2,6 +2,50 @@
 
 ## Unreleased
 
+- **Fixes from a code review**:
+  - CSV/JSON previews no longer turn a whole file into mojibake when the 5 MB cap cuts a multibyte character (cp1252 is now tried before latin-1); European-decimal columns only convert cells that match the pattern; `__MACOSX` resource forks are skipped when picking an archive member.
+  - `read_pdf` page ranges are clamped to the document; `.xlsx`/`.ods` files that expand past 200 MB are rejected; corrupt `.tar.gz` and unsafe URLs in `download_resource`/content sniffing give a clean error.
+  - SSRF guard: CGNAT (`100.64.0.0/10`) and NAT64 targets are refused and DNS resolution no longer blocks the event loop; an empty `CKAN_INSECURE_TLS` no longer disables TLS verification; CKAN `groups`/`organization` filters are quoted.
+  - `list_risk_events` returns the newest events first (OBJECTID sorted numerically) and ArcGIS error bodies raise instead of caching an empty list; the BCE catalog snapshot is not cached when a bundle failed; SERCOP's default year uses Ecuador time; INEC category pagination tolerates a page past the end and sends a User-Agent.
+  - Tests: module-level asyncio locks are refreshed per test (they bound to the first event loop that contended them).
+
+- **`get_serie_internacional` gains five `fuente` values** (no new tools; the
+  tool count is unchanged): `comtrade` (UN Comtrade public preview: bilateral
+  trade in USD for one period per call, capped at 500 rows, 429 retried
+  automatically), `imf` (IMF SDMX: CPI, exchange rates, balance of payments,
+  fiscal and monetary flows; a short key such as `ECU` is a country prefix),
+  `who` (WHO Global Health Observatory indicators by sex), `ilo` (ILOSTAT labour
+  statistics; short keys are padded with wildcards) and `unhcr` (refugees and
+  asylum seekers hosted in Ecuador, by year and origin). All keyless and
+  Ecuador by default; `wdi`, `irena` and `xm` are unchanged. `imf`/`ilo`/`who`
+  list their flows or indicators when `indicador` is empty. New clients
+  `helpers/{comtrade,imf,who,ilo,unhcr}_client.py` plus `helpers/intl_http.py`
+  (429/5xx retry) and `helpers/sdmx_json.py`.
+
+- **Consejo de la Judicatura — Estadística Judicial** (`fuente="judicatura"` in
+  `list_catalogo`, `get_sut_indicador_schema` and `query_sut_indicador`; no new
+  tools): ten live Power BI dashboards of the Portal de Estadística Judicial
+  (audiencias, boletas, capacitaciones, destituciones, escritos, mediación,
+  notarial, productividad de jueces, remates judiciales, SUPA) through the SUT
+  Power BI client. Each indicator can now carry its own Power BI cluster
+  (`base`), schema discovery reads `Aggregation` fields (`[suma]`/`[promedio]`)
+  and falls back to scanning the report layout for newer report formats, and
+  one-column query results decode correctly. `medidasdeproteccion` (key does not
+  resolve) and `causas` (empty page) are not included. `fuente` defaults to
+  `sut`, so existing calls are unchanged.
+
+- **Docs and site fixes** (no behaviour change for callers): `docs/TOOLS.md` now
+  states the real count (83 public tools, plus the 2 maintenance tools) and lists
+  `get_certificado_cumplimiento_patronal`; the server instructions mention the
+  `explorar_tema` prompt; the SRI RUC tool argument docs are in English. Site:
+  Spanish copy uses the masculine "tool" and Spanish number formatting, English
+  copy uses American spelling and translated institution names; Google Fonts load
+  through `<link>` (no render-blocking `@import`); canonical, hreflang and
+  `og:url` tags; skip link, labelled search input and visible search focus ring;
+  smooth scrolling respects `prefers-reduced-motion`; the sitemap no longer
+  carries a build-time `<lastmod>`; `web/README.md` describes the real Pages
+  setup (`gh-pages` branch) and CSS sources.
+
 ## 0.12.0 — 2026-10-10
 
 - **Internal robustness** (no behaviour change for callers): BVG, BVQ and CNE use
