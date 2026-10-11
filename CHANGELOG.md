@@ -2,6 +2,60 @@
 
 ## Unreleased
 
+## 0.12.0 — 2026-10-10
+
+- **Internal robustness** (no behaviour change for callers): BVG, BVQ and CNE use
+  one lock per section/process instead of a global one, and a CNE sub-category
+  that fails is skipped with a warning and not cached; the Energy Ministry and
+  ANT clients run their requests concurrently under a bound of 4 (Energy now also
+  checks `source_url` hosts); `ckan_client.search_datasets_by_filter` replaces
+  the private CKAN calls in `ant_client`. More tests for `bolsas_common` and the
+  new `fuente` values.
+
+- **EP Petroecuador** (`fuente="petroecuador"` in `list_archivo_secciones` /
+  `get_archivo_seccion`): the 8 sections of "Cifras Institucionales"
+  (financial statements, monthly and annual statistical reports 2006 onward,
+  field production, prices, dispatches, refining, WTI, risk reports) with
+  their PDF links. New `helpers/petroecuador_client.py`.
+- **Ministerio de Ambiente y Energía** (`list_archivo_secciones` /
+  `get_archivo_seccion`, `fuente="energia"`): four sections read from the
+  ministry's WordPress media library (`ambienteyenergia.gob.ec`): hydrocarbon
+  statistics (crudo/derivados yearbooks 2002-2024 with gaps, plus the 2024
+  field production matrix), mining exports and tax revenue, 2020-21 weekly
+  mining reports, and the Balance Energético Nacional 2018-2025. Links only.
+  The ARCERNNR host (`arcernnr.gob.ec`) and `recursosyenergia.gob.ec` do not
+  resolve and `controlrecursosyenergia.gob.ec` serves no content, so the
+  ministry's current site is the only source.
+- **New tool `search_siniestros_ant`**: road-crash (siniestros de tránsito)
+  data from ANT records. `ant.gob.ec` and `ecu911.gob.ec` drop the TLS
+  handshake for every client, so the tool combines INEC's quarterly/annual
+  "Siniestros de Tránsito" releases (tabulados XLSX, open-data ZIP,
+  dictionary, technical note; file links for the newest ones) with CKAN
+  datasets (INEC ANET 2019, SPPAT road deaths 2016-2021, the ANT
+  organisation's licence and speed datasets). Each source fails
+  independently. Helper: `helpers/ant_client.py`.
+- **CNE (electoral data)**: `list_archivo_secciones` / `get_archivo_seccion`
+  take `fuente="cne"`. One section per election process, 2002-2025 (19), each
+  listing dictionaries, political organizations, candidates, the electoral
+  roll by parish and the results by parish from
+  cne.gob.ec/estadisticas/bases-de-datos/ (SPSS `.sav`, up to 77 MB; the
+  Incapsula block seen on 2026-09-06 is gone, checked 2026-10-10). Returns
+  links with `grupo`, `descargas` and `tamano`; the files are not parsed.
+- **Bolsas de valores** (`list_archivo_secciones`, `get_archivo_seccion`):
+  two new `fuente` values. `bvg` is the Bolsa de Valores de Guayaquil (4
+  sections: trade-by-trade history since 2019 for acciones, obligaciones,
+  papel comercial, titularizaciones, bonos del Estado, notas de crédito and
+  cetes; dividendos since 2002; valores permitidos; ofertas públicas). `bvq`
+  is the Bolsa de Valores de Quito's public statistics (10 sections, ~45
+  XLS/XLSX/PDF files: cotizaciones históricas, emisiones, renta variable,
+  sector público, boletines, vectores de precios, emisores). Both lists carry
+  `modificado` (HTTP Last-Modified) and `tamano_bytes` per file, because the
+  exchanges overwrite the same URL (checked 2026-10-10: trading files rebuilt
+  on 2026-10-08; BVG dividends 2026-08-05; BVQ facturas comerciales
+  emisiones 2024-09-10). Links only; BVG's workbooks fail in
+  `preview_resource_data` (stylesheet openpyxl rejects), so download them. BVQ's
+  Infolab bulletins are behind a login and are not listed.
+
 Fixes from a field report (paper-apagones, 2026-10-06/07).
 
 - **ANDA**: `get_anda_survey_info` and `download_anda_microdata` accept the
@@ -13,6 +67,10 @@ Fixes from a field report (paper-apagones, 2026-10-06/07).
   registry pages (1990-2015 bases de datos, 2017, 2018, 2019);
   `get_inec_estadistica_files` tags each file with its `year` and takes a
   `year` filter.
+- **INEC hub topics** (issue #55, e.g. ENDI): when a topic page lists no files
+  itself, `get_inec_estadistica_files` follows up to 3 related landing pages
+  (same non-generic slug words, menu links skipped) and merges their files;
+  the pages used come back as `paginas_relacionadas`.
 - **`lookup_ubicacion`** returns urban parishes (`parroquias_urbanas`, with
   `codigo_parroquia_urbana`, head-parish `codigo` and `clasificador_anio`)
   from INEC's CODIFICACIÓN_2026.
@@ -43,11 +101,25 @@ Fixes from a field report (paper-apagones, 2026-10-06/07).
   gob.ec dropped the connection partway through the ~1.8 MB SRI page
   (`httpx.ReadError`, which stringifies to ""). gob.ec GETs are now retried
   up to 3 times on transport errors, and the final error names the failure.
+- **`search_tramites`** keyword routing (no `institution_id`) matched inside
+  other words ("instrucciones" went to the SRI, "importante" to the ANT,
+  "revisar" to Cancillería). Keywords now match as word prefixes, the short
+  ones (`ruc`, `sri`, `ant`, `visa`, `iess`) as whole words, accent-insensitive
+  ("vehículos", "afiliación", "cesantía" now route). Query words also match
+  from the start of a word, so "RUC" no longer hits "construcción".
+- **gob.ec reads** are also capped at 60 s per attempt, so a trickling body
+  can't hold a call for minutes. Keyword routing picks the keyword that
+  appears first in the query ("pasaporte con cédula" → Cancillería), and
+  unscoped `search_tramites` queries say they only cover the first 1,250
+  trámites.
+- **`get_tramite_info`** and **`get_tramite_estadisticas`** reject a
+  non-numeric `tramite_id` with a clear message instead of gob.ec's raw 500.
 - **gob.ec institution IDs**: the shortcuts in `search_tramites`,
   `get_institucion_info`, `consultar_tramite` and
   `ecuador://instituciones-clave` were wrong for three of five. IESS is
   163 (5 is the agriculture ministry), ANT 48 (not 62) and Cancillería 6
-  (not 16); SRI 8 and Registro Civil 23 were right.
+  (not 16); SRI 8 and Registro Civil 23 were right. Also fixed in the
+  `list_instituciones` docs and the site's Atlas.
 
 ## 0.11.0 — 2026-10-02
 
