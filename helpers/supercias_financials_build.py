@@ -1,12 +1,13 @@
 """Build/refresh the Supercías financials SQLite DB from the ranking export.
 
-Downloads bi_ranking.csv (~356 MB, ~1.7M rows, 2008-present) plus the small
-lookup tables (bi_compania.csv, bi_segmento.csv, bi_ciiu.csv,
+Downloads bi_ranking.csv (~356 MB, ~1.7M rows, fiscal years 2008-present)
+plus the small lookup tables (bi_compania.csv, bi_segmento.csv, bi_ciiu.csv,
 indicadores_sector.csv) from
-https://appscvsmovil.supercias.gob.ec/ranking/reporte.html, loads them into a
-local SQLite database, then prunes `ranking`/`indicadores_sector` down to the
-last 5 fiscal years present in the data (not a hardcoded year, so this
-self-adjusts every year without a code change).
+https://appscvsmovil.supercias.gob.ec/ranking/reporte.html and loads them into
+a local SQLite database. Every fiscal year in the export is kept, so the
+tools can query the full history (see docs/RESEARCH.md for which columns each
+year carries: ratios only from 2018, CIIU from 2009). A host short on disk can
+keep only the last N years with ECUADOR_MCP_SUPERCIAS_YEARS=N.
 
 Launched automatically as a background subprocess by
 helpers/supercias_financials.py (`_trigger_background_build`), both at
@@ -28,8 +29,8 @@ already has the same fields, joined on `expediente`. That created a real
 coupling bug: get_financials()/search_ranking() need a live, separately
 warmed, separately-TTL'd cache from a different module just to show a
 company's name next to its financials. Duplicating three small columns for
-~226k rows is cheap (a few MB) next to the ~180 MB this DB already is, and
-makes this module fully self-contained.
+~226k rows is cheap (a few MB) next to the size of this DB, and makes this
+module fully self-contained.
 
 Lives in the package (not scripts/) so installs from PyPI or an MCPB bundle,
 which don't ship scripts/, can still run it; helpers/supercias_financials.py
@@ -44,6 +45,7 @@ from __future__ import annotations
 
 import csv
 import os
+import shutil
 import sqlite3
 import time
 from datetime import UTC, datetime
@@ -63,7 +65,9 @@ _RESOURCES_BASE = "https://appscvsmovil.supercias.gob.ec/ranking/recursos/"
 # Short connect timeout: a network the host drops (Render, 2026-10-07) only
 # fails by timing out, and 300 s of that just delays the error.
 _TIMEOUT = httpx.Timeout(300.0, connect=15.0)
-_YEARS_TO_KEEP = 5
+# Optional retention cap in fiscal years; unset, empty or "all" keeps every
+# year Supercías publishes (2008 onwards).
+_YEARS_ENV = "ECUADOR_MCP_SUPERCIAS_YEARS"
 _BATCH_SIZE = 5000
 # A few malformed lines are tolerable; more means a truncated/corrupt file.
 _MAX_SKIPPED_SHARE = 0.001
@@ -87,6 +91,18 @@ _COMPANIA_INT_COLUMNS = {"expediente"}
 _COMPANIA_TEXT_COLUMNS = {"ruc", "nombre", "tipo", "pro_codigo", "provincia"}
 
 
+def _years_to_keep() -> int | None:
+    """Last N fiscal years to keep, or None for the full history."""
+    value = (os.getenv(_YEARS_ENV) or "").strip().lower()
+    if value in ("", "all"):
+        return None
+    if not value.isdigit() or int(value) < 1:
+        raise ValueError(
+            f"{_YEARS_ENV}={value!r} no es válido: usa un número de años (ej. 5) o 'all'"
+        )
+    return int(value)
+
+
 def _client() -> httpx.Client:
     return httpx.Client(
         headers={"User-Agent": USER_AGENT},
@@ -95,6 +111,14 @@ def _client() -> httpx.Client:
         follow_redirects=True,
         proxy=proxy_for(_RESOURCES_BASE),
     )
+
+
+# The whole export is ~356 MB today (bi_ranking.csv is most of it); a file
+# past this is not the export but a redirect to an error page or a runaway
+# response, and must not be allowed to fill the data volume.
+_MAX_FILE_BYTES = 1024 * 1024 * 1024
+# Room for the CSVs plus the SQLite file built from them, with headroom.
+_MIN_FREE_BYTES = 2 * 1024 * 1024 * 1024
 
 
 def _download_to(
@@ -114,8 +138,13 @@ def _download_to(
                             f"Descarga de {name} excedió el plazo total "
                             f"({_DOWNLOAD_DEADLINE_SECONDS // 60} min)"
                         )
-                    f.write(chunk)
                     total += len(chunk)
+                    if total > _MAX_FILE_BYTES:
+                        raise RuntimeError(
+                            f"Descarga de {name} superó {_MAX_FILE_BYTES // (1024 * 1024)} MB; "
+                            "no parece ser la exportación de Supercías"
+                        )
+                    f.write(chunk)
                     if total % (20 * 1024 * 1024) < len(chunk):
                         print(f"  {total / (1024 * 1024):.0f} MB...", flush=True)
     except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
@@ -220,22 +249,30 @@ def _load_csv_table(
 
 
 def _check_not_shrunk(new_path: Path, previous_path: Path) -> None:
-    """Reject a build whose ranking table shrank sharply vs. the live DB."""
+    """Reject a build whose ranking table shrank sharply vs. the live DB.
+
+    Only years inside the new build's range are compared, so lowering
+    ECUADOR_MCP_SUPERCIAS_YEARS is not mistaken for a truncated source file.
+    """
     if not previous_path.exists():
         return
+    conn = sqlite3.connect(f"file:{new_path.as_posix()}?mode=ro", uri=True)
+    try:
+        min_anio, new_rows = conn.execute(
+            "SELECT MIN(anio), COUNT(*) FROM ranking"
+        ).fetchone()
+    finally:
+        conn.close()
     try:
         conn = sqlite3.connect(f"file:{previous_path.as_posix()}?mode=ro", uri=True)
         try:
-            previous_rows = conn.execute("SELECT COUNT(*) FROM ranking").fetchone()[0]
+            previous_rows = conn.execute(
+                "SELECT COUNT(*) FROM ranking WHERE anio >= ?", (min_anio,)
+            ).fetchone()[0]
         finally:
             conn.close()
     except sqlite3.DatabaseError:
         return  # unreadable previous DB -- nothing meaningful to compare against
-    conn = sqlite3.connect(f"file:{new_path.as_posix()}?mode=ro", uri=True)
-    try:
-        new_rows = conn.execute("SELECT COUNT(*) FROM ranking").fetchone()[0]
-    finally:
-        conn.close()
     if new_rows < previous_rows * _MIN_ROWS_VS_PREVIOUS:
         raise RuntimeError(
             f"'ranking' bajó de {previous_rows} a {new_rows} filas frente a la "
@@ -327,9 +364,17 @@ def _verify_build(db_path: Path) -> None:
                 "La columna 'n_empleados' de 'ranking' quedó completamente vacía "
                 "tras el build -- probablemente falló la conversión a entero"
             )
-        min_anio, max_anio = conn.execute(
-            "SELECT MIN(anio), MAX(anio) FROM ranking"
+        min_anio, max_anio, n_anios = conn.execute(
+            "SELECT MIN(anio), MAX(anio), COUNT(DISTINCT anio) FROM ranking"
         ).fetchone()
+        # Supercías publishes every year from 2008 with no gaps; a year
+        # missing in the middle means the export came back partial.
+        if n_anios != max_anio - min_anio + 1:
+            raise RuntimeError(
+                f"La tabla 'ranking' tiene {n_anios} años entre {min_anio} y "
+                f"{max_anio}: falta al menos un año -- probablemente la fuente "
+                "vino incompleta"
+            )
         print(
             f"  Verificación OK: {ranking_rows} filas en 'ranking' "
             f"({companias_rows} en 'companias'), años {min_anio}-{max_anio}",
@@ -348,21 +393,37 @@ def _build() -> None:
     # cross-filesystem copy that could itself fail partway through.
     build_path = DB_PATH.parent / f"{DB_PATH.name}.building"
 
+    free = shutil.disk_usage(DB_PATH.parent).free
+    if free < _MIN_FREE_BYTES:
+        raise RuntimeError(
+            f"Espacio insuficiente en {DB_PATH.parent}: {free // (1024 * 1024)} MB libres, "
+            f"se necesitan al menos {_MIN_FREE_BYTES // (1024 * 1024)} MB para el build"
+        )
+
+    # Read before downloading, so a typo in the setting fails in seconds.
+    years_to_keep = _years_to_keep()
+
+    ranking_csv = tmp_dir / "bi_ranking.csv"
+    compania_csv = tmp_dir / "bi_compania.csv"
+    segmento_csv = tmp_dir / "bi_segmento.csv"
+    ciiu_csv = tmp_dir / "bi_ciiu.csv"
+    sector_csv = tmp_dir / "indicadores_sector.csv"
     deadline = time.time() + _DOWNLOAD_DEADLINE_SECONDS
-    with _client() as client:
-        ranking_csv = tmp_dir / "bi_ranking.csv"
-        compania_csv = tmp_dir / "bi_compania.csv"
-        segmento_csv = tmp_dir / "bi_segmento.csv"
-        ciiu_csv = tmp_dir / "bi_ciiu.csv"
-        sector_csv = tmp_dir / "indicadores_sector.csv"
-        for name, dest in (
-            ("bi_ranking.csv", ranking_csv),
-            ("bi_compania.csv", compania_csv),
-            ("bi_segmento.csv", segmento_csv),
-            ("bi_ciiu.csv", ciiu_csv),
-            ("indicadores_sector.csv", sector_csv),
-        ):
-            _download_to(client, name, dest, deadline)
+    try:
+        with _client() as client:
+            for name, dest in (
+                ("bi_ranking.csv", ranking_csv),
+                ("bi_compania.csv", compania_csv),
+                ("bi_segmento.csv", segmento_csv),
+                ("bi_ciiu.csv", ciiu_csv),
+                ("indicadores_sector.csv", sector_csv),
+            ):
+                _download_to(client, name, dest, deadline)
+    except BaseException:
+        # A failed or interrupted download must not leave hundreds of MB of
+        # partial CSVs behind on the data volume.
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise
 
     build_path.unlink(missing_ok=True)
     conn = sqlite3.connect(build_path)
@@ -371,15 +432,16 @@ def _build() -> None:
         _load_csv_table(conn, ranking_csv, "ranking", _RANKING_INT_COLUMNS, _RANKING_TEXT_COLUMNS)
 
         max_anio = conn.execute("SELECT MAX(anio) FROM ranking").fetchone()[0]
-        if max_anio is not None:
-            cutoff = max_anio - (_YEARS_TO_KEEP - 1)
+        cutoff = None
+        if max_anio is not None and years_to_keep is not None:
+            cutoff = max_anio - (years_to_keep - 1)
             deleted = conn.execute(
                 "DELETE FROM ranking WHERE anio < ?", (cutoff,)
             ).rowcount
             conn.commit()
             print(
-                f"  Recortado a anio >= {cutoff} "
-                f"(mantiene los últimos {_YEARS_TO_KEEP} años); {deleted} filas eliminadas",
+                f"  Recortado a anio >= {cutoff} ({_YEARS_ENV}={years_to_keep}); "
+                f"{deleted} filas eliminadas",
                 flush=True,
             )
 
@@ -398,10 +460,8 @@ def _build() -> None:
         _load_csv_table(
             conn, sector_csv, "indicadores_sector", _SECTOR_INT_COLUMNS, _SECTOR_TEXT_COLUMNS
         )
-        if max_anio is not None:
-            conn.execute(
-                "DELETE FROM indicadores_sector WHERE anio < ?", (max_anio - (_YEARS_TO_KEEP - 1),)
-            )
+        if cutoff is not None:
+            conn.execute("DELETE FROM indicadores_sector WHERE anio < ?", (cutoff,))
             conn.commit()
 
         print("Creando índices...", flush=True)
@@ -433,19 +493,36 @@ def _build() -> None:
         build_path.unlink(missing_ok=True)
         raise
 
-    # Atomic on both POSIX and Windows, and same-filesystem (build_path
-    # lives next to DB_PATH) so this can't fail partway through the way a
-    # plain unlink()-then-write to DB_PATH directly could -- a reader
-    # opening DB_PATH mid-build would either see the old file or the new
-    # one, never a half-written one, and a failed build never touches the
-    # previously-working database at all.
-    os.replace(build_path, DB_PATH)
+    # Same-filesystem rename (build_path lives next to DB_PATH), so a reader
+    # opening DB_PATH sees either the old file or the new one, never a
+    # half-written one, and a failed build never touches the previously
+    # working database at all. On POSIX the replace also succeeds while a
+    # reader has the old file open; on Windows it raises PermissionError
+    # until that reader closes, so retry briefly instead of discarding a
+    # 15-20 minute build because a get_financials call overlapped the rename.
+    _replace_with_retry(build_path, DB_PATH)
 
     for f in (ranking_csv, compania_csv, segmento_csv, ciiu_csv, sector_csv):
         f.unlink(missing_ok=True)
     tmp_dir.rmdir()
 
     print(f"Listo: {DB_PATH} ({DB_PATH.stat().st_size / (1024 * 1024):.1f} MB)")
+
+
+_REPLACE_ATTEMPTS = 20
+_REPLACE_DELAY_SECONDS = 0.5
+
+
+def _replace_with_retry(src: Path, dst: Path) -> None:
+    """os.replace that tolerates a Windows reader holding `dst` open."""
+    for attempt in range(1, _REPLACE_ATTEMPTS + 1):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == _REPLACE_ATTEMPTS:
+                raise
+            time.sleep(_REPLACE_DELAY_SECONDS)
 
 
 def main() -> None:

@@ -47,9 +47,56 @@ async def test_find_regulaciones(httpx_mock):
         url="https://www.gob.ec/api/v1/regulaciones?page=1",
         json=[],
     )
-    matches = await gobec_client.find_regulaciones("datos personales", max_pages=2)
+    busqueda = await gobec_client.find_regulaciones("datos personales", max_pages=2)
+    matches = busqueda["resultados"]
     assert len(matches) == 1
     assert matches[0]["regulacion_id"] == "1"
+    # Page 1 came back empty, so the listing was exhausted.
+    assert busqueda["hay_mas"] is False
+    assert busqueda["paginas_leidas"] == 1
+
+
+@pytest.mark.asyncio
+async def test_find_regulaciones_flags_unread_pages_at_cap(httpx_mock):
+    httpx_mock.add_response(
+        url="https://www.gob.ec/api/v1/regulaciones?page=0",
+        json=[{"regulacion_id": "1", "regulacion": "Reglamento de tránsito"}],
+    )
+
+    busqueda = await gobec_client.find_regulaciones("datos personales", max_pages=1)
+
+    assert busqueda["resultados"] == []
+    assert busqueda["hay_mas"] is True
+    assert busqueda["paginas_leidas"] == 1
+
+
+@pytest.mark.asyncio
+async def test_find_institucion_flags_unread_pages_at_cap(httpx_mock):
+    for page in range(gobec_client._MAX_PAGINAS_INSTITUCIONES):
+        httpx_mock.add_response(
+            url=f"https://www.gob.ec/api/v1/instituciones?page={page}",
+            json=[{"institucion_id": str(page), "institucion": "Ministerio X", "siglas": "MX"}],
+        )
+
+    busqueda = await gobec_client.find_institucion("ministerio")
+
+    assert len(busqueda["resultados"]) == gobec_client._MAX_PAGINAS_INSTITUCIONES
+    assert busqueda["hay_mas"] is True
+    assert busqueda["paginas_leidas"] == gobec_client._MAX_PAGINAS_INSTITUCIONES
+
+
+@pytest.mark.asyncio
+async def test_find_institucion_exhausted_listing_has_no_more(httpx_mock):
+    httpx_mock.add_response(
+        url="https://www.gob.ec/api/v1/instituciones?page=0",
+        json=[{"institucion_id": "8", "institucion": "Servicio de Rentas Internas", "siglas": "SRI"}],
+    )
+    httpx_mock.add_response(url="https://www.gob.ec/api/v1/instituciones?page=1", json=[])
+
+    busqueda = await gobec_client.find_institucion("sri")
+
+    assert [i["institucion_id"] for i in busqueda["resultados"]] == ["8"]
+    assert busqueda["hay_mas"] is False
 
 
 @pytest.mark.asyncio
@@ -175,3 +222,22 @@ async def test_http_error_status_is_not_retried(httpx_mock, _no_retry_sleep):
         await gobec_client.search_tramites(institution_id="8", page=0)
 
     assert _no_retry_sleep == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bad", ["", "abc", "1/../2", "8?x=1", " "])
+async def test_get_institucion_and_regulacion_reject_non_numeric_id(bad):
+    with pytest.raises(ValueError, match="numérico"):
+        await gobec_client.get_institucion(bad)
+    with pytest.raises(ValueError, match="numérico"):
+        await gobec_client.get_regulacion(bad)
+
+
+@pytest.mark.asyncio
+async def test_get_institucion_list_response_is_not_found(monkeypatch):
+    async def fake_fetch(url, params=None, session=None):
+        return [{"institucion": "Otra"}]
+
+    monkeypatch.setattr(gobec_client, "_fetch_json", fake_fetch)
+    assert await gobec_client.get_institucion("8") is None
+    assert await gobec_client.get_regulacion("8") is None

@@ -1,7 +1,8 @@
-from typing import Any, Literal
+from typing import Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.types import CallToolResult
 
 from helpers import gobec_client
 from helpers.format_out import render_structured
@@ -19,7 +20,7 @@ def register_get_regulacion_info_tool(mcp: MCPServer) -> None:
     @log_tool
     async def get_regulacion_info(
         regulacion_id: str, format: Literal["text", "json"] = "text"
-    ) -> dict[str, Any]:
+    ) -> CallToolResult:
         """
         Get detailed information about a regulation published on gob.ec.
 
@@ -27,7 +28,7 @@ def register_get_regulacion_info_tool(mcp: MCPServer) -> None:
         when available. Get the regulacion_id from search_regulaciones.
 
         Args:
-            regulacion_id: Regulation ID (e.g. "5051")
+            regulacion_id: Regulation ID (e.g. "2990")
             format: text | json
         """
         try:

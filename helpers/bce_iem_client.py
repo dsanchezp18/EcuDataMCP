@@ -57,6 +57,8 @@ _DEFAULT_CATALOG_DIR = data_dir() / "iem_catalog_snapshots"
 
 _catalog_cache = TtlCache(ttl_seconds=86400.0, max_entries=1)
 _bulletins_cache = TtlCache(ttl_seconds=86400.0, max_entries=1)
+# Bulletin sources that failed on the most recent reconciliation.
+_last_bulletin_failures: list[str] = []
 _bulletin_tables_cache = TtlCache(ttl_seconds=86400.0, max_entries=512)
 # Legacy bulletin ZIPs (pre-Oct-2016) are fetched whole -- both to list their
 # members (building the table catalog) and later to read one member's bytes.
@@ -170,6 +172,9 @@ def _bulletin_diagnostics(bulletins: list[dict[str, Any]]) -> dict[str, Any]:
         "primer_boletin": numbers[0] if numbers else None,
         "ultimo_boletin": numbers[-1] if numbers else None,
         "numeros_faltantes": gaps,
+        # Sources that failed while reconciling the bulletin list (see
+        # _fetch_bulletins); non-empty means the newest bulletin may be missing.
+        "fuentes_fallidas": list(_last_bulletin_failures),
     }
 
 
@@ -270,6 +275,7 @@ async def _fetch_bulletins() -> list[dict[str, Any]]:
         )
         latest_bulletins: list[dict[str, Any]] = []
         archive_bulletins: list[dict[str, Any]] = []
+        failed_sources: list[str] = []
         try:
             raw_latest, latest_truncated = await download_bytes(
                 IEM_LATEST_PUBLICATIONS_URL
@@ -281,6 +287,7 @@ async def _fetch_bulletins() -> list[dict[str, Any]]:
         except Exception as exc:
             # Keep the historical index as a safe fallback if the publications
             # page is temporarily unavailable or changes its markup.
+            failed_sources.append("ultimas_publicaciones")
             logger.warning(
                 "No se pudo reconciliar Últimas publicaciones del BCE: %s", exc
             )
@@ -293,13 +300,20 @@ async def _fetch_bulletins() -> list[dict[str, Any]]:
         except Exception as exc:
             # The older archive is supplementary: preserve the current index
             # when it is temporarily unavailable or its WordPress markup moves.
+            failed_sources.append("archivo_historico")
             logger.warning("No se pudo cargar el archivo histórico IEM del BCE: %s", exc)
         bulletins = _merge_bulletins(
             latest_bulletins, index_bulletins, archive_bulletins
         )
         if not bulletins:
             raise ValueError("No se encontraron boletines IEM en el índice del BCE")
-        _bulletins_cache.set("bulletins", bulletins)
+        global _last_bulletin_failures
+        _last_bulletin_failures = failed_sources
+        # A list reconciled without one of its sources may be missing the
+        # newest bulletin: serve it now, but don't pin it for 24 h -- the
+        # next call retries the failed source.
+        if not failed_sources:
+            _bulletins_cache.set("bulletins", bulletins)
         return bulletins
 
 
@@ -795,8 +809,28 @@ _MONTHS = {
 }
 
 
+# Bare 4-digit integers are accepted as years, so bound them to the range a
+# BCE statistical series can actually cover: a data cell holding 1500 (a
+# value, not a year) must not make its row look like a period header.
+_MIN_YEAR = 1900
+
+
+def _max_year() -> int:
+    return datetime.now(UTC).year + 1
+
+
 def _period_key(value: Any) -> tuple[int, int] | None:
-    """Normalize annual, monthly and Spanish month-year labels for filtering."""
+    """Normalize annual, monthly and Spanish month-year labels for filtering.
+
+    Returns None for anything whose year falls outside 1900..next year.
+    """
+    period = _period_key_unbounded(value)
+    if period is None or not (_MIN_YEAR <= period[0] <= _max_year()):
+        return None
+    return period
+
+
+def _period_key_unbounded(value: Any) -> tuple[int, int] | None:
     if isinstance(value, datetime):
         return value.year, value.month
     text = _strip(str(value or "")).strip().replace(".", "")
@@ -877,6 +911,12 @@ def _selected_columns(
 
     selected = []
     for index, value in enumerate(header[1:], start=1):
+        # A period header cell is a label (str), a real date, or a bare
+        # integer year as openpyxl returns "2024". Floats and booleans are
+        # data values: a row like ("Banano", 1950.5, 2024.0) is a series,
+        # never a header, even when its label happens to contain "ano".
+        if not isinstance(value, (str, datetime, int)) or isinstance(value, bool):
+            continue
         period = _period_key(value)
         if period is None or not _period_in_bounds(period, start, end):
             continue
@@ -1260,6 +1300,58 @@ class _XlsSheetAdapter:
             yield tuple(row)
 
 
+# Decompression-bomb bounds (same 200 MB container figure as csv_reader's
+# xlsx/ods check; kept local so this client stays import-free of private
+# csv_reader names). A single legacy member is capped lower than the total.
+_MAX_ZIP_MEMBER_BYTES = 50 * 1024 * 1024
+_MAX_CONTAINER_UNCOMPRESSED_BYTES = 200 * 1024 * 1024
+
+
+def _read_zip_member_capped(zip_raw: bytes, member: str) -> bytes:
+    """Read one ZIP member after checking its declared size against the caps."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_raw)) as zf:
+            try:
+                info = zf.getinfo(member)
+            except KeyError as exc:
+                raise ValueError(
+                    f"El miembro '{member}' ya no está en el ZIP del boletín IEM"
+                ) from exc
+            total = sum(i.file_size for i in zf.infolist())
+            if (
+                info.file_size > _MAX_ZIP_MEMBER_BYTES
+                or total > _MAX_CONTAINER_UNCOMPRESSED_BYTES
+            ):
+                raise ValueError(
+                    "El ZIP del boletín IEM se expande por encima del límite "
+                    f"seguro ({_MAX_ZIP_MEMBER_BYTES // 2**20} MB por archivo, "
+                    f"{_MAX_CONTAINER_UNCOMPRESSED_BYTES // 2**20} MB en total); "
+                    "se rechaza para evitar una bomba de descompresión."
+                )
+            raw = zf.read(member)
+    except zipfile.BadZipFile as exc:
+        raise ValueError("El ZIP del boletín IEM está dañado") from exc
+    _check_xlsx_container_size(raw)
+    return raw
+
+
+def _check_xlsx_container_size(raw: bytes) -> None:
+    """Reject an XLSX whose parts expand far beyond the download cap."""
+    if not raw.startswith(b"PK"):
+        return
+    try:
+        with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+            total = sum(i.file_size for i in zf.infolist())
+    except zipfile.BadZipFile:
+        return  # the real parser reports the corrupt container
+    if total > _MAX_CONTAINER_UNCOMPRESSED_BYTES:
+        raise ValueError(
+            "La tabla IEM se expande a más de "
+            f"{_MAX_CONTAINER_UNCOMPRESSED_BYTES // 2**20} MB al descomprimirse; "
+            "se rechaza para evitar una bomba de descompresión."
+        )
+
+
 def _open_legacy_zip_member(raw: bytes) -> tuple[Any, bool]:
     """Open a ZIP-member table named ``*.xls`` as its real format.
 
@@ -1371,27 +1463,27 @@ async def get_table(
         # Pre-Oct-2016 bulletin: no individual XLSX URL, read one member
         # out of the bulk ZIP instead (see _fetch_legacy_zip_tables).
         zip_raw = await _download_zip_cached(table["url"])
-        try:
-            raw = zipfile.ZipFile(io.BytesIO(zip_raw)).read(table["zip_member"])
-        except KeyError as exc:
-            raise ValueError(
-                f"El miembro '{table['zip_member']}' ya no está en el ZIP del boletín IEM"
-            ) from exc
-        legacy_book, is_xlsx = _open_legacy_zip_member(raw)
-        try:
-            worksheet = (
-                legacy_book.active
-                if is_xlsx
-                else _XlsSheetAdapter(legacy_book.sheet_by_index(0), legacy_book)
-            )
-            structured = _extract_wide_series(worksheet, desde, hasta, max_rows)
-            if structured is None:
-                structured = _extract_long_table(worksheet, desde, hasta, max_rows)
-            if structured is None:
-                structured = _extract_matrix_series(worksheet, desde, hasta, max_rows)
-        finally:
-            if is_xlsx:
-                legacy_book.close()
+        raw = _read_zip_member_capped(zip_raw, table["zip_member"])
+
+        def _parse_legacy() -> dict[str, Any] | None:
+            legacy_book, is_xlsx = _open_legacy_zip_member(raw)
+            try:
+                worksheet = (
+                    legacy_book.active
+                    if is_xlsx
+                    else _XlsSheetAdapter(legacy_book.sheet_by_index(0), legacy_book)
+                )
+                found = _extract_wide_series(worksheet, desde, hasta, max_rows)
+                if found is None:
+                    found = _extract_long_table(worksheet, desde, hasta, max_rows)
+                if found is None:
+                    found = _extract_matrix_series(worksheet, desde, hasta, max_rows)
+                return found
+            finally:
+                if is_xlsx:
+                    legacy_book.close()
+
+        structured = await asyncio.to_thread(_parse_legacy)
     elif table.get("formato_origen") == "html_frameset":
         # Pre-Aug-2006 bulletin: the table is a raw HTML <TABLE> on its own
         # section page, not a downloadable file (see
@@ -1407,15 +1499,21 @@ async def get_table(
             raise ValueError("La tabla IEM supera el límite seguro de descarga")
         if not raw.startswith(b"PK"):
             raise ValueError("La URL de la tabla IEM no devolvió un archivo XLSX válido")
-        workbook = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
-        try:
-            structured = _extract_wide_series(workbook.active, desde, hasta, max_rows)
-            if structured is None:
-                structured = _extract_long_table(workbook.active, desde, hasta, max_rows)
-            if structured is None:
-                structured = _extract_matrix_series(workbook.active, desde, hasta, max_rows)
-        finally:
-            workbook.close()
+        _check_xlsx_container_size(raw)
+
+        def _parse_xlsx() -> dict[str, Any] | None:
+            workbook = load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+            try:
+                found = _extract_wide_series(workbook.active, desde, hasta, max_rows)
+                if found is None:
+                    found = _extract_long_table(workbook.active, desde, hasta, max_rows)
+                if found is None:
+                    found = _extract_matrix_series(workbook.active, desde, hasta, max_rows)
+                return found
+            finally:
+                workbook.close()
+
+        structured = await asyncio.to_thread(_parse_xlsx)
 
     result = {
         "source": _SOURCE_NAME,

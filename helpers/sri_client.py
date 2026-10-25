@@ -40,7 +40,6 @@ from helpers.cache import TtlCache
 from helpers.logging import MAIN_LOGGER_NAME
 from helpers.text_utils import strip_accents as _strip
 from helpers.timeout_retry import SLOW_HOST_TIMEOUT, retry_on_timeout
-from helpers.tls import should_retry_insecure
 from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
@@ -99,13 +98,12 @@ def _parse_files(html: str) -> list[dict[str, str]]:
     return files
 
 
-async def _download_page(url: str, verify: bool = True) -> str:
+async def _download_page(url: str) -> str:
     async def attempt() -> str:
         async with httpx.AsyncClient(
             headers={"User-Agent": USER_AGENT},
             follow_redirects=True,
             timeout=SLOW_HOST_TIMEOUT,
-            verify=verify,
         ) as session:
             resp = await session.get(url)
             resp.raise_for_status()
@@ -127,20 +125,19 @@ async def _fetch_files() -> list[dict[str, str]]:
             return cached
 
         logger.info("Descargando la página de datasets del SRI")
-        try:
-            html = await _download_page(SRI_DATASETS_URL)
-        except httpx.ConnectError as exc:
-            if not should_retry_insecure(exc, SRI_DATASETS_URL):
-                raise
-            logger.warning(
-                "Falló la verificación TLS para %s; reintentando sin verificación",
-                SRI_DATASETS_URL,
-            )
-            html = await _download_page(SRI_DATASETS_URL, verify=False)
+        html = await _download_page(SRI_DATASETS_URL)
 
         files = _parse_files(html)
-        _files_cache.set("files", files)
-        logger.info("Página de datasets del SRI cargada: %d archivos", len(files))
+        # Don't pin an empty parse for 6h: it is indistinguishable from a
+        # maintenance page or a redesign that the next call would recover from.
+        if files:
+            _files_cache.set("files", files)
+            logger.info("Página de datasets del SRI cargada: %d archivos", len(files))
+        else:
+            logger.warning(
+                "La página de datasets del SRI no trae enlaces de archivos "
+                "(¿cambio de estructura?); no se guarda en caché."
+            )
         return files
 
 
@@ -208,23 +205,21 @@ async def _fetch_estadisticas_files() -> list[dict[str, str]]:
             return cached
 
         logger.info("Descargando la página de Estadísticas de Recaudación del SRI")
-        try:
-            html = await _download_page(SRI_ESTADISTICAS_URL)
-        except httpx.ConnectError as exc:
-            if not should_retry_insecure(exc, SRI_ESTADISTICAS_URL):
-                raise
-            logger.warning(
-                "Falló la verificación TLS para %s; reintentando sin verificación",
-                SRI_ESTADISTICAS_URL,
-            )
-            html = await _download_page(SRI_ESTADISTICAS_URL, verify=False)
+        html = await _download_page(SRI_ESTADISTICAS_URL)
 
         files = _parse_estadisticas_files(html)
-        _estadisticas_cache.set("files", files)
-        logger.info(
-            "Página de Estadísticas de Recaudación del SRI cargada: %d archivos",
-            len(files),
-        )
+        # Same rationale as _fetch_files: never cache an empty parse.
+        if files:
+            _estadisticas_cache.set("files", files)
+            logger.info(
+                "Página de Estadísticas de Recaudación del SRI cargada: %d archivos",
+                len(files),
+            )
+        else:
+            logger.warning(
+                "La página de Estadísticas de Recaudación del SRI no trae enlaces "
+                "de archivos (¿cambio de estructura?); no se guarda en caché."
+            )
         return files
 
 

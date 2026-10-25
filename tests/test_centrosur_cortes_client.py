@@ -157,3 +157,39 @@ async def test_empty_archive_is_not_cached(httpx_mock):
 
     second = await client._fetch_archivos()
     assert len(second) == 4
+
+
+def test_parse_item_unescapes_wordpress_rendered_title():
+    item = {
+        "title": {"rendered": "Cortes &#8211; 23 al 29 de septiembre &amp; octubre"},
+        "source_url": "https://www.centrosur.gob.ec/wp-content/uploads/2024/09/Cortes.pdf",
+        "date": "2024-09-22T18:58:21",
+    }
+
+    assert client._parse_item(item)["titulo"] == "Cortes – 23 al 29 de septiembre & octubre"
+
+
+async def test_concurrent_cache_misses_parse_pdf_once(monkeypatch):
+    import asyncio
+
+    from helpers import centrosur_cortes_client as client
+
+    client._horarios_cache.clear()
+    calls = {"download": 0, "parse": 0}
+
+    async def fake_download(url, max_bytes):
+        calls["download"] += 1
+        await asyncio.sleep(0.01)
+        return b"%PDF-fake", False
+
+    def fake_parse(raw):
+        calls["parse"] += 1
+        return {"filas": [], "paginas": 1}
+
+    monkeypatch.setattr(client, "download_bytes", fake_download)
+    monkeypatch.setattr(client, "parse_pdf", fake_parse)
+
+    await asyncio.gather(*(client._load_horarios("https://x/a.pdf") for _ in range(5)))
+
+    assert calls == {"download": 1, "parse": 1}
+    assert client._fill_locks == {}

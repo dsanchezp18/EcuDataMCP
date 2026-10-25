@@ -1,53 +1,42 @@
-from typing import Any, Literal
+import asyncio
+from typing import Literal
 
 import httpx
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.types import CallToolResult
 
 from helpers import ckan_client
 from helpers.csv_reader import (
     format_table,
-    preview_csv,
-    preview_json,
-    preview_ods,
-    preview_targz,
-    preview_xls,
-    preview_xlsb,
-    preview_xlsx,
-    preview_zip,
     sniff_content_type,
 )
 from helpers.format_out import render_structured
+from helpers.geo_proxy import proxy_for
 from helpers.logging import log_tool
+from helpers.preview_dispatch import PREVIEWABLE_KINDS, preview_by_kind
 from helpers.tool_meta import READ_ONLY
+from helpers.user_agent import USER_AGENT
 from tools.list_dataset_resources import detect_periodic_series
 from tools.preview_resource_data import (
     classify_from_content_type,
     classify_resource_format,
 )
 
-# Prefer previewing a resource whose format we can actually parse into a
-# table over one search ranks higher but we'd just bounce off (RAR/UNKNOWN).
-_PREVIEWABLE_KINDS = {"CSV", "JSON", "XLS", "XLSB", "XLSX", "ODS", "ZIP", "TARGZ"}
-
-_PREVIEW_DISPATCH = {
-    "TARGZ": preview_targz,
-    "ZIP": preview_zip,
-    "XLS": preview_xls,
-    "XLSB": preview_xlsb,
-    "XLSX": preview_xlsx,
-    "ODS": preview_ods,
-    "JSON": preview_json,
-    "CSV": preview_csv,
-}
+# Bounds for the Content-Type sniff pass over resources with no usable
+# format/extension (see the classification loop in investigate_dataset).
+_MAX_SNIFFED_RESOURCES = 25
+_SNIFF_CONCURRENCY = 5
 
 
-async def _classify(res: dict, session: httpx.AsyncClient) -> str:
+async def _classify(res: dict) -> str:
     url = res.get("url") or ""
     fmt = (res.get("format") or "").upper()
     kind = classify_resource_format(fmt, url)
     if kind == "UNKNOWN" and url:
-        content_type = await sniff_content_type(url, session=session)
+        # No shared session: sniff_content_type builds its own per URL, so
+        # the project User-Agent and the geo proxy (proxy_for) apply.
+        content_type = await sniff_content_type(url)
         kind = classify_from_content_type(content_type)
     return kind
 
@@ -68,7 +57,7 @@ def register_investigate_dataset_tool(mcp: MCPServer) -> None:
         source: ckan_client.CkanSource = "nacional",
         preview_rows: int = 10,
         format: Literal["text", "json"] = "text",
-    ) -> dict[str, Any]:
+    ) -> CallToolResult:
         """
         One-shot research shortcut: search for a dataset, list its resources,
         and preview the most promising one's actual data -- the
@@ -116,7 +105,12 @@ def register_investigate_dataset_tool(mcp: MCPServer) -> None:
         dataset_id = dataset_stub.get("id") or dataset_stub.get("name")
         site = ckan_client.site_url(source).rstrip("/")
 
-        session = httpx.AsyncClient()
+        # The shared session only serves CKAN metadata calls; resource files
+        # live on other hosts, so sniffing and previews build their own
+        # per-URL clients (User-Agent + geo proxy for that host).
+        session = httpx.AsyncClient(
+            headers={"User-Agent": USER_AGENT}, proxy=proxy_for(site)
+        )
         try:
             try:
                 dataset = await ckan_client.get_dataset(dataset_id, source=source, session=session)
@@ -150,13 +144,36 @@ def register_investigate_dataset_tool(mcp: MCPServer) -> None:
                 )
 
             chosen, kind = None, "UNKNOWN"
-            for res in resources:
-                if not res.get("id") or not res.get("url"):
-                    continue
-                candidate_kind = await _classify(res, session)
-                if candidate_kind in _PREVIEWABLE_KINDS:
+            candidates = [r for r in resources if r.get("id") and r.get("url")]
+            # Pass 1, no network: the first resource whose declared format or
+            # URL extension is previewable wins, in catalog order.
+            for res in candidates:
+                candidate_kind = classify_resource_format(
+                    (res.get("format") or "").upper(), res.get("url") or ""
+                )
+                if candidate_kind in PREVIEWABLE_KINDS:
                     chosen, kind = res, candidate_kind
                     break
+            if chosen is None:
+                # Pass 2: Content-Type sniffs for the unlabelled ones, a few at
+                # a time and only for the first _MAX_SNIFFED_RESOURCES -- a
+                # dataset with 150 mislabelled files used to mean 150 serial
+                # HEAD requests before anything was previewed.
+                sniff_slots = asyncio.Semaphore(_SNIFF_CONCURRENCY)
+
+                async def classify_bounded(res: dict) -> str:
+                    async with sniff_slots:
+                        try:
+                            return await _classify(res)
+                        except Exception:
+                            return "UNKNOWN"
+
+                sniffed = candidates[:_MAX_SNIFFED_RESOURCES]
+                kinds = await asyncio.gather(*(classify_bounded(r) for r in sniffed))
+                for res, candidate_kind in zip(sniffed, kinds, strict=True):
+                    if candidate_kind in PREVIEWABLE_KINDS:
+                        chosen, kind = res, candidate_kind
+                        break
 
             if chosen is None:
                 # Legitimate result: a fact about this dataset's resources,
@@ -180,9 +197,7 @@ def register_investigate_dataset_tool(mcp: MCPServer) -> None:
                 )
 
             try:
-                preview = await _PREVIEW_DISPATCH[kind](
-                    chosen["url"], max_rows=preview_rows, session=session
-                )
+                preview = await preview_by_kind(kind, chosen["url"], preview_rows)
             except (ValueError, httpx.HTTPError) as e:
                 raise ToolError(
                     f"Dataset encontrado: {base_payload['dataset']['title']} "

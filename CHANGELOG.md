@@ -2,56 +2,196 @@
 
 ## Unreleased
 
-- **International-series hardening**: `intl_http` retries connect/DNS/read errors
-  (not only timeouts) and names the source in the final error; the "try again in
-  N seconds" hint is honoured only on a 429; the IMF client maps an unknown flow
-  (404) and a rejected key (400) to clear errors; `sdmx_json` raises a clear error
-  on an inconsistent series key; UNHCR results carry `truncado` when the 10-page
-  cap cuts the data.
+- **Supercías ranking covers every published year (2008-2025)**:
+  `search_ranking` and `get_financials` used to see only the last five fiscal
+  years because the build deleted the rest of `bi_ranking.csv`. The build now
+  keeps all of it (388.5 MB DB instead of ~220 MB; `ECUADOR_MCP_SUPERCIAS_YEARS=N`
+  keeps only the last N years) and rejects a build with a year missing in the
+  middle. Both tools check the requested `anio` and answer with the available
+  years when it isn't loaded; `get_financials` gains `desde`/`hasta`. Older years
+  carry fewer columns (ratios from 2018, CIIU from 2009): sorting by a ratio or
+  filtering by CIIU in a year without them returns an error that says so, and
+  `search_ranking` adds a `notas` line. Companies without a financial statement
+  that year (NULL `posicion_general`, mostly 2008-2018) now sort last instead of
+  first and are flagged in `get_financials`. `metadatos.base_local` gains
+  `anios_disponibles` and `actualizacion_pendiente`. Schema version 3: a
+  version-2 DB keeps being served, flagged, while the full-history build runs.
 
-- **Fixes from a code review**:
-  - CSV/JSON previews no longer turn a whole file into mojibake when the 5 MB cap cuts a multibyte character (cp1252 is now tried before latin-1); European-decimal columns only convert cells that match the pattern; `__MACOSX` resource forks are skipped when picking an archive member.
-  - `read_pdf` page ranges are clamped to the document; `.xlsx`/`.ods` files that expand past 200 MB are rejected; corrupt `.tar.gz` and unsafe URLs in `download_resource`/content sniffing give a clean error.
-  - SSRF guard: CGNAT (`100.64.0.0/10`) and NAT64 targets are refused and DNS resolution no longer blocks the event loop; an empty `CKAN_INSECURE_TLS` no longer disables TLS verification; CKAN `groups`/`organization` filters are quoted.
-  - `list_risk_events` returns the newest events first (OBJECTID sorted numerically) and ArcGIS error bodies raise instead of caching an empty list; the BCE catalog snapshot is not cached when a bundle failed; SERCOP's default year uses Ecuador time; INEC category pagination tolerates a page past the end and sends a User-Agent.
-  - Tests: module-level asyncio locks are refreshed per test (they bound to the first event loop that contended them).
+## 0.13.0 — 2026-10-17
 
-- **`get_serie_internacional` gains five `fuente` values** (no new tools; the
-  tool count is unchanged): `comtrade` (UN Comtrade public preview: bilateral
-  trade in USD for one period per call, capped at 500 rows, 429 retried
-  automatically), `imf` (IMF SDMX: CPI, exchange rates, balance of payments,
-  fiscal and monetary flows; a short key such as `ECU` is a country prefix),
-  `who` (WHO Global Health Observatory indicators by sex), `ilo` (ILOSTAT labour
-  statistics; short keys are padded with wildcards) and `unhcr` (refugees and
-  asylum seekers hosted in Ecuador, by year and origin). All keyless and
-  Ecuador by default; `wdi`, `irena` and `xm` are unchanged. `imf`/`ilo`/`who`
-  list their flows or indicators when `indicador` is empty. New clients
-  `helpers/{comtrade,imf,who,ilo,unhcr}_client.py` plus `helpers/intl_http.py`
-  (429/5xx retry) and `helpers/sdmx_json.py`.
+No new tools (83 in the default profile): new data behind existing selectors
+(five international sources, the Consejo de la Judicatura dashboards) and a
+hardening pass from a full code review and the live smoke run.
+
+- **`get_serie_internacional` gains five `fuente` values**: `comtrade` (UN
+  Comtrade public preview: bilateral trade in USD for one period per call,
+  capped at 500 rows, 429 retried automatically), `imf` (IMF SDMX: CPI,
+  exchange rates, balance of payments, fiscal and monetary flows; a short key
+  such as `ECU` is a country prefix), `who` (WHO Global Health Observatory
+  indicators by sex), `ilo` (ILOSTAT labour statistics; short keys are padded
+  with wildcards) and `unhcr` (refugees and asylum seekers hosted in Ecuador,
+  by year and origin). All keyless and Ecuador by default; `wdi`, `irena` and
+  `xm` are unchanged. `imf`/`ilo`/`who` list their flows or indicators when
+  `indicador` is empty. New clients `helpers/{comtrade,imf,who,ilo,unhcr}_client.py`
+  plus `helpers/intl_http.py` (429/5xx retry) and `helpers/sdmx_json.py`.
+  Hardening after the first cut: `intl_http` retries connect/DNS/read errors
+  (not only timeouts), names the source in the final error, honours a
+  `Retry-After` hint (seconds or HTTP-date) only on a 429; the IMF client maps
+  an unknown flow (404) and a rejected key (400) to clear errors; `sdmx_json`
+  raises on an inconsistent series key or an observation outside the period
+  list; WDI pages through multi-page answers; UNHCR results carry `truncado`
+  when the 10-page cap cuts the data.
 
 - **Consejo de la Judicatura — Estadística Judicial** (`fuente="judicatura"` in
-  `list_catalogo`, `get_sut_indicador_schema` and `query_sut_indicador`; no new
-  tools): ten live Power BI dashboards of the Portal de Estadística Judicial
-  (audiencias, boletas, capacitaciones, destituciones, escritos, mediación,
-  notarial, productividad de jueces, remates judiciales, SUPA) through the SUT
-  Power BI client. Each indicator can now carry its own Power BI cluster
-  (`base`), schema discovery reads `Aggregation` fields (`[suma]`/`[promedio]`)
-  and falls back to scanning the report layout for newer report formats, and
-  one-column query results decode correctly. `medidasdeproteccion` (key does not
-  resolve) and `causas` (empty page) are not included. `fuente` defaults to
-  `sut`, so existing calls are unchanged.
+  `list_catalogo`, `get_sut_indicador_schema` and `query_sut_indicador`): ten
+  live Power BI dashboards of the Portal de Estadística Judicial (audiencias,
+  boletas, capacitaciones, destituciones, escritos, mediación, notarial,
+  productividad de jueces, remates judiciales, SUPA) through the SUT Power BI
+  client. Each indicator can carry its own Power BI cluster (`base`), schema
+  discovery reads `Aggregation` fields (`[suma]`/`[promedio]`) and falls back
+  to scanning the report layout for newer report formats, and one-column
+  results decode correctly. `medidasdeproteccion` (key does not resolve) and
+  `causas` (empty page) are not included. `fuente` defaults to `sut`, so
+  existing calls are unchanged. `query_sut_indicador` also escapes `'` as `''`
+  in the Power BI literal, clamps `limite` to 20000, reports `limite`/`truncado`,
+  and raises on a Power BI error body instead of returning zero rows.
 
-- **Docs and site fixes** (no behaviour change for callers): `docs/TOOLS.md` now
-  states the real count (83 public tools, plus the 2 maintenance tools) and lists
+- **Previews and downloads** (`csv_reader` and the tools on top of it):
+  - European decimals: a column of `1,234`-style cells is no longer read as
+    European notation (that is a US thousands group, and the conversion shrank
+    values 1000x). A column needs one unambiguous cell such as `7.760,2` or
+    `168,15`; once it qualifies, only cells matching the pattern are converted,
+    `1.000`-style whole numbers included.
+  - Spreadsheet and PDF parsers (openpyxl, xlrd, pyxlsb, odfpy, pypdf, and the
+    Centrosur/EEQ outage PDFs) run in a worker thread under a 60 s bound
+    (`csv_reader.run_parser_off_loop`), and the SSRF guard's DNS resolution is
+    off the event loop too, so a huge or malformed file no longer stalls every
+    other request. The outage-PDF parsers cap at 200 pages and turn pypdf
+    errors into a clear message; Centrosur extracts each page once and an
+    unlabelled page inherits the nearest preceding schedule.
+  - `.xlsx`, `.ods` and `.xlsb` files that would expand past 200 MB are
+    rejected; `read_pdf` page ranges are clamped to the document; CSV/JSON
+    previews no longer turn into mojibake when the 5 MB cap cuts a multibyte
+    character (cp1252 is tried before latin-1); `__MACOSX` resource forks are
+    skipped when picking an archive member.
+  - `download_bytes` treats `Content-Length` as advisory (an overstated or
+    malformed header no longer makes `download_resource` refuse a fully
+    received file); a truncated `.xls`, a corrupt `.tar.gz` and an unsafe URL
+    give the same actionable error as the other formats; `list_zip_contents`
+    ends cleanly on a short central directory and its ranged requests honour
+    `ECUADOR_MCP_GEO_PROXY`.
+  - `preview_resource_data` classifies on the URL path (a `?token=` query no
+    longer hides the extension); `download_resource` with `format="text"` no
+    longer attaches the base64 file to the structured payload.
+  - `investigate_dataset` picks the first resource whose format or extension
+    is previewable without any network call and sniffs Content-Type only for
+    the unlabelled ones, at most 25 and five at a time (150 mislabelled files
+    used to mean 150 serial HEAD requests). It and `detect_series_pattern` let
+    `download_bytes` own the download session, so the project User-Agent and
+    the geo proxy apply to the file host.
+
+- **Security and privacy**:
+  - `log_tool` logs only parameter names at INFO (values moved to DEBUG), so
+    RUCs, cédulas and free-text queries stay out of hosted logs; `LOG_LEVEL`
+    governs Uvicorn's loggers too.
+  - The per-client rate limit drops idle client keys; behind a reverse proxy,
+    set `FORWARDED_ALLOW_IPS` (Uvicorn's own variable) so clients get separate
+    quotas (see docs/DEPLOYMENT.md).
+  - SSRF guard: CGNAT (`100.64.0.0/10`) and NAT64 targets are refused, and a
+    rejection answers with a generic message instead of the resolved private
+    IP. An empty `CKAN_INSECURE_TLS` no longer disables TLS verification; the
+    unreachable `verify=False` fallbacks in the SRI and IESS certificate
+    clients are removed; CKAN `groups`/`organization` filters are quoted.
+  - `get_aviso_aeronautico`/`get_aip_aerodromo` refuse an ICAO designator
+    that is not exactly four letters or digits before building any URL;
+    `list_sat_tsunami` caps its `limit`; `ECUADOR_MCP_DATA_DIR` is resolved to
+    an absolute path; an empty `*_API_URL` override falls back to the default.
+
+- **BCE**:
+  - `get_bce_iem_table`: a data row such as `Banano | 1500 | 2300` can no
+    longer be mistaken for the period header (years are bounded to 1900..next
+    year and only text, date or integer cells count); a sheet without a real
+    period header falls back to the layout preview.
+  - When the "Últimas publicaciones" page or the historical archive cannot be
+    read, `get_bce_iem_table`/`search_bce_iem` serve the bulletin list without
+    caching it for 24 h and report `fuentes_fallidas`; `search_indicadores_bce`
+    (índices), cuentas nacionales and precios/comercio exterior likewise report
+    `paginas_fallidas`, and the catalog snapshot is never cached after a failed
+    bundle.
+  - `get_bce_indicador_diario` flags `truncado`/`observaciones_en_rango` when a
+    date window is cut to 366 rows and rejects dates that are not `YYYY-MM-DD`.
+
+- **Honest results instead of empty successes**: scrapes that find no
+  sentinel structure (Contraloría, ARCSA, INEVAL, EEQ, SRI, CENACE) raise or
+  skip caching; ANDA raises when the CSRF token is missing instead of
+  reporting "no microdata"; ArcGIS error bodies raise instead of caching an
+  empty list and `list_risk_events` returns the newest events first;
+  `list_instituciones`/`search_regulaciones` report `hay_mas` when the page
+  cap was reached; `get_cepalstat_indicador` raises on an ambiguous partial
+  country name; `search_ecuador` gives each source a 20 s deadline; ten tools
+  that caught only `ValueError` now wrap transport errors in the same Spanish
+  `ToolError` as the rest. Also: HTML entities are unescaped in Centrosur,
+  CENACE and Energía Ecuador titles; SERCOP and IG-EPN default the year in
+  Ecuador time; INEC sessions send the project User-Agent and category
+  pagination tolerates a page past the end; `find_cantones`/`find_parroquias`
+  match an all-digit filter against the zero-padded code (so `"1"` is Azuay,
+  not every province containing a 1) and two blank rows left
+  `parroquias_urbanas.json`; `ecuador://fuentes` lists only the tools
+  registered in the running profile.
+
+- **Smoke-run follow-ups**: `get_regulacion_info`/`get_institucion_info`
+  accept gob.ec's one-element list answer for a single id again (the stricter
+  lookup had turned regulation 5051 into "not found"); `list_catalogo` for
+  `bce_diarios` no longer crashes on an indicator row without a date; the
+  smoke classifier treats a 5xx as "known degradation" only for the listed
+  hosts and a Supercías connect timeout (both hosts drop datacenter
+  connections) as a known geo-block instead of a failure.
+
+- **Supercías financials build**: retries the final `os.replace` for up to
+  ten seconds when a Windows reader holds the database open instead of
+  discarding the build; caps each export file at 1 GB, checks for 2 GB of free
+  space first and removes partial CSVs on failure. `sgr` event locks and
+  `bce_client` revision observations are bounded.
+
+- **Server and packaging**: every tool is annotated `-> CallToolResult`, so
+  tools/list no longer advertises an empty `{"type": "object"}` output schema
+  (structured content unchanged); the compose healthcheck follows
+  `MCP_SSL_CERTFILE`; the Docker image pins `uv`; the standalone scripts import
+  `helpers` from any working directory; Python 3.14 added to the classifiers;
+  `.mcpbignore` drops `web/`, `glama.json`, `server.json`, `.env.example` and
+  `quality_reports/` from the MCPB bundle; tests refresh module-level asyncio
+  locks per test.
+
+- **CI**: every workflow declares `permissions: contents: read` at the top
+  (publishing jobs keep their own `id-token`/`contents: write`); third-party
+  actions are pinned to commit SHAs (Dependabot keeps them current); the
+  `pypi` and `mcp-registry` jobs run only on a published release, so
+  `workflow_dispatch` builds and tests without publishing; `mcp-publisher` and
+  `@anthropic-ai/mcpb` are pinned and the `mcp-publisher` tarball is checked
+  against its release SHA-256; the smoke test's geo tunnel fails with a clear
+  message unless `GEO_SSH_KNOWN_HOSTS` is set and always uses
+  `StrictHostKeyChecking=yes`.
+
+- **Docs**: README's compose instructions set `MCP_AUTH_TOKEN` (or copy
+  `.env.example`) first, since `docker-compose.yml` defaults to
+  `MCP_REQUIRE_AUTH=1` and an empty token crash-looped the container;
+  docs/DEPLOYMENT.md gains the canonical environment-variable table covering
+  everything the code reads, README links to it and `.env.example` lists the
+  same variables; CONTRIBUTING.md carries the project scope, layout, commands,
+  conventions and release steps (docs/ROADMAP.md and docs/RESEARCH.md cite it
+  instead of the gitignored AGENTS.md); `docs/TOOLS.md` states the real count
+  (83 public tools plus 2 maintenance tools) and lists
   `get_certificado_cumplimiento_patronal`; the server instructions mention the
-  `explorar_tema` prompt; the SRI RUC tool argument docs are in English. Site:
-  Spanish copy uses the masculine "tool" and Spanish number formatting, English
-  copy uses American spelling and translated institution names; Google Fonts load
-  through `<link>` (no render-blocking `@import`); canonical, hreflang and
-  `og:url` tags; skip link, labelled search input and visible search focus ring;
-  smooth scrolling respects `prefers-reduced-motion`; the sitemap no longer
-  carries a build-time `<lastmod>`; `web/README.md` describes the real Pages
-  setup (`gh-pages` branch) and CSS sources.
+  `explorar_tema` prompt; the SRI RUC tool argument docs are in English.
+
+- **Site**: the Atlas renders with Jinja2 autoescape on; Spanish copy uses the
+  masculine "tool" and Spanish number formatting, English copy American
+  spelling and translated institution names; Google Fonts load through
+  `<link>`; canonical, hreflang and `og:url` tags; skip link, labelled search
+  input and visible search focus ring; smooth scrolling respects
+  `prefers-reduced-motion`; the sitemap no longer carries a build-time
+  `<lastmod>`; `web/README.md` describes the real Pages setup (`gh-pages`
+  branch) and CSS sources.
 
 ## 0.12.0 — 2026-10-10
 

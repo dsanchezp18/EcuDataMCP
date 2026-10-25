@@ -1,3 +1,4 @@
+
 import pytest
 
 from helpers import sgr_publicaciones_client as client
@@ -274,3 +275,41 @@ async def test_empty_biblioteca_scrape_is_not_cached(httpx_mock):
 
     second = await client.list_biblioteca_categorias()
     assert second["total"] == 2
+
+
+@pytest.mark.asyncio
+async def test_event_locks_stay_bounded_under_real_fetch(httpx_mock):
+    client._event_locks.clear()
+    for i in range(500):
+        client._event_lock_for(f"https://www.gestionderiesgos.gob.ec/evento-{i}/")
+    evento_url = "https://www.gestionderiesgos.gob.ec/algun-evento/"
+    httpx_mock.add_response(url=evento_url, html=_SITREP_EVENT_HTML)
+
+    try:
+        result = await client.get_sitrep_archivos(evento_url)
+        assert result["total"] == 3
+        assert len(client._event_locks) <= client._EVENT_LOCK_POOL_SIZE
+    finally:
+        client._event_locks.clear()
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "javascript:alert(1)",
+        "https://evil.com/?https://gestionderiesgos.gob.ec/",
+        "https://user@gestionderiesgos.gob.ec/x/",
+        "ftp://gestionderiesgos.gob.ec/x/",
+        "algo cualquiera",
+    ],
+)
+async def test_get_sitrep_archivos_rejects_arbitrary_input(bad):
+    with pytest.raises(ValueError):
+        await client.get_sitrep_archivos(bad)
+
+
+def test_event_lock_pool_is_bounded():
+    client._event_locks.clear()
+    for i in range(500):
+        client._event_lock_for(f"https://gestionderiesgos.gob.ec/e{i}/")
+    assert len(client._event_locks) <= client._EVENT_LOCK_POOL_SIZE

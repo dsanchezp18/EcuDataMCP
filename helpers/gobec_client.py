@@ -4,6 +4,7 @@ import logging
 import re
 from html import unescape
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -172,12 +173,20 @@ async def list_instituciones(
     return []
 
 
+_MAX_PAGINAS_INSTITUCIONES = 3  # ~1500 institutions
+
+
 async def find_institucion(
     query: str, session: httpx.AsyncClient | None = None
-) -> list[dict[str, Any]]:
+) -> dict[str, Any]:
     """
-    Find institutions matching a query by searching through all pages.
-    Searches in name, siglas (acronym), and description.
+    Find institutions matching a query by searching through the first
+    pages of the listing. Searches in name, siglas (acronym), and
+    description.
+
+    Returns {"resultados": [...], "paginas_leidas": n, "hay_mas": bool};
+    `hay_mas` is True when the page cap was reached with every page still
+    full, i.e. unread pages may hold more matches.
     """
     own = session is None
     if own:
@@ -191,34 +200,63 @@ async def find_institucion(
     try:
         query_lower = _strip(query).lower()
         matches: list[dict[str, Any]] = []
-        for page in range(3):  # Max 3 pages (~1500 institutions)
+        paginas_leidas = 0
+        for page in range(_MAX_PAGINAS_INSTITUCIONES):
             items = await list_instituciones(page=page, session=session)
             if not items:
                 break
+            paginas_leidas += 1
             for inst in items:
                 name = _strip(inst.get("institucion", "")).lower()
                 siglas = _strip(inst.get("siglas", "")).lower()
                 desc = _strip(inst.get("descripcion", "")).lower()
                 if query_lower in name or query_lower in siglas or query_lower in desc:
                     matches.append(inst)
-        return matches
+        else:
+            # Never saw an empty page: the listing may continue past the cap.
+            hay_mas = True
+            return {"resultados": matches, "paginas_leidas": paginas_leidas, "hay_mas": hay_mas}
+        return {"resultados": matches, "paginas_leidas": paginas_leidas, "hay_mas": False}
     finally:
         if own:
             await session.aclose()
+
+
+def _single_record(result: Any, id_key: str, wanted_id: str) -> dict[str, Any] | None:
+    """One gob.ec record for `wanted_id`, or None.
+
+    gob.ec answers /<coleccion>/{id} either with the record itself or with a
+    one-element list holding it (confirmed live 2026-10-17 for
+    /regulaciones/5051). A list whose records do not carry `wanted_id` is
+    the collection endpoint answering an unknown id: not found, never
+    result[0].
+    """
+    if isinstance(result, dict):
+        return result
+    if isinstance(result, list):
+        matches = [
+            item
+            for item in result
+            if isinstance(item, dict) and str(item.get(id_key, "")) == wanted_id
+        ]
+        if len(matches) == 1:
+            return matches[0]
+    return None
 
 
 async def get_institucion(
     institucion_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any] | None:
     """Get details of a specific public institution."""
+    institucion_id = str(institucion_id).strip()
+    if not institucion_id.isascii() or not institucion_id.isdigit():
+        raise ValueError(
+            f"El ID de institución debe ser numérico (ej. '8'); se recibió '{institucion_id}'."
+        )
     result = await _fetch_json(
-        _gobec_url(f"instituciones/{institucion_id}"), session=session
+        _gobec_url(f"instituciones/{quote(institucion_id, safe='')}"), session=session
     )
-    if isinstance(result, list) and result:
-        return result[0]
-    if isinstance(result, dict):
-        return result
-    return None
+    return _single_record(result, "institucion_id", institucion_id)
 
 
 async def list_regulaciones(
@@ -238,25 +276,34 @@ async def get_regulacion(
     regulacion_id: str, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any] | None:
     """Get details of a specific regulation."""
+    regulacion_id = str(regulacion_id).strip()
+    if not regulacion_id.isascii() or not regulacion_id.isdigit():
+        raise ValueError(
+            f"El ID de regulación debe ser numérico (ej. '8'); se recibió '{regulacion_id}'."
+        )
     result = await _fetch_json(
-        _gobec_url(f"regulaciones/{regulacion_id}"), session=session
+        _gobec_url(f"regulaciones/{quote(regulacion_id, safe='')}"), session=session
     )
-    if isinstance(result, list) and result:
-        return result[0]
-    if isinstance(result, dict):
-        return result
-    return None
+    # gob.ec answers /regulaciones/{id} with a one-element list (confirmed
+    # live 2026-10-17 for id 5051), so a list is only "not found" when none
+    # of its records carries the requested id (the collection endpoint).
+    return _single_record(result, "regulacion_id", regulacion_id)
 
 
 async def find_regulaciones(
     query: str,
     max_pages: int = 5,
     session: httpx.AsyncClient | None = None,
-) -> list[dict[str, Any]]:
-    """Client-side search across regulation pages (gob.ec has no search param)."""
+) -> dict[str, Any]:
+    """Client-side search across regulation pages (gob.ec has no search param).
+
+    Returns {"resultados": [...], "paginas_leidas": n, "hay_mas": bool};
+    `hay_mas` is True when `max_pages` was reached with every page still
+    full, i.e. unread pages may hold more matches.
+    """
     words = [_strip(w) for w in query.split() if len(w) >= 2]
     if not words:
-        return []
+        return {"resultados": [], "paginas_leidas": 0, "hay_mas": False}
 
     own = session is None
     if own:
@@ -269,10 +316,12 @@ async def find_regulaciones(
     assert session is not None
     try:
         matches: list[dict[str, Any]] = []
+        paginas_leidas = 0
         for page in range(max(max_pages, 1)):
             items = await list_regulaciones(page=page, session=session)
             if not items:
                 break
+            paginas_leidas += 1
             for reg in items:
                 blob = _strip(
                     f"{reg.get('regulacion', '')} {reg.get('descripcion', '')} "
@@ -281,7 +330,10 @@ async def find_regulaciones(
                 )
                 if all(w in blob for w in words):
                     matches.append(reg)
-        return matches
+        else:
+            # Never saw an empty page: the listing may continue past the cap.
+            return {"resultados": matches, "paginas_leidas": paginas_leidas, "hay_mas": True}
+        return {"resultados": matches, "paginas_leidas": paginas_leidas, "hay_mas": False}
     finally:
         if own:
             await session.aclose()

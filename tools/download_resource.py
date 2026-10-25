@@ -1,9 +1,10 @@
 import base64
-from typing import Any, Literal
+from typing import Literal
 
 import httpx
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.types import CallToolResult
 
 from helpers import ckan_client
 from helpers.csv_reader import MAX_DOWNLOAD_BYTES, download_bytes
@@ -27,7 +28,7 @@ def register_download_resource_tool(mcp: MCPServer) -> None:
         resource_id: str,
         source: ckan_client.CkanSource = "nacional",
         format: Literal["text", "json"] = "text",
-    ) -> dict[str, Any]:
+    ) -> CallToolResult:
         """
         Download a resource's raw bytes from Ecuador's open data portal, base64-encoded.
 
@@ -95,5 +96,11 @@ def register_download_resource_tool(mcp: MCPServer) -> None:
                 'Usa format="json" para obtener el contenido en content_base64 '
                 "(decodifícalo en base64 para reconstruir el archivo original)."
             )
+
+        # The docstring promises text mode never carries the file: the
+        # structured payload goes to the client too, so strip the base64
+        # there as well, not only from the text block.
+        if format != "json":
+            payload = {k: v for k, v in payload.items() if k != "content_base64"}
 
         return render_structured(payload, format, text_builder=to_text)

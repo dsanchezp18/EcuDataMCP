@@ -5,6 +5,8 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 import tools.preview_resource_data as preview_resource_data_module
 from helpers import ckan_client
+from helpers.preview_dispatch import PREVIEW_DISPATCH
+from helpers.safe_download import UnsafeUrlError
 from tools.preview_resource_data import (
     classify_from_content_type,
     classify_resource_format,
@@ -50,6 +52,13 @@ def test_classify_falls_back_to_declared_format_without_recognizable_extension()
 
 def test_classify_zip_by_extension_even_if_declared_csv():
     assert classify_resource_format("CSV", "https://x/archivo.zip") == "ZIP"
+
+
+def test_classify_ignores_query_string_and_fragment():
+    # Only the path carries the extension; `.zip?token=x` used to miss.
+    assert classify_resource_format("CSV", "https://x/archivo.zip?token=x") == "ZIP"
+    assert classify_resource_format("", "https://x/datos.xlsx?download=1#hoja") == "XLSX"
+    assert classify_resource_format("CSV", "https://x/d?file=archivo.zip") == "CSV"
 
 
 def test_classify_plain_csv():
@@ -144,8 +153,8 @@ async def test_sri_tar_gz_declared_csv_is_routed_to_targz_parser(monkeypatch):
         raise AssertionError("preview_csv should not be called for a .tar.gz resource")
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(preview_resource_data_module, "preview_targz", fake_preview_targz)
-    monkeypatch.setattr(preview_resource_data_module, "preview_csv", fail_preview_csv)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "TARGZ", fake_preview_targz)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fail_preview_csv)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -179,8 +188,8 @@ async def test_zip_declared_csv_is_routed_to_zip_parser(monkeypatch):
         raise AssertionError("preview_csv should not be called for a .zip resource")
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(preview_resource_data_module, "preview_zip", fake_preview_zip)
-    monkeypatch.setattr(preview_resource_data_module, "preview_csv", fail_preview_csv)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "ZIP", fake_preview_zip)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fail_preview_csv)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -212,8 +221,8 @@ async def test_mpceip_xlsx_declared_csv_is_routed_to_xlsx_parser(monkeypatch):
         raise AssertionError("preview_csv should not be called for a .xlsx resource")
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(preview_resource_data_module, "preview_xlsx", fake_preview_xlsx)
-    monkeypatch.setattr(preview_resource_data_module, "preview_csv", fail_preview_csv)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "XLSX", fake_preview_xlsx)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fail_preview_csv)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -254,8 +263,8 @@ async def test_xls_is_routed_to_xls_parser(monkeypatch):
         raise AssertionError("preview_csv should not be called for a .xls resource")
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(preview_resource_data_module, "preview_xls", fake_preview_xls)
-    monkeypatch.setattr(preview_resource_data_module, "preview_csv", fail_preview_csv)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "XLS", fake_preview_xls)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fail_preview_csv)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -287,8 +296,8 @@ async def test_xlsb_is_routed_to_xlsb_parser(monkeypatch):
         raise AssertionError("preview_csv should not be called for a .xlsb resource")
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(preview_resource_data_module, "preview_xlsb", fake_preview_xlsb)
-    monkeypatch.setattr(preview_resource_data_module, "preview_csv", fail_preview_csv)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "XLSB", fake_preview_xlsb)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fail_preview_csv)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -316,8 +325,8 @@ async def test_ods_is_routed_to_ods_parser(monkeypatch):
         raise AssertionError("preview_csv should not be called for a .ods resource")
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(preview_resource_data_module, "preview_ods", fake_preview_ods)
-    monkeypatch.setattr(preview_resource_data_module, "preview_csv", fail_preview_csv)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "ODS", fake_preview_ods)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fail_preview_csv)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -379,7 +388,7 @@ async def test_extensionless_resource_is_routed_via_sniffed_content_type(monkeyp
     monkeypatch.setattr(
         preview_resource_data_module, "sniff_content_type", fake_sniff_content_type
     )
-    monkeypatch.setattr(preview_resource_data_module, "preview_csv", fake_preview_csv)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fake_preview_csv)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -409,3 +418,26 @@ async def test_extensionless_resource_falls_back_when_sniff_is_inconclusive(monk
     result = await tool(resource_id="abc123", format="json")
     payload = result.structured_content
     assert payload["error"] == "formato_no_soportado"
+
+
+async def test_unsafe_url_error_hides_resolved_ip_from_client(monkeypatch):
+    # The SSRF guard's own message names the private IP the host resolved
+    # to; that belongs in the server log, not in the tool error.
+    async def fake_get_resource(resource_id, source="nacional", session=None):
+        return {"url": "https://interno.example/datos.csv", "format": "CSV", "name": "x"}
+
+    async def fake_preview_csv(url, max_rows=20, session=None):
+        raise UnsafeUrlError(
+            "El host 'interno.example' resuelve a una IP no pública (10.0.0.7); "
+            "descarga rechazada"
+        )
+
+    monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
+    monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fake_preview_csv)
+
+    tool = _make_tool()
+    with pytest.raises(ToolError) as excinfo:
+        await tool(resource_id="abc123", format="json")
+
+    assert str(excinfo.value) == "URL rechazada por seguridad: el destino no es público"
+    assert "10.0.0.7" not in str(excinfo.value)

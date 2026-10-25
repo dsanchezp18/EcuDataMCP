@@ -1,10 +1,11 @@
-from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.types import CallToolResult
 
 from helpers import sercop_client
+from helpers.ecuador_time import today_ecuador
 from helpers.format_out import render_structured
 from helpers.logging import log_tool
 from helpers.sercop_client import SercopRateLimitError
@@ -28,7 +29,7 @@ def register_search_contratos_tool(mcp: MCPServer) -> None:
         buyer: str = "",
         supplier: str = "",
         format: Literal["text", "json"] = "text",
-    ) -> dict[str, Any]:
+    ) -> CallToolResult:
         """
         Search Ecuador public procurement procedures (SERCOP / OCDS open data).
 
@@ -54,7 +55,7 @@ def register_search_contratos_tool(mcp: MCPServer) -> None:
 
         page = max(page, 1)
         pinned_year = year > 0
-        year_arg = year if pinned_year else datetime.now(UTC).year
+        year_arg = year if pinned_year else today_ecuador().year
         fallback = 0 if pinned_year else 2
 
         try:

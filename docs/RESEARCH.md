@@ -72,9 +72,11 @@ fricción (sin registro, sin captcha).
 Hecho: directorio de compañías (`search_companias`/`get_compania_info`,
 226k+ compañías, actualizado a diario, parseado desde el export Excel
 estático del portal), ranking financiero (`search_ranking`/`get_financials`,
-~38 ratios financieros por compañía y año fiscal, sobre un SQLite local
-construido de antemano con `scripts/build_supercias_financials_db.py`) y
-registro de auditores externos (`search_auditores`/`get_auditor_info`).
+~38 ratios financieros por compañía y año fiscal, años fiscales 2008-2025 sin
+huecos, ratios desde 2018, sobre un SQLite local construido en segundo plano
+por `helpers/supercias_financials_build.py`; ver § Supercías — cobertura por
+año del Ranking de Compañías) y registro de auditores externos
+(`search_auditores`/`get_auditor_info`).
 
 ### Instituto Geofísico (IG-EPN)
 
@@ -1028,7 +1030,7 @@ fecha, segunda pasada) tras pedido explícito de Daniel: Observatorio
 Legislativo, Observatorio de los GADs, Observatorio de Gasto Público "y
 otros observatorios de la misma organización/fundación".
 
-**Nota de alcance:** este proyecto se describe (AGENTS.md) como datos *del
+**Nota de alcance:** este proyecto se describe (CONTRIBUTING.md) como datos *del
 gobierno* ecuatoriano vía CKAN/gob.ec/SRI/BCE/etc. — estas fuentes son de
 una fundación de sociedad civil, no del Estado. Investigado igual porque se
 pidió explícitamente, pero decidir si integrarlas es una decisión de
@@ -1249,7 +1251,7 @@ Anticorrupción tienen mecanismos reales pero rotos o de difícil extracción
 datasets tabulares — ahí sí se sostiene la conclusión original. Cuentas
 Claras necesita atención de seguridad antes de cualquier otra cosa. Sigue
 pendiente la decisión de alcance: son fuentes de sociedad civil, no de
-gobierno, así que integrarlas implica ampliar lo que AGENTS.md define como
+gobierno, así que integrarlas implica ampliar lo que CONTRIBUTING.md define como
 el alcance del proyecto — pero técnicamente, a diferencia de lo que se
 pensó inicialmente, sí hay con qué construir tools reales aquí.
 
@@ -3435,7 +3437,7 @@ boletín No. 1975 (`IEM-316b/312b/315a/322a.xls`) resultaban en `ValueError`
 porque son en realidad XLSX modernos (contenedor ZIP OOXML) con extensión
 `.xls` heredada; `xlrd.open_workbook` fallaba directo. Corregido con
 sniffing de bytes (`raw.startswith(b"PK")`) en vez de confiar en la
-extensión, igual que la regla ya documentada en `AGENTS.md` para el campo
+extensión, igual que la regla ya documentada en `CONTRIBUTING.md` para el campo
 `format` de CKAN — ver `_open_legacy_zip_member` en
 `helpers/bce_iem_client.py`. Tras la corrección, cero errores en los 4
 boletines muestreados; los 4-7 `vista` restantes por boletín son tablas
@@ -4076,8 +4078,14 @@ sanitario de ARCSA). De las cinco:
 - **SNIESE** — sin dataset masivo propio (es un registro interno). El
   contenido real es `educacion.gob.ec/edusuperior/biblioteca/` (1,259
   documentos WordPress `download-monitor`, ya documentado en la sección
-  SENESCYT/MINEDEC de este archivo) — reachable pero nunca construido
-  como tool; queda pendiente.
+  SENESCYT/MINEDEC de este archivo). *Actualización 2026-10-21:* la
+  Biblioteca se construyó días después como
+  `list_archivo_secciones`/`get_archivo_seccion(fuente="senescyt")`, y lo
+  que SNIESE publica como datos es el dataset CKAN
+  `base-de-datos-de-oferta-academica-de-ies` (organización SENESCYT). Una
+  búsqueda CKAN por "SNIESE" daba 0 resultados porque el nombre no aparece
+  en los metadatos; `helpers/acronyms.py` ahora expande "sniese" a los
+  términos de ese dataset.
 - **CEAACES/CES cierre y contingencia** — resuelto a
   `ces.gob.ec/lotaip/AAAA/Mes/...` (resoluciones RPC-SO-XX-No.XXX,
   patrón LOTAIP-por-categoría-legal ya visto en IESS/Contraloría); queda
@@ -4118,12 +4126,19 @@ removieron `helpers/sri_saiku_client.py`, los tres tools
 (`list_sri_saiku_cubes`, `describe_sri_saiku_cube`,
 `query_sri_saiku_aggregate`), su registro en `tools/__init__.py`, sus
 menciones en `resources/catalog.py`/`tools/list_capabilities.py`/
-`docs/TOOLS.md`, y se actualizó el conteo de tools (103→100) en
-`AGENTS.md` y `docs/MCP_ARCHITECTURE.md` (con nota fechada en vez de
-reescribir los conteos históricos de esa página). Si el dominio vuelve a
+`docs/TOOLS.md`, y se actualizó el conteo de tools (103→100 en el perfil
+público; 105→102 si se cuentan las 2 de mantenimiento) en
+`docs/MCP_ARCHITECTURE.md` (con nota fechada en vez de reescribir los
+conteos históricos de esa página — el mismo estilo que usa esa página
+para todo el historial). Si el dominio vuelve a
 responder más adelante, reconstruir desde este mismo punto — la lógica de
 sesión anónima/discovery/query ya estaba resuelta, el bloqueo es
 puramente de alcanzabilidad de red.
+
+**Nota (2026-10-18):** el dominio volvió a responder. La re-verificación en
+vivo de hoy —incluida la razón por la que el cliente removido no habría
+funcionado aunque hubiera red— está en § SRI Saiku re-verificado, más abajo,
+que cierra con la decisión de **no** reconstruir las tools.
 
 ## Decimonovena pasada — CNE reevaluado, WAF caracterizado a fondo (2026-09-06)
 
@@ -4203,7 +4218,7 @@ enlace de descarga final, no solo el HTML de listado — confirmado que
 un navegador real ejecutando JS (Playwright o similar) no hay forma de
 obtener las cookies de sesión que el WAF exige, y este proyecto no tiene
 esa dependencia en ningún otro helper (todos usan `httpx`, ver
-`AGENTS.md`). Agregar Playwright solo para CNE es una dependencia pesada
+`CONTRIBUTING.md`). Agregar Playwright solo para CNE es una dependencia pesada
 y nueva para el proyecto — decisión pendiente de Daniel antes de
 construir `helpers/cne_client.py`. Si se decide seguir, la estructura de
 datos (procesos electorales 2002-2025 × subcategorías × archivos WPDM) y
@@ -6295,6 +6310,215 @@ Se cierra el pendiente "Consejo de la Judicatura — Portal de Estadística Judi
 - Códigos de `Aggregation.Function` vistos: 0 (suma) y 1 (promedio) se exponen;
   3 y 5 aparecen sobre fechas/texto (`Corte`, `Entidad`) y se dejan como columna
   plana.
+
+## SRI Saiku re-verificado en vivo — el servicio responde otra vez (2026-10-18)
+
+**Qué pasó.** La Decimoctava pasada (2026-09-05) removió
+`helpers/sri_saiku_client.py` y sus tres tools porque
+`srienlinea.sri.gob.ec` cerraba la conexión TLS desde tres entornos
+independientes. Re-verificación de hoy (pedido de Daniel: ver en vivo qué hay
+en el servicio, sin asumir ninguna reconstrucción): **el dominio responde y el
+OLAP está operativo**. El bloqueo de septiembre fue transitorio, no
+estructural.
+
+**Flujo real de esta instancia** (Saiku 2.6-SNAPSHOT, UI en `/saiku-ui/`):
+con estado y form-encoded, no el endpoint JSON sin estado.
+
+1. `GET /saiku/rest/saiku/session` → 200, sesión anónima
+   (`{"language":"en","roles":["ROLE_ANONYMOUS"],"username":"anonymousUser"}`).
+2. `GET /saiku/rest/saiku/proxy/discover` → 200, cinco cubos públicos (anidados
+   en `catalogs → schemas → cubes`).
+3. `GET /saiku/rest/saiku/{usuario}/discover/{connection}/{catalog}/{schema}/{cube}/{dimensions|hierarchies|measures|metadata}`
+   → 200 con la metadata de cada cubo. (`/levels` no es una ruta: 404.)
+4. `POST /saiku/rest/saiku/anonymousUser/query/{uuid}` con `connection`, `cube`,
+   `catalog`, `schema` como **form params** → 200, `SaikuQuery` vacío
+   (`mdx: "SELECT\nFROM [Boletin]"`, `type: "QM"`).
+5. `POST /saiku/rest/saiku/anonymousUser/query/{uuid}/result/flattened` con
+   `mdx` como form param → 200, cellset ya formateado
+   (`{"cellset": …, "runtime": …, "height": …, "width": …}`). La UI de Saiku
+   hace `POST …/query/{uuid}/mdx` y luego `GET …/query/{uuid}/result/flattened`.
+
+**Por qué el cliente removido no habría funcionado ni con red** (tres bugs
+independientes, ninguno relacionado con el bloqueo):
+
+1. `query_sri_saiku_aggregate` enviaba el `ThinQuery` en JSON a
+   `POST /rest/saiku/api/query/execute` → **500 siempre**. Ese endpoint sin
+   estado no es el de esta instancia: cuerpo vacío → 204, cuerpo JSON → 500, y
+   un cuerpo no-JSON lo rechaza el WAF (F5, `Request Rejected`) en vez de
+   contestar Saiku.
+2. `_normalise_cube()` buscaba `connectionName`/`catalogName`/`schemaName` en el
+   primer nivel de cada ítem de `discover`; la respuesta real los anida en
+   `catalogs → schemas → cubes`, así que los cinco cubos quedaban con
+   `cube_id = None` y `describe`/`query` habrían fallado con "El cubo no tiene
+   un identificador completo".
+3. `_safe_identifier()` rechaza `(`, `)`, `'`, `;` y **73 de las 83 medidas de
+   los cinco cubos llevan paréntesis** en el nombre (`TOTAL DEL ACTIVO (399)`,
+   `IMPUESTO CAUSADO (601)`): D101 27/27, D104 23/23, D103 23/26. Solo los seis
+   campos de recaudación, `TOTAL RUCS` y las tres medidas de doble tributación
+   de D103 se libran. En la práctica el tool no habría podido consultar casi
+   nada.
+
+**Inventario de los cinco cubos** (verificado hoy):
+
+| Cubo | Qué mide | Medidas | Dimensiones |
+|---|---|---|---|
+| `recaudacion/Recaudacion/Recaudacion/Boletin` | recaudación tributaria | 6 (`VALOR_RECAUDADO`, `VALOR_EFECTIVO`, `VALOR_NOTAS_CREDITO`, `VALOR_COMPENSACIONES`, `VALOR_SENAE`, `VALOR_TBC`) | actividad económica, clase / gran / tipo de contribuyente, impuesto (grupo → subgrupo → impuesto), fecha de recaudación (año/mes), fecha fiscal (año/mes), provincia/cantón |
+| `declaracion101/Declaracion/Declaracion/D101` | declaración anual de renta de sociedades | 27 (activo, pasivo, patrimonio, ingresos, ventas 12 %/0 %, exportaciones, costos, gastos, utilidad/pérdida, 15 % trabajadores, deducciones, impuesto causado) | actividad económica, año fiscal, clase / gran / tipo / estado de contribuyente, provincia/cantón, pertenece a grupo económico |
+| `declaracion104/Declaracion/Declaracion/D104` | IVA declarado | 23 (ventas gravadas, 0 % y de activos fijos, exportaciones de bienes y servicios, adquisiciones e importaciones gravadas y 0 %, impuesto causado, percepciones, retenciones, tarifa variable) | actividad económica, año fiscal (año/mes), clase / gran / tipo / estado, provincia/cantón, grupo económico |
+| `declaracion103/Declaracion/Declaracion/D103` | retenciones en la fuente | 26 (códigos 270/320/500/…/1495, total retenido, total pagado, doble tributación, paraíso fiscal) | actividad económica, período fiscal (año/mes), clase, comercio exterior, estado, tipo/subtipo, provincia/cantón |
+| `Contribuyentes/Contribuyentes/Contribuyentes/Contribuyentes` | registro de RUC | 1 (`TOTAL RUCS`) | actividad económica, clase, estado, tipo/subtipo, comercio exterior, fecha de inscripción (año), provincia/cantón |
+
+Los cubos de declaración responden desde 2020 (hasta el año en curso);
+`Contribuyentes` trae años sueltos desde 1900 y el nivel de fecha fiscal de
+recaudación tiene residuos desde 1900 (2.103 USD en 1900), así que el corte
+confiable de todo el servicio empieza en 2019.
+
+**Cifras verificadas hoy** (muestras, no catálogo; todas en USD):
+
+- Recaudación por año de recaudación: 2020 12.381.844.579 · 2021 13.976.164.008
+  · 2022 17.161.895.891 · 2023 17.419.676.814 · 2024 20.131.290.048 ·
+  2025 21.500.870.934 · 2026 18.771.814.243 (año en curso).
+- Recaudación acumulada por grupo: IVA 59.357.973.945; renta global
+  39.406.542.374; salida de divisas 8.175.323.907; consumos especiales
+  5.332.185.596; contribuciones 3.764.500.211; mineras 1.683.240.435.
+- Recaudación por provincia: Pichincha 60.199.956.676; Guayas 37.875.418.937;
+  Azuay 5.791.324.281; Zamora Chinchipe 3.759.080.150 (por encima de Manabí,
+  2.422.006.607, y de Tungurahua, 1.968.195.444: coincide con el grupo minero y
+  con cuánto pesa la minería en esa provincia — hipótesis, no dato del cubo).
+- RUC: 7.128.219 en total (personas naturales 6.557.162 + sociedades 571.057);
+  por estado, activos 3.060.792, pasivos 663.523, suspendidos 3.403.904.
+  Inscripciones: 2019 474.635; 2020 197.416 (caída pandémica); 2021 249.996;
+  2022 294.743; 2023 267.895; 2024 253.832; 2025 290.918; 2026 236.497.
+  Por provincia: Pichincha 1.760.853; Guayas 1.712.037; Manabí 563.057; Azuay
+  361.300.
+- D101 (sociedades, por año fiscal): activo 311.135.898.277 (2020) →
+  438.082.865.179 (2025); ingresos 140.132.918.808 → 236.793.278.156;
+  utilidad 11.679.152.144 → 22.620.778.449. El 2026 trae apenas 372.511.736 de
+  activo: son las declaraciones ya presentadas, no un año completo.
+- D104 (IVA): ventas y exportaciones 163.402.710.224 (2020) → 268.243.827.150
+  (2025); impuesto causado 4.130.012.827 → 7.672.713.372.
+- D103 (retenciones): total retenido 2.873.294.366 (2020) · 3.976.505.714 (2023)
+  · 4.168.641.076 (2024) · 3.654.856.509 (2025). Total pagado 2.473.217.618
+  (2020).
+
+**Solapamiento con lo que el catálogo ya sirve (verificado hoy).** Casi todo lo
+del cubo de recaudación y del de RUC ya está en archivos oficiales que el
+proyecto alcanza: la biblioteca del SRI
+(`search_archivos(fuente="sri_recaudacion")`) publica `Recaudación por impuesto
+provincia y cantón` (XLSX con una hoja `BDD` de 59.000 filas: año, provincia,
+cantón, mes, grupo de impuesto, impuesto, **gran contribuyente** y recaudación),
+`Recaudación por actividad económica` (hoja `BDD` con año, mes, código de sección
+y de grupo CIIU) y `Estadísticas de Recaudación` mensual; los 127 datasets del
+SRI en CKAN (`Recaudación de Impuestos`, `Ventas_Compras`, `Contribuyentes
+Activos Catastro`, `Inscripciones Catastro`, cada uno con recurso **CSV**)
+cubren 2017-2026. O sea: el corte por provincia/cantón/impuesto/gran
+contribuyente y el de actividad económica ya son oficiales, y con más historia
+que el cubo (2017+ contra 2020+). Lo único que el cubo aporta y no apareció en
+el catálogo es `D101` (balance y estado de resultados de sociedades por
+actividad, provincia y año) y `D103` (retenciones), más los cortes por
+`PERTENECE GRUPO ECONOMICO` y clase/tipo/subtipo de contribuyente y el detalle
+CIIU de 6 dígitos.
+
+**Límites reales del servicio, medidos hoy.** De ~20 ejecuciones POST, dos
+cayeron con `Server disconnected without sending a response` (en una misma
+corrida) y **la misma consulta respondió al reintentar** en 11-16 ms; las que
+cayeron no eran más pesadas que las que pasaron (`SUBGRUPO` con 28 miembros,
+provincia con 26, año fiscal con 43). El síntoma de septiembre reaparece de vez
+en cuando pero **no correlaciona con el peso de la consulta**, así que
+reconstruir exigiría reintentos, no consultas más chicas. Aparte: un `TOPCOUNT`
+sobre el nivel `IMPUESTO` completo del boletín (miles de miembros) excedió los
+35 s de timeout del cliente; el flujo con estado **crea un objeto de consulta
+del lado del servidor en cada ejecución** (`GET /rest/saiku/anonymousUser/query`
+lista los que dejó este mismo probe), así que un rebuild tendría que crearlos y
+borrarlos; y todo va detrás de un WAF (F5) sobre un Saiku 2.6 sin contrato ni
+documentación, que ya dejó el dominio entero inalcanzable una vez.
+
+**No hay microdatos ni PII.** Los cinco cubos son agregados: ninguna dimensión
+tiene un miembro identificador —sin RUC, cédula, nombre, dirección ni correo—
+y el grano más fino es cantón (226), código CIIU de 6 dígitos (1.850), clase /
+tipo / subtipo / estado de contribuyente, los «SI/NO» de gran contribuyente y
+grupo económico, código de impuesto y año/mes. Las medidas son sumas o un
+conteo (`TOTAL RUCS`), nunca filas de contribuyente; la celda más chica del
+cubo de RUC tiene 3 contribuyentes (por cantón; mínimo 16 por provincia).
+Matiz honesto: los cubos de declaración no traen medida de conteo ni supresión
+visible de celdas chicas, así que un cruce deliberadamente fino (actividad ×
+cantón × mes) podría quedar dominado por uno o pocos contribuyentes — el riesgo
+de revelación de cualquier tabla agregada publicada, no microdatos, y no
+verificable desde el propio cubo. Aparte, `GET /rest/saiku/api/repository`
+responde 200 sin autenticar y devuelve las seis consultas guardadas del SRI
+(`Declaracion104_Mensual`, `Recaudacion_*`, todas del 2024-11-14) como
+definiciones XML: consultas publicadas, sin dueño, usuario ni datos.
+
+**Decisión (2026-10-18): no se reconstruyen.** El valor real se reduce a los
+agregados de declaración (`D101`/`D103`) y a un par de cortes que ya se
+aproximan con archivos oficiales, a cambio de un servicio sin contrato que se
+cayó una vez, que ensucia su propio repositorio de consultas en cada llamada y
+que exigiría reintentos y limpieza. Si algún día pesa el hueco de `D101`/`D103`,
+reconstruir **una** tool parametrizada (`query_sri_estadisticas` con cubo /
+filas / medida), no las tres, con grano por defecto provincial o de sección.
+
+## Supercías — cobertura por año del Ranking de Compañías (2026-10-22)
+
+**Pregunta.** `search_ranking`/`get_financials` solo cubrían los últimos cinco
+años fiscales porque el build borraba el resto. ¿Desde qué año publica
+Supercías el ranking y los estados financieros, y con qué huecos?
+
+**Fuentes revisadas en vivo** (desde Canadá, sin proxy; el portal respondió
+200 en todas):
+
+- `appscvsmovil.supercias.gob.ec/ranking/reporte.html` enlaza
+  `recursos/bi_ranking.csv` (373.891.466 bytes, `Last-Modified` del 22-10-2026,
+  se regenera a diario), las tablas auxiliares (`bi_compania.csv`,
+  `bi_segmento.csv`, `bi_ciiu.csv`, `indicadores_sector.csv`), el PDF
+  `referencia_indicadores.pdf`, un tablero Power BI embebido y un Excel por año
+  en `recursos/archivos/ranking_<año>.xlsx`.
+- Los Excel anuales existen para **2010-2025** (4,8 MB el de 2010, 18 MB el de
+  2025); `ranking_2005` a `ranking_2009` y `ranking_2026` dan 404. El listado
+  de `recursos/` y de `recursos/archivos/` da 403.
+- El Excel de 2010 trae 51.962 filas: solo las compañías con posición, más
+  nombre, tipo, región, provincia, ciudad, tamaño y la posición del año
+  anterior. Es un subconjunto del CSV (51.893 filas con posición en 2010), no
+  una fuente con más años ni más filas. No se usa.
+
+**`bi_ranking.csv` es la fuente con la historia más larga: años fiscales
+2008-2025, sin huecos.** 1.676.986 filas, una por compañía y año (ningún
+`expediente` repetido dentro de un año), 54 columnas, 0 filas malformadas.
+
+| Años | Filas | Qué columnas traen datos |
+|---|---|---|
+| 2008 | 136.048 | Solo tamaño: ingresos por ventas, activos, patrimonio, utilidad antes de impuestos, impuesto a la renta, empleados, posición. **Sin CIIU** (`ciiu_n1`/`ciiu_n6` vacías). |
+| 2009 | 142.978 | Lo mismo que 2008 más CIIU. |
+| 2010-2017 | 42.357-69.980 por año | Lo anterior más ingresos totales, utilidad del ejercicio, utilidad neta y segmento. **Sin ratios.** |
+| 2018-2025 | 78.214-154.690 por año | Las 54 columnas, incluidos los ~38 ratios financieros. |
+
+- **Filas sin posición.** Entre 2008 y 2018 hay compañías listadas sin
+  `posicion_general` ni `id_estado_financiero` (82.821 en 2008, 88.156 en
+  2009, 12.384 en 2010, 15.326 en 2011, unos cientos por año entre 2012 y 2017,
+  4.965 en 2018; ninguna en 2019-2024 y 30 en 2025). Todas tienen ingresos y
+  activos en cero, pero muchas sí traen `n_empleados`. Son compañías que no
+  presentaron estado financiero ese año: se conservan (el dato de empleados es
+  real), se ordenan al final del ranking y `get_financials` las marca como
+  "sin estado financiero presentado".
+- **Saltos de cobertura.** 2008-2009 tienen el doble de filas que 2010 por esas
+  filas sin estado financiero. Las compañías con posición bajan en 2012
+  (41.785, frente a 54.654 en 2011) y desde ahí crecen cada año hasta 154.660
+  en 2025.
+- **`indicadores_sector.csv`** (promedios sectoriales por CIIU nivel 1) solo
+  cubre 2018-2023, 21 sectores por año.
+- **Nada anterior a 2008.** Ni el CSV ni los Excel ni la página citan años
+  previos; el tablero Power BI no se revisó (cubre el mismo ranking).
+
+**Qué cambió en el proyecto.** El build conserva todos los años
+(`ECUADOR_MCP_SUPERCIAS_YEARS=N` limita a los últimos N para hosts con poco
+disco). Build completo medido: 222 s con buena conexión, base de 388,5 MB
+(antes ~220 MB con cinco años); los topes de descarga (1 GB por archivo, plazo
+total) y el mínimo de 2 GB libres siguen bastando. El build rechaza ahora una
+base con un año faltante en medio del rango. `search_ranking` y
+`get_financials` validan el año pedido y responden con la lista de años
+disponibles (`2008-2025`); ordenar por un ratio antes de 2018 o filtrar por
+CIIU en 2008 da un error que explica la falta de datos. `get_financials` suma
+`desde`/`hasta`. Una base de la versión anterior (cinco años) se sigue
+sirviendo mientras se reconstruye.
 
 ## Notas históricas
 

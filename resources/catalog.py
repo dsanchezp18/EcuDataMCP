@@ -33,14 +33,24 @@ _CKAN_TOOLS = [
 
 def _fuentes_payload() -> dict:
     payload = _all_fuentes()
-    hidden = hidden_tools()
-    if not hidden:
+    hidden = set(hidden_tools())
+    # TOOL_DOCS is filled by @log_tool as tools register, so once anything is
+    # registered it is the profile-correct set: the maintenance tools
+    # (audit_bce_catalog, compare_bce_sources) only appear there under the
+    # maintenance profile. Empty means nothing registered yet (a unit test
+    # importing this module on its own): list everything.
+    registered = set(TOOL_DOCS)
+    if not hidden and not registered:
         return payload
 
     # Drop tools this deployment doesn't register, and sources left empty.
     fuentes = []
     for fuente in payload["fuentes"]:
-        tools = [tool for tool in fuente["tools"] if tool not in hidden]
+        tools = [
+            tool
+            for tool in fuente["tools"]
+            if tool not in hidden and (not registered or tool in registered)
+        ]
         if tools:
             fuentes.append({**fuente, "tools": tools})
     return {**payload, "fuentes": fuentes}
@@ -286,7 +296,7 @@ def _all_fuentes() -> dict:
             },
             {
                 "id": "supercias-financials",
-                "nombre": "Superintendencia de Compañías (ranking financiero, últimos años)",
+                "nombre": "Superintendencia de Compañías (ranking financiero, 2008 en adelante)",
                 "base": "https://appscvsmovil.supercias.gob.ec/ranking/",
                 "tools": ["search_ranking", "get_financials"],
             },
