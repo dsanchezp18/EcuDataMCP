@@ -14,6 +14,8 @@
 <meta property="og:description" content="Historial de versiones de EcuDataMCP y el ritmo real de los releases.">
 <meta property="og:url" content="https://dweskz.github.io/EcuDataMCP/releases.html">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="es_EC">
+<meta property="og:locale:alternate" content="en_US">
 <meta property="og:image" content="https://dweskz.github.io/EcuDataMCP/assets/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://dweskz.github.io/EcuDataMCP/assets/og-image.png">
@@ -160,6 +162,11 @@
 <div class="container-page">
 
 <div class="release-row">
+<div class="release-meta"><span class="release-version">v0.13.0</span><span class="release-date">2026-10-17</span></div>
+<p class="release-summary">Sin tools nuevos (siguen siendo 83 en el perfil por defecto). get_serie_internacional gana cinco fuentes: comtrade (comercio bilateral de UN Comtrade), imf (FMI: IPC, tipos de cambio, balanza de pagos, flujos fiscales y monetarios), who (indicadores de salud de la OMS), ilo (estadísticas laborales de ILOSTAT) y unhcr (refugiados y solicitantes de asilo acogidos en Ecuador). El Consejo de la Judicatura entra como fuente=&#34;judicatura&#34; en list_catalogo, get_sut_indicador_schema y query_sut_indicador: diez tableros Power BI del Portal de Estadística Judicial. Ronda de endurecimiento tras una revisión completa del código y el smoke test en vivo: los parsers de hojas de cálculo y PDF corren fuera del event loop con tope de 60 s, los decimales europeos ya no confunden 1,234 con 1.234, los logs guardan solo nombres de parámetros, el guard SSRF rechaza CGNAT y NAT64, los catálogos del BCE y los scrapes que fallan a medias ya no se cachean como vacíos, y los resultados cortados avisan con truncado o hay_mas. CI con permisos mínimos y acciones fijadas por SHA; docs/DEPLOYMENT.md trae la tabla canónica de variables de entorno.</p>
+</div>
+
+<div class="release-row">
 <div class="release-meta"><span class="release-version">v0.12.0</span><span class="release-date">2026-10-10</span></div>
 <p class="release-summary">Nuevo tool search_siniestros_ant (siniestros de tránsito: publicaciones trimestrales del INEC con registros de la ANT más datasets CKAN) y cinco fuentes nuevas dentro de list_archivo_secciones / get_archivo_seccion: EP Petroecuador (cifras institucionales), Ministerio de Ambiente y Energía (hidrocarburos, minería y Balance Energético Nacional), CNE (19 procesos electorales 2002-2025) y las bolsas de valores de Guayaquil y Quito. get_inec_estadistica_files sigue ahora las páginas de ronda enlazadas cuando un tema no lista archivos propios (ENDI, #55). Correcciones de la ronda de campo: ANDA acepta el id numérico y pagina todo el catálogo, nuevos microdatos históricos de defunciones del INEC, parroquias urbanas en lookup_ubicacion, search_datasets con compact y fields, y la descarga en segundo plano del directorio de Supercías. Ahora son 83 tools en el perfil por defecto.</p>
 </div>
@@ -206,12 +213,12 @@
 
 <div class="release-row">
 <div class="release-meta"><span class="release-version">v0.8.9</span><span class="release-date">2026-09-14</span></div>
-<p class="release-summary">Limpieza de la arquitectura MCP: se eliminan tools duplicados (list_recent_datasets pasa a search_datasets(sort="recent")) y el par de ARCOTEL se unifica en search_arcotel(tipo=...); nuevo MCP_PROFILE para separar los tools de mantenimiento; todas los tools declaran título en español, anotaciones MCP y structuredContent nativo. La base financiera de Supercías (search_ranking/get_financials) ahora se construye y refresca sola en segundo plano.</p>
+<p class="release-summary">Limpieza de la arquitectura MCP: se eliminan tools duplicados (list_recent_datasets pasa a search_datasets(sort=&#34;recent&#34;)) y el par de ARCOTEL se unifica en search_arcotel(tipo=...); nuevo MCP_PROFILE para separar los tools de mantenimiento; todas los tools declaran título en español, anotaciones MCP y structuredContent nativo. La base financiera de Supercías (search_ranking/get_financials) ahora se construye y refresca sola en segundo plano.</p>
 </div>
 
 <div class="release-row">
 <div class="release-meta"><span class="release-version">v0.8.8</span><span class="release-date">2026-09-10</span></div>
-<p class="release-summary">Cuentas Nacionales y calendario de publicaciones del BCE, el SIAU/CTI y la Biblioteca de Educación Superior de SENESCYT, CEPALSTAT (la API regional de indicadores de CEPAL, filtrada a Ecuador por defecto), el portal de datos abiertos del BID como nuevo source="iadb" en los tools CKAN genéricos, y las Gacetas de Inmunoprevenibles semanales del MSP. get_organization_info gana un filtro de texto y ya no trunca organizaciones grandes a 25 datasets. Corrige el re-hasheo redundante de ZIPs en el pipeline de IEM.</p>
+<p class="release-summary">Cuentas Nacionales y calendario de publicaciones del BCE, el SIAU/CTI y la Biblioteca de Educación Superior de SENESCYT, CEPALSTAT (la API regional de indicadores de CEPAL, filtrada a Ecuador por defecto), el portal de datos abiertos del BID como nuevo source=&#34;iadb&#34; en los tools CKAN genéricos, y las Gacetas de Inmunoprevenibles semanales del MSP. get_organization_info gana un filtro de texto y ya no trunca organizaciones grandes a 25 datasets. Corrige el re-hasheo redundante de ZIPs en el pipeline de IEM.</p>
 </div>
 
 <div class="release-row">
