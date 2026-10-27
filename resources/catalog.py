@@ -314,15 +314,39 @@ def _all_fuentes() -> dict:
             },
             {
                 "id": "cenace",
-                "nombre": "CENACE (snapshot en vivo de generación y demanda eléctrica)",
+                "nombre": (
+                    "CENACE (snapshot en vivo de generación y demanda eléctrica, "
+                    "boletín mensual de transacciones y Biblioteca)"
+                ),
                 "base": "https://www.cenace.gob.ec/",
-                "tools": ["get_cenace_tablero"],
+                "tools": [
+                    "get_cenace_tablero",
+                    "get_cenace_boletin",
+                    "list_archivo_secciones",
+                    "get_archivo_seccion",
+                ],
             },
             {
                 "id": "arconel",
-                "nombre": "ARCONEL (reportes estadísticos del sector eléctrico)",
-                "base": "https://reportes.arconel.gob.ec/",
-                "tools": ["list_catalogo", "get_arconel_reporte"],
+                "nombre": (
+                    "ARCONEL (reportes estadísticos, capas ArcGIS de balance y "
+                    "facturación, estadística anual, tarifas y regulaciones)"
+                ),
+                "base": "https://arconel.gob.ec/",
+                "tools": [
+                    "list_catalogo",
+                    "get_arconel_reporte",
+                    "search_capas_geo",
+                    "get_capa_geo_datos",
+                    "list_archivo_secciones",
+                    "get_archivo_seccion",
+                ],
+            },
+            {
+                "id": "celec",
+                "nombre": "CELEC EP (centrales de generación y red de transmisión, ArcGIS)",
+                "base": "https://portalarcgis.celec.gob.ec/server/rest/services/Hosted",
+                "tools": ["search_capas_geo", "get_capa_geo_datos"],
             },
             {
                 "id": "eeq",
@@ -337,6 +361,27 @@ def _all_fuentes() -> dict:
                     "y Morona Santiago)"
                 ),
                 "base": "https://www.centrosur.gob.ec/",
+                "tools": ["search_cortes", "get_cortes_horarios"],
+            },
+            {
+                "id": "emelnorte",
+                "nombre": (
+                    "Emelnorte (avisos de cortes por mantenimiento en Imbabura, "
+                    "Carchi y norte de Pichincha)"
+                ),
+                "base": "https://www.emelnorte.com/",
+                "tools": ["search_cortes", "get_cortes_horarios"],
+            },
+            {
+                "id": "elecgalapagos",
+                "nombre": "ElecGalápagos (avisos de mantenimientos programados por isla)",
+                "base": "https://www.elecgalapagos.com.ec/",
+                "tools": ["search_cortes", "get_cortes_horarios"],
+            },
+            {
+                "id": "eeasa",
+                "nombre": "EEASA (trabajos programados en Tungurahua y Pastaza)",
+                "base": "https://www.eeasa.com.ec/",
                 "tools": ["search_cortes", "get_cortes_horarios"],
             },
             {

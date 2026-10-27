@@ -84,7 +84,7 @@ def mcp():
     return server
 
 
-_NEW_FUENTES = ["petroecuador", "energia", "cne", "bvg", "bvq"]
+_NEW_FUENTES = ["petroecuador", "energia", "cne", "bvg", "bvq", "cenace", "arconel"]
 
 
 @pytest.mark.parametrize("fuente", _NEW_FUENTES)
