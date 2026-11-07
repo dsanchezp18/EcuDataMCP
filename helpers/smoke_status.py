@@ -64,6 +64,33 @@ _DEGRADED_SOURCES = (
         "no se pudo conectar",
     ),
     (
+        # Seen 2026-11-04 from a home connection in Ecuador: the SRI's public
+        # RUC page answers every RUC with its own "Error en el Sistema"
+        # page and HTTP 500 (tried 1790016919001 and 0990004196001 by
+        # hand). The SRI's system, not this repo.
+        "sri_ficha_ruc_down",
+        "ruc-establec.jspa",
+        "500 internal server error",
+    ),
+    (
+        # Seen 2026-11-04 from a home connection in Ecuador: the ASP.NET
+        # report site answered its own landing page with a 500, so
+        # list_catalogo(fuente='arconel') and get_arconel_reporte both fail.
+        # The site is down, not this repo.
+        "arconel_reportes_down",
+        "reportes.arconel.gob.ec",
+        "500 internal server error",
+    ),
+    (
+        # Seen 2026-11-05 to 2026-11-07 on the runner: the IESS certificate
+        # form never answers in time, while the same call from Render (no
+        # proxy for iess.gob.ec) returned the certificate on 2026-11-07. The
+        # IESS host throttling datacenter IPs, not a regression.
+        "iess_certificado_timeout",
+        "certificado de cumplimiento patronal del iess",
+        "readtimeout",
+    ),
+    (
         # Seen 2026-10-23 and 2026-10-24 on the runner: infoMIES never
         # completes the TCP handshake from datacenter IPs (30 s timeout), the
         # same block Render hits. A geo block, not a regression.

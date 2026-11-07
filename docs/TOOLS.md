@@ -165,7 +165,6 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 | `search_cortes` (`distribuidora="eeq"`\|`"centrosur"`) | Archivo de PDFs de cortes de luz programados de EEQ (Quito, crisis 2023-2024) o Centrosur (Azuay, Cañar, Morona Santiago, 2023 en adelante). |
 | `search_cortes` (`distribuidora="emelnorte"`\|`"elecgalapagos"`\|`"eeasa"`) | Avisos vigentes de cortes por mantenimiento: los 100 más recientes de Emelnorte (Imbabura, Carchi, norte de Pichincha) y ElecGalápagos (por isla), y los trabajos programados de los próximos días de EEASA (Tungurahua, Pastaza). |
 | `get_cortes_horarios` | Convierte un PDF o aviso de cortes en filas: fecha, bloques horarios sin luz, ubicación (subestación, provincia/cantón/zona o isla), sectores y, en los avisos de mantenimiento, el motivo. |
-| `get_energia_ecuador_snapshot` | Snapshot (2024-04-24, Wayback Machine) del portal nacional de horarios de apagones energia-ecuador.com; solo sobrevivió la rotación de EEQ. |
 | `get_informe_igepn` | Descarga y extrae el texto de un informe del IG-EPN encontrado vía search_informes_igepn. |
 | `get_sut_indicador_schema` | Lista las columnas/medidas/niveles de fecha consultables de un tablero Power BI del SUT o de la Judicatura (`fuente`), descubiertos desde la definición propia del reporte (la consulta subyacente de cada visual), no por adivinanza. |
 | `query_sut_indicador` | Ejecuta una consulta en vivo contra el modelo de datos subyacente de un tablero Power BI del SUT o de la Judicatura (`fuente`) — cualquier combinación de sus campos, ej. mes y provincia juntos. |
@@ -177,6 +176,7 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 |------|-------------|
 | `investigate_dataset` | Atajo de investigación en un solo paso: busca un dataset, lista sus recursos, y previsualiza los datos reales del más prometedor -- el flujo search_datasets -> list_dataset_resources -> preview_resource_data en una sola llamada, para el caso común de "encuéntrame datos sobre X y muéstrame qué hay dentro" |
 | `list_zip_contents` | Lista los archivos miembro (nombre, tamaño) de un .zip desde una URL directa, sin descargar el archivo completo. |
+| `read_zip_member` | Lee como tabla un archivo (CSV/TSV/TXT, XLSX/XLS/XLSB/ODS) dentro de un .zip remoto, bajando solo los bytes de ese miembro vía HTTP Range. Tope: 5 MB comprimido por miembro. Detecta el encabezado bajo el bloque de título de los tabulados y omite columnas vacías. |
 | `read_pdf` | Extrae texto de un documento PDF en una URL directa. |
 
 ## SEPS y economía popular
