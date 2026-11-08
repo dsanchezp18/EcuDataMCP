@@ -2,6 +2,82 @@
 
 ## Unreleased
 
+## 0.15.0 — 2026-11-07
+
+85 tools in the default profile (`get_resumen_compras` is new) and eleven
+new sources behind existing selectors; every structured response now has a
+size ceiling, a common pagination block and file links, and cached catalogs
+answer with their last good copy when the source is down.
+
+- **Ministry sources, no new tools.**
+  - `search_capas_geo` / `get_capa_geo_datos` gain `fuente="msp"`: nine
+    curated layers of the Ministry of Public Health's ArcGIS Online org
+    (6,411 public-network facilities, 18 sexual and reproductive health
+    indicators by canton 2018-2026, visits and discharges by facility,
+    fertility, COVID vaccination by canton...), with filters and grouped sums.
+  - `search_archivos` gains `msp_precios` (every medicine ceiling-price
+    revision since 2016), `arcotel_series` (the newest XLSX of each of 25
+    ARCOTEL statistical series, each with full history), `mit_vias` (MIT's
+    daily state-road status report) and `minedec_bases` (AMIE registers by
+    school year 2009-2025 in XLSX and CSV, plus thematic files).
+  - RESEARCH and ROADMAP record what stays out: MSP's Nextcloud shares and
+    LOTAIP's national portal (unreachable from outside Ecuador), MSP's
+    Power BI reports (unlicensed), Interior's statistics site (Incapsula),
+    and housing (moved into MIT, API behind a login, CKAN frozen in 2021).
+
+- **CFN, FEDEXPOR and AEADE as sources, no new tools.**
+  - `list_catalogo` / `get_sut_indicador_schema` / `query_sut_indicador`
+    gain `fuente="cfn"`: the Corporación Financiera Nacional's public Power
+    BI report (credit lines, disbursements and operations by province,
+    monthly financial statements, investments, Fondo Nacional de Garantías
+    guarantees), 167 fields, on its own cluster. A query whose rows come
+    back without a column descriptor now raises a clear error instead of a
+    `KeyError`.
+  - `search_archivos` gains `fuente="fedexpor"` (the monthly Expordata
+    foreign-trade report, Google Drive links with a direct-download form)
+    and `fuente="aeade"` (73 monthly vehicle-sales bulletins and the sector
+    yearbooks).
+
+- **Three new sources, no new tools.**
+  - `search_capas_geo` / `get_capa_geo_datos` gain `fuente="igm"`: the
+    Instituto Geográfico Militar's GeoServer, 737 open WFS layers of official
+    cartography (68 national 1:1M from 2024, 505 at 1:50,000, 164 at
+    1:25,000; the reserved workspace is left out). `categoria` picks the
+    scale; samples carry attributes only, since one province is ~1.5 MB.
+  - `search_archivos` gains `fuente="turismo"`: the monthly tourism figures
+    bulletins (12 PDFs, November 2025 to October 2026), listed from
+    produccion.gob.ec's WordPress media API since the Ministerio de Turismo
+    domains no longer resolve.
+  - `get_serie_internacional` gains `fuente="ember"`: Ember's electricity
+    data through Our World in Data's electricity-mix explorer (no key; CC BY
+    4.0), 56 metric/source views, yearly or monthly from 2019. The monthly
+    by-source view is empty upstream, so it is assembled from the
+    single-source series.
+  - The Registro Oficial stays out of scope; the ROADMAP says so.
+
+- **New tool `get_resumen_compras`** (85 tools in the default profile): one
+  buyer's SERCOP procurement in a year, summarized. It pages through the
+  OCDS search filtered by buyer (up to 300 processes, marked `parcial` past
+  that) and totals processes, amount and budget per institution, by
+  procedure type, by month and by supplier. Per-buyer summaries were the
+  main procurement gap against other Ecuadorian MCP servers. The smoke run
+  summarizes the buyer of the contract it already checks.
+- **Uniform response contract (MCP_ARCHITECTURE Fase 6).** Every tool's
+  structured response now has a byte ceiling (`ECUADOR_MCP_MAX_RESPONSE_BYTES`,
+  200 KB by default): past it the main list is trimmed and the cut is
+  declared in `metadatos.truncado`. `metadatos.paginacion` states the next
+  page in one shape (`estilo` offset or page, `actual`, `total`, `hay_mas`,
+  `siguiente`) whenever a tool's payload says how it pages. File lists
+  (`archivos`, `files`, `resources`) also come back as MCP `resource_link`
+  blocks after the text block; the JSON is unchanged.
+- **Last good copy when a source is down.** Cache entries now outlive their
+  TTL by up to 7 days; `get` still ignores them, but when a refresh fails
+  the persisted catalogs (BCE indices, IEM and BCEData tree, CEPALSTAT tree,
+  INEC topics and categories, SGR SITREP index and library, Superbancos
+  sections) answer from that copy and say so: `metadatos.frescura` becomes
+  `"obsoleta"` and `metadatos.respuesta_obsoleta` gives the copy's date, the
+  catalog and the failure.
+
 ## 0.14.0 — 2026-11-07
 
 84 tools in the default profile: `read_zip_member` and `get_cenace_boletin`

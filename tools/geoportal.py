@@ -1,4 +1,4 @@
-"""The geoportals (INAMHI, MAG, ARCONEL, CELEC) behind one search/query pair.
+"""The geoportals (INAMHI, MAG, IGM, ARCONEL, CELEC) behind one search/query pair.
 
 INAMHI's hydrometeorology geoportal and the Ministry of Agriculture's
 "Geoportal del Agro" each had a layer-catalog search and a WFS feature
@@ -17,21 +17,23 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import CallToolResult
 
-from helpers import arcgis_client, inamhi_client, sipa_geoportal_client
+from helpers import arcgis_client, igm_client, inamhi_client, sipa_geoportal_client
 from helpers.format_out import render_structured
 from helpers.logging import log_tool
 from helpers.result_types import ResultadoBusqueda, ResultadoTabla
 from helpers.tool_meta import READ_ONLY
 
-Fuente = Literal["inamhi", "mag", "arconel", "celec"]
+Fuente = Literal["inamhi", "mag", "igm", "arconel", "celec", "msp"]
 
 _NOMBRES = {
     "inamhi": "Geoportal INAMHI",
     "mag": "Geoportal MAG (agro)",
+    "igm": "Geoportal IGM (cartografía oficial)",
     "arconel": "ARCONEL (ArcGIS, SISDAT)",
     "celec": "CELEC EP (ArcGIS)",
+    "msp": "Ministerio de Salud Pública (ArcGIS)",
 }
-_ARCGIS = ("arconel", "celec")
+_ARCGIS = ("arconel", "celec", "msp")
 
 
 async def _search(fuente: str, query: str, solo_wfs: bool, categoria: str) -> dict[str, Any]:
@@ -40,6 +42,9 @@ async def _search(fuente: str, query: str, solo_wfs: bool, categoria: str) -> di
         return {**result, "fuente": fuente}
     if fuente == "inamhi":
         result = await inamhi_client.search_capas(query=query, solo_wfs=solo_wfs)
+        id_key = "name"
+    elif fuente == "igm":
+        result = await igm_client.search_capas(query=query, servicio=categoria)
         id_key = "name"
     else:
         result = await sipa_geoportal_client.search_capas(
@@ -66,23 +71,22 @@ async def _sample(
         return {**result, "fuente": fuente}
     if filtro or offset or agrupar or sumar:
         raise ValueError(
-            "filtro, offset, agrupar y sumar solo aplican a las fuentes arconel y celec."
+            "filtro, offset, agrupar y sumar solo aplican a las fuentes arconel, celec y msp."
         )
-    client = inamhi_client if fuente == "inamhi" else sipa_geoportal_client
+    client = {"inamhi": inamhi_client, "igm": igm_client}.get(fuente, sipa_geoportal_client)
     result = await client.get_layer_features(capa, count=count)
     return {**result, "fuente": fuente}
 
 
 def register_geoportal_tools(mcp: MCPServer) -> None:
     @mcp.tool(
-        title="Buscar capas de un geoportal (INAMHI, MAG, ARCONEL o CELEC)",
+        title="Buscar capas de un geoportal (INAMHI, MAG, IGM, ARCONEL, CELEC o MSP)",
         description=(
-            "Search layers of a geoportal: inamhi (rainfall normals and anomalies, "
-            "WRF grids, watersheds), mag (agro zoning, land cover, agricultural "
-            "censuses, rural cadastre), arconel (distributor energy balance and "
-            "billing 1999-2025, monthly production and fuel by plant 1999-2026, "
-            "public lighting, plants, grid) or celec (CELEC plants, "
-            "transmission network)."
+            "Search layers of a geoportal: inamhi (rainfall normals, anomalies, "
+            "watersheds), mag (agro zoning, land cover, rural cadastre), igm "
+            "(official base cartography 1:1M/1:50k/1:25k), arconel (energy balance, "
+            "billing, production by plant 1999-2026, lighting, grid) or celec "
+            "(plants, transmission) or msp (health facilities, indicators)."
         ),
         annotations=READ_ONLY,
     )
@@ -107,6 +111,12 @@ def register_geoportal_tools(mcp: MCPServer) -> None:
           fisiografia, sigtierras, agroestadistica). 257 have WFS; the rural
           cadastre (sigtierras/catastro_rural) and
           agroestadistica/tipologias_territorio_hih have WFS disabled.
+        - igm: Instituto Geográfico Militar, www.geoportaligm.gob.ec, 737
+          open WFS layers of official base cartography: 68 national 1:1M
+          (nacional_2024: boundaries, settlements, roads, rivers, contours,
+          EEZ), 505 at 1:50,000 and 164 at 1:25,000. The reserved
+          igm_reservada workspace is left out. `categoria` picks the scale:
+          nacional, 50k or 25k.
         - arconel: ARCONEL's SISDAT layers on ArcGIS (12 curated):
           balance_energia (energy available, technical/non-technical losses
           and billed energy by distributor and month, Jan 1999-Apr 2024),
@@ -119,6 +129,13 @@ def register_geoportal_tools(mcp: MCPServer) -> None:
           centrales_sisdat (730-plant register), lineas_transmision,
           subestaciones, subestaciones_distribucion, lineas_subtransmision,
           areas_servicio.
+        - msp: Ministerio de Salud Pública's ArcGIS Online layers (9 curated):
+          establecimientos_rpis (6,411 public-network facilities, 71 fields),
+          establecimientos_msp, indicadores_ssr (18 sexual and reproductive
+          health indicators by canton, year and age band, 2018-2026),
+          atenciones and egresos_hospitalarios by facility and year (2019
+          on), fecundidad, vacunacion_covid_cantonal (Dec 2022), areas_eais,
+          categorizacion_distritos. Same filtro/sumar/agrupar as arconel.
         - celec: CELEC EP's ArcGIS portal, curated to its 40 generation plants
           and the March 2025 transmission network (snt_*). Its Survey123
           forms and results are excluded on purpose.
@@ -128,13 +145,13 @@ def register_geoportal_tools(mcp: MCPServer) -> None:
         no attribute data); every ArcGIS layer is queryable.
 
         Args:
-            fuente: inamhi, mag, arconel or celec.
+            fuente: inamhi, mag, igm, arconel, celec or msp.
             query: Free text matched (accent-insensitive) against the layer's
                 id, name, title or abstract. Empty returns all layers.
             solo_wfs: Only return layers with WFS (attribute data). Ignored
-                for arconel and celec.
-            categoria: Only for fuente="mag": one of its 8 categories. Ignored
-                for inamhi.
+                for arconel, celec and msp.
+            categoria: mag: one of its 8 categories. igm: scale (nacional, 50k
+                or 25k). Ignored for the other sources.
             format: text | json
         """
         try:
@@ -176,8 +193,8 @@ def register_geoportal_tools(mcp: MCPServer) -> None:
         title="Ver datos de una capa de geoportal",
         description=(
             "Attributes of a layer from search_capas_geo, geometry dropped. "
-            "GeoServer (inamhi, mag): a sample of up to 20 features. ArcGIS "
-            "(arconel, celec): up to 500 rows with a SQL filtro and offset, or "
+            "GeoServer (inamhi, mag, igm): a sample of up to 20 features. ArcGIS "
+            "(arconel, celec, msp): up to 500 rows with a SQL filtro and offset, or "
             "server-side sums by group (sumar, agrupar)."
         ),
         annotations=READ_ONLY,
@@ -196,12 +213,12 @@ def register_geoportal_tools(mcp: MCPServer) -> None:
         """
         Fetch one geoportal layer's feature attributes.
 
-        inamhi, mag: WFS GetFeature (JSON), a small sample to confirm what a
+        inamhi, mag, igm: WFS GetFeature (JSON), a small sample to confirm what a
         vector layer contains; no filters. Layers without WFS (rasters such
         as INAMHI's wrf_tiempo_* grids, or MAG stores with WFS disabled)
         raise an error.
 
-        arconel, celec: an ArcGIS REST query. `filtro` is a SQL where clause
+        arconel, celec, msp: an ArcGIS REST query. `filtro` is a SQL where clause
         on the layer's fields (listed in `campos`), e.g. "Anio = 2024 AND
         IdMes = 4" or "Empresa LIKE 'CNEL%'"; `total_features_en_capa` is
         the count matching it and `hay_mas` says whether to page on with
@@ -216,17 +233,18 @@ def register_geoportal_tools(mcp: MCPServer) -> None:
         type is kept.
 
         Args:
-            fuente: inamhi, mag, arconel or celec.
+            fuente: inamhi, mag, igm, arconel, celec or msp.
             capa: The layer's `capa` from search_capas_geo (INAMHI:
-                "geonode:..." name; MAG: "categoria/store/name"; ArcGIS: the
+                "geonode:..." name; IGM: "workspace:name", e.g.
+                nacional_2024:poblado_p_2024; MAG: "categoria/store/name"; ArcGIS: the
                 short id, e.g. balance_energia).
-            count: Features to fetch: 1-20 for inamhi/mag, 1-500 for
-                arconel/celec (default 5).
-            filtro: arconel/celec only: SQL where clause; empty for all rows.
-            offset: arconel/celec only: rows (or groups) to skip when paging.
-            agrupar: arconel/celec only: comma-separated fields to group by;
+            count: Features to fetch: 1-20 for inamhi/mag/igm, 1-500 for
+                arconel/celec/msp (default 5).
+            filtro: arconel/celec/msp only: SQL where clause; empty for all rows.
+            offset: arconel/celec/msp only: rows (or groups) to skip when paging.
+            agrupar: arconel/celec/msp only: comma-separated fields to group by;
                 needs `sumar`.
-            sumar: arconel/celec only: comma-separated numeric fields to sum.
+            sumar: arconel/celec/msp only: comma-separated numeric fields to sum.
             format: text | json
         """
         try:

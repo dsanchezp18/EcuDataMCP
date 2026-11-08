@@ -6688,6 +6688,127 @@ y Ediciones Especiales 1673-1675. El PDF vive en
 Range (el tope de 5 MB se aplica descargando). La búsqueda propia del sitio
 (`?s=`) no se probó.
 
+## Trigésimo octava pasada — fuentes económicas candidatas (2026-11-07)
+
+Revisión en vivo de siete pistas económicas que no figuraban en el ROADMAP,
+desde una conexión residencial en Canadá (sin proxy).
+
+**CFN (Corporación Financiera Nacional): construible.** `cfn.fin.ec/estadisticas/`
+no publica archivos: es un Power BI público ("publish to web",
+`app.powerbi.com/view?r=...`, recurso `bd2e40e9-243f-4d44-94b9-720388d3a408`,
+tenant `17888ad5-...`). La clave no resuelve en los clústeres del SUT ni de
+la Judicatura (401 `UnableToFindKeyInDBorCacheException`); la ruta
+`/public/routing/cluster/{tenant}` en `wabi-south-central-us-api` devuelve
+`FixedClusterUri` = `wabi-south-central-us-redirect`, y
+`modelsAndExploration` responde 200 en `wabi-south-central-us-api`. Doce
+páginas: Inicio, Ubicación, Líneas de crédito, Operaciones y monto por
+provincia, Inclusión, Estados financieros (2), Inversiones, Garantías
+otorgadas y cuatro del Fondo Nacional de Garantías (FNG). Encaja como
+`fuente="cfn"` en `list_catalogo`/`get_sut_indicador_schema`/
+`query_sut_indicador` reutilizando `helpers/sut_powerbi_client.py` con su
+propio clúster. La biblioteca de medios de WordPress solo tiene un PDF suelto
+("FNG ESTADISTICA Marzo 2025").
+
+**FEDEXPOR "Reporte Estadístico Expordata": construible, confirmado de
+nuevo.** `fedexpor.com/inteligencia-comercial/reporte-expordata/` responde
+200 y lista 16 informes mensuales en Google Drive (`drive.google.com/file/d/...`),
+sin login. Es comercio exterior mensual que SENAE no publica abierto.
+Listado de archivos + `read_pdf` sobre el PDF de Drive (habría que pasar el
+enlace de vista a descarga directa, `uc?export=download&id=`).
+
+**AEADE: construible, confirmado de nuevo.** Boletines mensuales de venta de
+vehículos en `aeade.net/boletines-de-prensa-venta-de-vehiculos/`: 73 descargas
+por el plugin Simple Download Monitor (`?sdm_process_download=1&download_id=`).
+Anuarios en PDF directos en `/anuario/` (2020, 2021, 2022, 2024, 2025). El
+"Boletín de facturación del sector automotor" ya no enlaza archivos.
+
+**Enterprise Surveys (Banco Mundial): bajo valor.** La API del Banco Mundial
+la expone como fuente 13 (115 indicadores: soborno, crédito, mujeres en la
+propiedad, exportación...), así que entraría en `get_serie_internacional`
+con el cliente WDI cambiando `source`. Pero la fuente se actualizó por
+última vez el 2022-03-25: para Ecuador solo trae la ronda 2017 y muchos
+indicadores vacíos; la ronda 2024 está en el sitio, no en la API.
+
+**BCE cuentas regionales: ya cubiertas.** `search_bce_paginas(catalogo=
+"cuentas_nacionales", query="provincial")` devuelve "Cuentas Nacionales
+Regionales — serie histórica provincial y cantonal" y los cuadros anuales
+regionales. El listado de directorio `contenido.bce.fin.ec/.../CuentasProvinciales/`
+da 403, pero no hace falta.
+
+**BDE (Banco de Desarrollo del Ecuador): bloqueado.** `bde.fin.ec` responde
+con el desafío de Imperva/Incapsula (`_Incapsula_Resource`) a cualquier
+petición, también a la API de WordPress. Igual que con los captchas, no se
+automatiza.
+
+**PRO ECUADOR: sin datos estructurados.** El sitio tiene estudios de
+inteligencia comercial y fichas, no series; la biblioteca de medios solo
+devuelve imágenes con "estadística" en el nombre (2019). Las estadísticas
+de comercio exterior ya llegan por Comtrade, BCE y, si se construye, FEDEXPOR.
+
+**SCPM (Superintendencia de Control del Poder de Mercado): fuera de línea.**
+`www.scpm.gob.ec` y `scpm.gob.ec` resuelven a `127.0.0.1`/`::1` también en
+8.8.8.8 y 1.1.1.1: el DNS público apunta a localhost, así que no hay sitio
+que leer hasta que lo corrijan.
+
+## Trigésimo novena pasada — ministerios: MSP, MINEDEC, MIT, vivienda, Gobierno, Interior, ARCOTEL y LOTAIP (2026-11-07)
+
+Tres revisiones en paralelo desde Canadá (curl, más el navegador para
+Interior). Lo construido está en el ROADMAP (§ Ministerios: segunda pasada).
+
+**MSP.** El sitio no está "vacío fuera de CKAN", como decía una nota de
+2023: tiene (1) los precios techo de medicamentos del Consejo de Fijación
+de Precios, ~110 revisiones en XLSX desde 2016, listadas por la API de
+medios; (2) su propia organización de ArcGIS Online (dueño `mps_unfpa`,
+org `mrexCE3lvn5U08zq`, 204 ítems públicos) con el registro de
+establecimientos de la red pública e indicadores de salud sexual y
+reproductiva por cantón; (3) recursos Nextcloud "Datos Abiertos" en
+`almacenamiento.msp.gob.ec` (COVID, consulta externa, vacunas, emergencias,
+laboratorio) que no responden desde Canadá, posiblemente la fuente más rica.
+Los 7 Power BI de `informacion-de-salud/` dan PowerBINotLicensedException
+(seis en el tenant `d1031f2d…`) o UnableToFindKeyInDBorCacheException
+(ECTS). GeoSalud en Cifras volvió a existir, pero su Power BI tiene la
+misma licencia vencida.
+
+**MINEDEC.** `educacion.gob.ec` no responde desde Canadá ni desde los runners de GitHub (TCP en ~21 s; queda en la lista del proxy geográfico);
+se leyó la copia de enero 2026 de Wayback. `/base-de-datos/` tiene el
+registro AMIE por año lectivo (2009-2010 a 2024-2025, Inicio y Fin, XLSX
+y CSV con diccionario y metadato), seis archivos temáticos por download
+monitor y las estadísticas 1993-2007 con sus boletines.
+`/publicaciones-estadistica-educativa/` solo tiene anuarios en PDF.
+
+**MIT (ex MTOP) y vivienda.** `obraspublicas.gob.ec` ya falla en DNS. No
+hay conteos de tráfico (TPDA), peajes ni SIG vial abiertos: geoportal, sig
+y datos.mit.gob.ec fallan; `sitop.mit.gob.ec` responde 503. Sí hay un
+informe diario de la Red Vial Estatal en PDF. Vivienda pasó al MIT; la API
+de `prd-sitop.mit.gob.ec` pide token, y los archivos sueltos (proyectos
+VIS/VIP a marzo 2025) son una foto con datos de contacto de promotores.
+`habitatyvivienda.gob.ec` sigue con TLS roto.
+
+**Gobierno.** Solo el CKAN `mdg` (organización territorial de CONALI,
+vigente) y PDFs metodológicos del indicador PND; las tablas de migración
+por nacionalidad y puerto de su biblioteca de medios terminan en 2020.
+
+**Interior.** `cifras.ministeriodelinterior.gob.ec` responde 403 de
+Incapsula también al navegador desde Canadá. El CKAN
+`ministerio-del-interior` está vigente (seis paquetes con archivo histórico
+y enero-septiembre 2026, actualizados entre el 13 y el 20 de octubre de
+2026) y ECU 911 publica su base de emergencias mensual hasta septiembre
+2026 (algunos recursos declarados CSV son XLSX). Ambos alcanzables con los
+tools CKAN.
+
+**ARCOTEL.** La biblioteca de medios tiene 3.074 XLSX, 974 XLS, 106 CSV y
+67 ZIP. Los XLSX siguen el patrón `{código}-{Indicador}_{mes}_{año}` y
+cada archivo mensual trae la serie completa (1.1.1 desde 2008, 3.1.1 desde
+2010). Sin Power BI. MINTEL tiene 5 paquetes CKAN (madurez de ciudades
+inteligentes, habilidades digitales 2023).
+
+**LOTAIP.** Desde ~febrero 2025 los sitios institucionales solo redirigen
+al portal nacional de la Defensoría (`transparencia.dpe.gob.ec/entidades/{id}`,
+Gobierno 22, MIT 35, ARCOTEL 1362), que no responde desde Canadá; octubre
+2024-enero 2025 queda en cada sitio como CSV por numeral (separador `;`,
+latin-1) bajo download monitor. Una herramienta transversal no es viable
+desde aquí; hay que probar el portal de la Defensoría desde Ecuador.
+
 ## Notas históricas
 
 **Corrección de diagnóstico (2026-08-13):** el 403 de CKAN que se creía un

@@ -113,7 +113,7 @@ def _all_fuentes() -> dict:
                 "id": "sercop",
                 "nombre": "SERCOP Contrataciones Abiertas OCDS",
                 "base": "https://datosabiertos.compraspublicas.gob.ec/PLATAFORMA/",
-                "tools": ["search_contratos", "get_contrato_info"],
+                "tools": ["search_contratos", "get_contrato_info", "get_resumen_compras"],
             },
             {
                 "id": "sgr",
@@ -137,6 +137,18 @@ def _all_fuentes() -> dict:
                 "nombre": "INAMHI (geoportal hidrometeorológico, capas WMS/WFS)",
                 "base": "https://geoservicios.inamhi.gob.ec/geoserver",
                 "tools": ["search_capas_geo", "get_capa_geo_datos"],
+            },
+            {
+                "id": "igm",
+                "nombre": "IGM (cartografía oficial: 737 capas WFS a 1:1M, 1:50.000 y 1:25.000)",
+                "base": "https://www.geoportaligm.gob.ec",
+                "tools": ["search_capas_geo", "get_capa_geo_datos"],
+            },
+            {
+                "id": "turismo",
+                "nombre": "Turismo (Boletín de Cifras del Sector Turismo, Ministerio de Producción)",
+                "base": "https://www.produccion.gob.ec/boletin-de-cifras-sector-turismo/",
+                "tools": ["search_archivos"],
             },
             {
                 "id": "aviacion",
@@ -399,6 +411,22 @@ def _all_fuentes() -> dict:
                 ],
             },
             {
+                "id": "cfn",
+                "nombre": "CFN (Corporación Financiera Nacional: crédito por provincia, estados financieros y garantías del FNG, Power BI en vivo)",
+                "base": "https://www.cfn.fin.ec/estadisticas/",
+                "tools": [
+                    "list_catalogo",
+                    "get_sut_indicador_schema",
+                    "query_sut_indicador",
+                ],
+            },
+            {
+                "id": "gremios",
+                "nombre": "Gremios privados: FEDEXPOR (Expordata, comercio exterior mensual) y AEADE (ventas de vehículos, anuarios)",
+                "base": "https://www.fedexpor.com/inteligencia-comercial/reporte-expordata/",
+                "tools": ["search_archivos"],
+            },
+            {
                 "id": "judicatura",
                 "nombre": (
                     "Consejo de la Judicatura (Portal de Estadística Judicial: "
@@ -416,7 +444,8 @@ def _all_fuentes() -> dict:
                 "id": "arcotel",
                 "nombre": (
                     "ARCOTEL (estadísticas del sector de telecomunicaciones: "
-                    "reportes mensuales y boletines anuales/temáticos)"
+                    "reportes mensuales, boletines anuales/temáticos y 25 series XLSX "
+                    "con historia completa)"
                 ),
                 "base": "https://www.arcotel.gob.ec/",
                 "tools": ["search_archivos"],
@@ -469,7 +498,7 @@ def _all_fuentes() -> dict:
             },
             {
                 "id": "minedec",
-                "nombre": "MINEDEC (matrícula escolar histórica, datos abiertos)",
+                "nombre": "MINEDEC (matrícula escolar histórica, registros AMIE por año lectivo en XLSX/CSV, archivos temáticos)",
                 "base": "https://educacion.gob.ec/datos-abiertos-minedec/",
                 "tools": ["search_archivos"],
             },
@@ -496,8 +525,18 @@ def _all_fuentes() -> dict:
             },
             {
                 "id": "msp",
-                "nombre": "MSP (gacetas epidemiológicas semanales, 18 series)",
+                "nombre": (
+                    "MSP (gacetas epidemiológicas, precios techo de medicamentos, capas ArcGIS: "
+                    "establecimientos de la red pública, indicadores de salud sexual y "
+                    "reproductiva, atenciones y egresos)"
+                ),
                 "base": "https://www.salud.gob.ec/",
+                "tools": ["search_archivos", "search_capas_geo", "get_capa_geo_datos"],
+            },
+            {
+                "id": "mit",
+                "nombre": "MIT (ex MTOP: informe diario de la Red Vial Estatal)",
+                "base": "https://www.mit.gob.ec/",
                 "tools": ["search_archivos"],
             },
             {
@@ -514,7 +553,7 @@ def _all_fuentes() -> dict:
             },
             {
                 "id": "series_internacionales",
-                "nombre": "Series internacionales con Ecuador: Banco Mundial WDI, IRENA, XM Colombia, UN Comtrade, FMI, OMS, OIT, ACNUR",
+                "nombre": "Series internacionales con Ecuador: Banco Mundial WDI, IRENA, Ember, XM Colombia, UN Comtrade, FMI, OMS, OIT, ACNUR",
                 "base": "https://api.worldbank.org/v2",
                 "tools": ["get_serie_internacional"],
             },

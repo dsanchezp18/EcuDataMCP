@@ -323,6 +323,49 @@ async def main() -> int:
             ("search_bce_calendario", {"limit": 3}, []),
             ("search_capas_geo", {"fuente": "inamhi", "format": "json"}, []),
             ("search_capas_geo", {"fuente": "mag", "format": "json"}, []),
+            ("search_capas_geo", {"fuente": "igm", "query": "poblado"}, ["nacional_2024:poblado_p_2024"]),
+            (
+                "get_capa_geo_datos",
+                {"fuente": "igm", "capa": "nacional_2024:poblado_p_2024", "count": 2},
+                ["poblado"],
+            ),
+            ("search_archivos", {"fuente": "turismo", "limit": 3}, ["Turismo"]),
+            ("search_archivos", {"fuente": "fedexpor", "limit": 3}, ["Expordata"]),
+            ("search_archivos", {"fuente": "arcotel_series", "query": "1.1.1"}, ["Lineas activas"]),
+            ("search_archivos", {"fuente": "msp_precios", "limit": 2}, ["precios"]),
+            ("search_archivos", {"fuente": "mit_vias"}, ["mit.gob.ec"]),
+            ("search_archivos", {"fuente": "minedec_bases", "query": "csv 2024-2025"}, ["2024-2025"]),
+            ("search_capas_geo", {"fuente": "msp"}, ["indicadores_ssr"]),
+            (
+                "get_capa_geo_datos",
+                {"fuente": "msp", "capa": "egresos_hospitalarios", "sumar": "EGRESOS", "agrupar": "AÑO"},
+                ["suma_EGRESOS"],
+            ),
+            ("search_archivos", {"fuente": "aeade", "query": "ventas", "limit": 3}, ["ventas"]),
+            ("list_catalogo", {"fuente": "cfn"}, ["estadisticas"]),
+            (
+                "query_sut_indicador",
+                {
+                    "fuente": "cfn",
+                    "indicador": "estadisticas",
+                    "campos": ["Garantias FNG.nombre_provincia", "Medidas FNG.Monto Garantizado (USD) [medida]"],
+                    "limite": 5,
+                    "format": "json",
+                },
+                ["nombre_provincia"],
+            ),
+            (
+                "get_serie_internacional",
+                {
+                    "fuente": "ember",
+                    "indicador": "by_source/total",
+                    "frecuencia": "M",
+                    "desde": "2024-09",
+                    "hasta": "2024-12",
+                    "format": "json",
+                },
+                ["Hydropower"],
+            ),
             ("search_cepalstat_indicadores", {"query": "poblacion"}, []),
             ("search_cortes", {"distribuidora": "eeq", "format": "json"}, []),
             ("search_cortes", {"distribuidora": "centrosur", "format": "json"}, []),
@@ -765,6 +808,18 @@ async def chain_contrato(client: httpx.AsyncClient) -> None:
     if contrato is None:
         raise AssertionError("search_contratos returned no row with an ocid and a title")
     await call_chain_step(client, "get_contrato_info", {"ocid": contrato["ocid"], "format": "json"})
+    # The per-buyer summary on that same row's buyer: the search found it, so
+    # the summary must find at least one process.
+    if contrato.get("buyer"):
+        summary = json.loads(
+            await call_chain_step(
+                client,
+                "get_resumen_compras",
+                {"comprador": contrato["buyer"][:60], "year": 2024, "format": "json"},
+            )
+        )
+        if not summary.get("procesos_leidos"):
+            raise AssertionError(f"get_resumen_compras found nothing for {contrato['buyer']!r}")
 
 
 if __name__ == "__main__":
