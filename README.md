@@ -94,6 +94,26 @@ Este MCP unifica fuentes gubernamentales en un solo servidor:
 
 ## Conecta tu chatbot al servidor MCP
 
+### Servidor público
+
+Hay una instancia pública en Bogotá (Oracle Cloud), sin instalación ni
+cuenta:
+
+```text
+https://129-38-110-203.sslip.io/mcp
+```
+
+No pide token y limita cada IP a 120 peticiones por minuto. Al estar en
+Colombia llega a fuentes que bloquean IP fuera de Latinoamérica (ANDA,
+Supercías, censo, SERCOP); detalles en
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#instancia-pública-en-oracle-cloud-bogotá).
+
+- **Claude (web, escritorio y móvil):** `Settings` > `Connectors` >
+  `Add custom connector`, nombre "Ecuador Datos" y la URL de arriba.
+- **ChatGPT:** sigue los pasos de [ChatGPT](#chatgpt) con la URL de arriba.
+- **Cualquier cliente de la lista:** reemplaza `http://localhost:8000/mcp`
+  por la URL pública.
+
 ### Claude Desktop
 
 La forma más simple no necesita levantar ningún servidor: Claude Desktop
@@ -157,7 +177,9 @@ Agrega a tu archivo `mcp.json` (ejecuta **MCP: Open User Configuration** desde l
 1. Ve a `Settings` > `Apps and connectors`
 2. Abre `Advanced settings` y habilita **Developer mode**
 3. En `Settings` > `Connectors` > `Browse connectors`, haz clic en **Add a new connector**
-4. Configura la URL: `http://localhost:8000/mcp`
+4. Configura la URL del [servidor público](#servidor-público):
+   `https://129-38-110-203.sslip.io/mcp`. ChatGPT se conecta desde sus
+   propios servidores, así que no llega a `localhost`.
 
 ### Claude Code
 

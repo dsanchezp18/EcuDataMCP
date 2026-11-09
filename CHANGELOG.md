@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Public instance moves to Oracle Cloud in Bogotá**:
+  `https://129-38-110-203.sslip.io/mcp` replaces the Render instance. It is an
+  Always Free VM (2 OCPU, 12 GB), always on, with a persistent disk for the
+  Supercías financials database. From Colombia it reaches the Supercías apps,
+  ANDA, the census site, SERCOP and INEVAL BI, which Render and Canadian IPs
+  cannot. The README gives the URL and the Claude and ChatGPT connector steps;
+  `docs/DEPLOYMENT.md` documents the setup and the 57-URL reachability check.
+
 ## 0.15.0 — 2026-11-07
 
 85 tools in the default profile (`get_resumen_compras` is new) and eleven
