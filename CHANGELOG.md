@@ -2,6 +2,132 @@
 
 ## Unreleased
 
+- **Smoke run failures of 2026-11-09 and 2026-11-10.**
+  `query_sut_indicador` let a Power BI `ReadTimeout` escape, so clients saw
+  only "Error executing tool query_sut_indicador"; it and
+  `get_sut_indicador_schema` now name the exception. The Supercías financials
+  build resumes a dropped download with a `Range` request (up to 3 times,
+  restarting from zero if the server ignores `Range`) instead of failing the
+  whole build; the runner had lost `bi_ranking.csv` at 274 of 374 MB.
+  `search_cortes` reports a non-JSON answer (Emelnorte's HTTP 202 with an empty
+  body on the runner) as a clear error. The smoke classifier treats that
+  Emelnorte block, an ElecGalápagos 503 and an IESS certificate
+  `ConnectTimeout` as known upstream degradation.
+- **`search_inec_publicaciones`: word-boundary matching and ranking.**
+  WordPress's `search` is a substring match, so `TIC` returned 1,458 posts
+  (matching "estadísticas", "práctica", "tránsito"). Queries are now tokenized
+  (accent- and case-insensitive, stopwords dropped), each token is fetched and
+  re-checked against title and excerpt on word boundaries (prefix for tokens of
+  4+ characters, whole word for 3 or fewer), and results rank by tokens matched
+  (all first), then token rarity, title hits and recency. Empty query is
+  unchanged. Live: `TIC` 1,458 -> 22, led by the "Tecnologías de la Información
+  y Comunicación-TIC" posts. Body text beyond the excerpt is not searched.
+- **`get_cepalstat_indicador`: country resolution and series-break flag.**
+  `pais="Bolivia"` failed as ambiguous because CEPALSTAT also lists MERCOSUR
+  groupings whose names contain "Bolivia" (no alias table was involved). An
+  exact name, the name before a parenthetical, or an ISO3 code (`BOL`, `PER`)
+  now wins; aggregates (regional groupings, "A, B y C" lists) are chosen only
+  when named or when nothing else matches; real ambiguity still errors and
+  lists only real candidates. Percentage series with a year-over-year jump above
+  25 pp now carry `posible_quiebre_serie` (e.g. indicator 4891, Peru 2022 to
+  2023: Total 55.2 to 89.6).
+- **`get_resumen_compras`: totals no longer change between identical runs.**
+  `search_ocds` has no stable ordering: the same `page` returns a different
+  sample of rows on every call (`sort`/`order`/`limit` are ignored), so one pass
+  over pages 1..N repeated some processes and missed others while
+  `procesos_leidos` still equalled `total_en_fuente` and `parcial` stayed
+  `false` (Manta 2025 gave USD 32.4-42.5 M across runs; a pass held ~210
+  distinct processes out of 253). The summary now sweeps the pages repeatedly
+  without the page cache, de-duplicates by OCID, sums in OCID order and reports
+  `parcial=true` unless as many distinct processes as `total_en_fuente` were
+  collected. Concurrency drops to 2, a rate-limited host stops the sweep (the
+  429 `Retry-After` is still honoured by the shared retry), requests are capped
+  (6 passes, 150 s), `paginas_fallidas` / `solicitudes` are returned, and the
+  distinct rows already collected are kept 15 min in memory so a repeat call
+  resumes from them and converges on the full set.
+  `monto_total` sums the OCDS `amount` (awarded value when the process has one,
+  else the estimated value); `presupuesto_total` sums `budget` separately.
+- **Census 2022: search inside the tabulados.** `search_archivos(fuente="censo")`
+  matched only file names plus one hand-written ICT description. A committed
+  index (`helpers/data/censo_tabulados_index.json`, 19 workbooks, 282 tables)
+  now records, per sheet, the table title, geographic levels (provincia,
+  cantón, parroquia) and column headers, with each file's URL, SHA-256, size
+  and extraction date. Queries such as `computadora`, `discapacidad`, `agua
+  potable`, `tablet` or `parroquia` match on those and the results carry
+  `tablas_coincidentes` (sheet, title, levels, columns) and `tablas_total`;
+  files whose label matches rank first. If censoecuador.gob.ec is unreachable
+  (network error or HTTP 5xx) the tabulado list comes from the index with an
+  `aviso`; 403/404 still raise. No workbook is downloaded at query time.
+  Refresh with `uv run python scripts/build_censo_index.py` (also
+  `python -m helpers.censo_index_build`; workbooks above `--max-mb`, default
+  25, are skipped and listed under `omitidos`).
+- **`search_anda`: faster access checks, new default `verificar_acceso="auto"`.**
+  The check of each result's real download page (up to 2 requests each) made a
+  50-result search ~70 requests. Now: catalog pages are fetched concurrently,
+  probes run 8 at a time, answers are cached per study on disk for 7 days
+  (keyed by id + the catalog's `changed` date; the 6 h memory cache stays), and
+  `form_model=public` (ANDA's login wall) is classified from the catalog
+  without a probe. `"auto"` (default) verifies only the first 10 results and
+  marks the rest `tipo_acceso: "desconocido"` with `nota_acceso` and a top-level
+  `aviso_verificacion`; `true` verifies all of them, `false` trusts the catalog
+  flag (both unchanged). Live, `search_anda("encuesta", limit=50)`: 5.1-5.4 s and
+  71 requests before; auto 3.4 s / 23 requests cold and 2.8 s / 3 warm; `true`
+  4.0 s / 69 cold.
+
+- **`get_bce_iem_table`: multi-row headers and month rows in "tabla_larga".**
+  `iem-451-e` (consumer confidence, bulletin 2095) returned headers such as
+  `["Período (5)(6)\\Variable","","TOTAL NACIONAL","","","URBANO",...]` and only
+  the January rows. The parser took the first header row as the whole header
+  and read the year column as the period, but the source puts the year only on
+  each January row (months below, in an unnamed column) and spreads group names
+  over merged cells. Fixed for the ~40 IEM tables that share this shape
+  (loans/rates, foreign trade, oil, prices, employment, public finance,
+  construction, confidence):
+  - Merged header rows are flattened (`"TOTAL NACIONAL — Confianza del
+    Consumidor"`, footnote markers like `(3)` dropped, extra key
+    `niveles_encabezado`).
+  - Year and month columns merge into one `Período` (`2024-01`; `2024` for
+    annual rows; `2022 Enero - Marzo` for quarter ranges); `Febrero`-only rows
+    after `2026 Enero` inherit the year. `desde`/`hasta` and `rows` now apply
+    to those periods.
+  - Footnote rows are excluded and one-cell banners (`Porcentaje del PIB`,
+    `A diciembre`) become a `Bloque` column when a table has several blocks.
+  - Unchanged: `formato`, `filas`, `filas_totales`, `truncada`, and cell
+    values. Only the header names and the leading period cell(s) changed.
+
+- **ANDA: availability and download now agree.** `search_anda` said the 2022
+  Census (catalog 1085, `ECU-INEC-CTIMA-CPV-2022-V1.6`) had microdata and
+  `download_anda_microdata` returned `total_archivos: 0`. The catalog marks
+  it `direct`, but its "Obtener microdatos" page lists a single resource that
+  is an *External link* to `censoecuador.gob.ec/data-censo-ecuador/`; the old
+  parser only looked for ANDA-hosted `/download/` links and read that as
+  "nothing attached" (a few defunciones generales and hospital-beds studies
+  do the same). The three ANDA tools now classify the study from its real
+  download page:
+  - `tipo_acceso`: `directo` (files in ANDA), `enlace_externo` (ANDA only
+    links out), `registro` (ANDA login), `solicitud` (request to INEC),
+    `ninguno` (explicit "Data Access Not Available" or no resources), and
+    `desconocido` when the check fails and the catalog flag is all there is.
+  - `download_anda_microdata` returns `enlaces_externos` next to `archivos`,
+    a `motivo`, and a `siguiente_paso` pointing at `search_archivos(fuente=
+    "censo")` or `get_inec_estadistica_files`.
+  - `search_anda` verifies each result (2 requests per study with microdata,
+    6 h cache, 6 in parallel; `verificar_acceso=false` skips it) so
+    `microdatos_disponibles` means "there is a way to get it" and agrees with
+    the download tool. `get_anda_survey_info` reports the same fields.
+- **Census 2022 results tabulados via `search_archivos(fuente="censo")`.**
+  The source read `censoecuador.gob.ec/data-y-resultados/`, which is now a
+  real 404 page with only the site's navigation, so it listed ~36 unrelated
+  links and no tabulado. It now reads `/resultados-censo/` and
+  `/data-censo-ecuador/` (~100 files): the thematic tabulados in XLSX and
+  CSV-in-ZIP (población, vivienda, hogar, including *Uso de las Tecnologías de
+  la Información y Comunicación*: mobile phone, internet, computer/laptop and
+  tablet by province and cantón), microdata by cantón/sector/manzana (CSV,
+  SPSS, REDATAM) with the 2010 and 2001 censuses recoded to 2022 geography,
+  and the dictionaries. Each file carries `tipo`, `anio` and, for tabulados,
+  `tema`; every query word must match (so `internet` or `tabulado hogar`
+  work), and http links are normalised to https.
+
 ## 0.15.0 — 2026-11-07
 
 85 tools in the default profile (`get_resumen_compras` is new) and eleven
