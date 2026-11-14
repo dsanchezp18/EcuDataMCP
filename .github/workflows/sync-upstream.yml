@@ -1,6 +1,6 @@
 name: Sync upstream
 
-# Keeps this fork's main in step with DweskZ/EcuDataMCP so Render redeploys
+# Keeps this fork's main in step with DweskZ/EcuDataMCP so the Oracle instance deploys
 # the latest upstream code. Merges (not a hard reset), so fork-only commits
 # such as this workflow survive.
 on:

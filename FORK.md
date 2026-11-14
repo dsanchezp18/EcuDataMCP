@@ -1,27 +1,20 @@
 # Fork notes (dsanchezp18/EcuDataMCP)
 
-This fork hosts a public instance of EcuDataMCP on Render. It follows
-`DweskZ/EcuDataMCP` `main`; fork-only changes live in this file and in
-`.github/workflows/sync-upstream.yml`, so upstream merges stay conflict-free.
+This fork hosts a public instance of EcuDataMCP on Oracle Cloud (Always Free).
+It follows `DweskZ/EcuDataMCP` `main`; fork-only changes live in this file and
+in `.github/workflows/sync-upstream.yml`, so upstream merges stay conflict-free.
 
 ## Hosted endpoint
 
-- MCP: `https://ecuador-mcp-lb0s.onrender.com/mcp`
-- Health: `https://ecuador-mcp-lb0s.onrender.com/health`
-
-Render service `ecuador-mcp` in the `ecuador-mcp` workspace, deploying this
-fork's `main` on every commit. It replaced `https://ecuador-mcp.onrender.com`
-(service in "My Workspace"), which should no longer be used.
-
-Free instance: the first request after a period of inactivity can take about
-a minute while the service wakes up.
+The Oracle instance is not deployed yet, so there is no public URL. Add the
+MCP and health URLs here once it is running. Clients will connect like this:
 
 ```json
 {
   "mcpServers": {
     "ecuador-datos": {
       "type": "http",
-      "url": "https://ecuador-mcp-lb0s.onrender.com/mcp"
+      "url": "https://<oracle-host>/mcp"
     }
   }
 }
