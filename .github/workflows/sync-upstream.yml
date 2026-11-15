@@ -1,11 +1,15 @@
 name: Sync upstream
 
-# Keeps this fork's main in step with DweskZ/EcuDataMCP so the Oracle instance deploys
-# the latest upstream code. Merges (not a hard reset), so fork-only commits
-# such as this workflow survive.
+# Merges DweskZ/EcuDataMCP main into this fork's main so the Oracle instance
+# deploys the latest upstream code. Merges (not a hard reset), so fork-only
+# commits such as this workflow survive.
+#
+# Manual only: run it from the Actions tab ("Run workflow"). The built-in
+# GITHUB_TOKEN may not change files under .github/workflows/, so this run
+# fails whenever upstream has edited a workflow. In that case sync from your
+# own machine instead, where your gh login has the "workflow" scope:
+#   gh repo sync dsanchezp18/EcuDataMCP --branch main
 on:
-  schedule:
-    - cron: "17 8 * * *"
   workflow_dispatch:
 
 permissions:
@@ -19,10 +23,6 @@ jobs:
     steps:
       - name: Merge upstream main into fork main
         env:
-          # GITHUB_TOKEN cannot push changes to .github/workflows/*. If an
-          # upstream sync touches workflow files, add a personal access token
-          # with the "workflow" scope as the SYNC_TOKEN repository secret.
-          GH_TOKEN: ${{ secrets.SYNC_TOKEN || github.token }}
-        run: |
-          gh api --method POST "repos/${{ github.repository }}/merge-upstream" \
-            -f branch=main
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: gh api --method POST "repos/$REPO/merge-upstream" -f branch=main
