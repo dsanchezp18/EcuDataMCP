@@ -6,19 +6,35 @@ in `.github/workflows/sync-upstream.yml`, so upstream merges stay conflict-free.
 
 ## Hosted endpoint
 
-The Oracle instance is not deployed yet, so there is no public URL. Add the
-MCP and health URLs here once it is running. Clients will connect like this:
+The Oracle instance has been running since 2026-11-09 on an Always Free
+Ampere A1 VM in Bogotá (`sa-bogota-1`):
+
+- MCP: `https://129-38-110-203.sslip.io/mcp`
+- Health: `https://129-38-110-203.sslip.io/health`
+
+The hostname is an sslip.io name that resolves to the VM's IP. Clients connect
+like this:
 
 ```json
 {
   "mcpServers": {
     "ecuador-datos": {
       "type": "http",
-      "url": "https://<oracle-host>/mcp"
+      "url": "https://129-38-110-203.sslip.io/mcp"
     }
   }
 }
 ```
+
+The VM runs this fork's `main` as the systemd service `ecuador-mcp`, so it only
+changes when someone updates it. To update it, on the VM:
+
+```bash
+cd ~/EcuDataMCP && git pull && uv sync --no-dev && sudo systemctl restart ecuador-mcp
+```
+
+Setup details (network rules, proxy, usage logs) are in `docs/DEPLOYMENT.md` on
+the `deploy/oracle-bogota` branch, which is not merged into `main` yet.
 
 ## Upstream sync
 
