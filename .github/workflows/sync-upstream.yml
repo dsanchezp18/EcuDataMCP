@@ -6,9 +6,11 @@ name: Sync upstream
 #
 # Manual only: run it from the Actions tab ("Run workflow"). The built-in
 # GITHUB_TOKEN may not change files under .github/workflows/, so this run
-# fails whenever upstream has edited a workflow. In that case sync from your
-# own machine instead, where your gh login has the "workflow" scope:
-#   gh repo sync dsanchezp18/EcuDataMCP --branch main
+# fails whenever upstream has edited a workflow. In that case merge from your
+# own machine instead, where your credentials include the "workflow" scope:
+#   git fetch origin && git merge origin/main && git push fork HEAD:main
+# `gh repo sync` only fast-forwards and this fork's main has commits upstream
+# does not, so it fails here.
 on:
   workflow_dispatch:
 
