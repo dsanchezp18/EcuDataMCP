@@ -1,8 +1,9 @@
 # Fork notes (dsanchezp18/EcuDataMCP)
 
 This fork hosts a public instance of EcuDataMCP on Oracle Cloud (Always Free).
-It follows `DweskZ/EcuDataMCP` `main`; fork-only changes live in this file and
-in `.github/workflows/sync-upstream.yml`, so upstream merges stay conflict-free.
+It follows `DweskZ/EcuDataMCP` `main`; fork-only changes live in this file, in
+`docs/ORACLE_INSTANCE.md` and in `.github/workflows/sync-upstream.yml`, so
+upstream merges stay conflict-free.
 
 ## Hosted endpoint
 
@@ -33,8 +34,8 @@ changes when someone updates it. To update it, on the VM:
 cd ~/EcuDataMCP && git pull && uv sync --no-dev && sudo systemctl restart ecuador-mcp
 ```
 
-Setup details (network rules, proxy, usage logs) are in `docs/DEPLOYMENT.md` on
-the `deploy/oracle-bogota` branch, which is not merged into `main` yet.
+Setup details (network rules, proxy, usage logs, and which sources are
+reachable from Bogotá) are in `docs/ORACLE_INSTANCE.md`.
 
 ## Upstream sync
 
