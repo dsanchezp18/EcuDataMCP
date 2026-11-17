@@ -88,3 +88,192 @@ Hallazgos:
 Una instancia en Azure Container Apps (Brazil South, luego East US) funcionó
 el 2026-11-04 y se retiró el mismo día. Costaba unos 25-40 USD al mes y no
 llegaba a más fuentes que Render.
+
+## Estado y mantenimiento (2026-11-17)
+
+Lo que sigue describe cómo está la VM hoy y cómo reconstruirla. Las cifras salen
+de mediciones del 2026-11-17 (hechas en la propia VM, o desde Render y Canadá
+donde se indica).
+
+### Parches y reinicios
+
+- `unattended-upgrades` está activo, pero sin `Automatic-Reboot`: tras un
+  parche de kernel o de `libc6` el servicio sigue con la versión vieja hasta que
+  alguien reinicia. Revisar con
+  `[ -f /var/run/reboot-required ] && cat /var/run/reboot-required.pkgs`.
+- Reinicio: `sudo systemctl reboot`. El corte fue de unos 35 s el 2026-11-17.
+  Antes de reiniciar hay que comprobar que `ssh.socket`, `ecuador-mcp`, `caddy`
+  y `netfilter-persistent` están `enabled` y que las reglas guardadas en
+  `/etc/iptables/rules.v4` incluyen 22, 80 y 443 (si no, los puertos 80 y 443
+  desaparecen tras el reinicio). Después: `systemctl --failed` vacío y `/health`
+  en `ok`.
+- Último reinicio: 2026-11-17, kernel `7.0.0-1016-oracle`.
+
+### Acceso SSH
+
+- Solo con clave (`PasswordAuthentication no`). En los 7 días anteriores al
+  2026-11-17 hubo 18 928 intentos fallidos desde Internet.
+- `fail2ban` instalado el 2026-11-17 con la jaula `sshd` por defecto (5 fallos,
+  bloqueo de 10 min): `sudo fail2ban-client status sshd`.
+
+### Aislamiento del servicio (systemd)
+
+El servicio corre como `ubuntu` y escribe solo en `~/EcuDataMCP/data` (base de
+Supercías, `usage.jsonl`, estado y bloqueo de la reconstrucción). Los drop-ins
+de `/etc/systemd/system/ecuador-mcp.service.d/`:
+
+- `10-hardening.conf`: `NoNewPrivileges`, `PrivateTmp`, `PrivateDevices`,
+  `ProtectSystem=strict`, `ProtectHome=read-only` con
+  `ReadWritePaths=/home/ubuntu/EcuDataMCP/data`, `ProtectKernel*`,
+  `ProtectControlGroups`, `ProtectClock`, `ProtectHostname`, `RestrictSUIDSGID`,
+  `RestrictRealtime`, `RestrictNamespaces`, `LockPersonality`,
+  `RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX`,
+  `SystemCallArchitectures=native`, `SystemCallFilter=@system-service`,
+  `CapabilityBoundingSet=` (vacío), `UMask=0027`.
+- `20-hide-tools.conf`: `Environment=ECUADOR_MCP_HIDE_TOOLS=...` (ver más abajo).
+
+`systemd-analyze security ecuador-mcp` pasó de 9.2 UNSAFE a 1.8 OK. Antes de
+aplicarlo se probó con una unidad transitoria con las mismas propiedades: el
+servidor, las llamadas a la red, la lectura de SQLite, la escritura del registro
+de uso y la reconstrucción completa de la base de Supercías (3 min 44 s)
+funcionan dentro. Si una versión futura necesita escribir en otra ruta, hay que
+añadirla a `ReadWritePaths`. Para volver atrás: borrar los dos archivos y ejecutar
+`sudo systemctl daemon-reload && sudo systemctl restart ecuador-mcp`.
+
+### Cabeceras de Caddy
+
+`Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+`Referrer-Policy: no-referrer` y sin cabecera `Server`. La copia anterior está
+en `/etc/caddy/Caddyfile.bak-20261117`. Validar siempre como el usuario del
+servicio (como `ubuntu` falla al abrir el registro):
+`sudo -u caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile`
+y recargar con `sudo systemctl reload caddy`.
+
+### Herramientas ocultas y fuentes que esta VM no alcanza
+
+`20-hide-tools.conf` oculta `search_contratos`, `get_contrato_info`,
+`get_resumen_compras`, `search_infomies_bases_mensuales` y
+`search_infomies_boletines_zonales` (80 tools en vez de 85): SERCOP e infoMIES no
+responden desde Oracle Bogotá, así que esas tools solo podían fallar.
+
+Medido el 2026-11-17 desde esta VM:
+
+| Fuente | Resultado |
+|---|---|
+| CKAN nacional (`www.datosabiertos.gob.ec`) | 403 de CloudFront para cualquier cliente fuera de Ecuador: igual con `www` o apex, cualquier User-Agent, cabeceras o versión de HTTP; también desde Render, GitHub Actions y Azure |
+| CKAN `iadb` y `latacunga` | funcionan |
+| CKAN `cuenca` | no conecta desde Bogotá (sí desde Render) |
+| ANDA, Supercías, IESS | funcionan |
+| SERCOP, infoMIES, MINEDEC | no responden |
+| SRI (`www.sri.gob.ec`) | conexión reiniciada (también desde Canadá) |
+
+La única salida para el CKAN nacional es un egress en Ecuador
+(`ECUADOR_MCP_GEO_PROXY`, ver `docs/GEOBLOCK_PLAN.md`).
+
+### Riesgo: recuperación por inactividad
+
+Oracle puede recuperar una instancia Always Free inactiva. Según su
+[página oficial](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm),
+una instancia se considera inactiva si, durante 7 días, el percentil 95 de CPU,
+la red y (solo en A1) la memoria están todos por debajo del 20 %. Esta VM está
+muy por debajo: CPU p95 de 0.71 % y memoria de 5.6 %. La página no menciona un
+plazo de aviso ni una exención para cuentas de pago por uso (Pay As You Go); lo
+segundo solo lo afirma un blog de terceros y no está verificado. Qué hacer:
+vigilar el correo de la cuenta de Oracle, tener un chequeo externo de `/health` y,
+si pasa, reconstruir con la lista siguiente. Como el nombre `sslip.io` lleva la
+IP, una VM nueva cambia la URL y cada conector (Claude, ChatGPT) tendría que
+volver a conectarse; con un dominio propio bastaría cambiar un registro A.
+
+### Reconstruir la VM desde cero
+
+1. Región `sa-bogota-1`, forma `VM.Standard.A1.Flex` (2 OCPU, 12 GB), Ubuntu
+   24.04, 100 GB de disco, IP pública. Abrir 22, 80 y 443 en la lista de
+   seguridad de la VCN.
+2. En la VM: abrir 22, 80 y 443 en `iptables` con regla final `REJECT` y
+   guardarlas (`sudo netfilter-persistent save`).
+3. `sudo apt-get install -y git caddy fail2ban` e instalar `uv`
+   (`curl -LsSf https://astral.sh/uv/install.sh | sh`).
+4. Clonar el fork y sincronizar:
+   `git clone https://github.com/dsanchezp18/EcuDataMCP.git ~/EcuDataMCP`, luego
+   `cd ~/EcuDataMCP && ~/.local/bin/uv sync --no-dev`. Crear también
+   `mkdir -p ~/EcuDataMCP/data`: un clon nuevo no lo trae, y el drop-in de
+   aislamiento lo lista en `ReadWritePaths`, así que systemd no arranca el
+   servicio si no existe.
+5. `/etc/systemd/system/ecuador-mcp.service`:
+
+```ini
+[Unit]
+Description=EcuDataMCP (streamable HTTP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/EcuDataMCP
+Environment=MCP_TRANSPORT=http
+Environment=MCP_HOST=0.0.0.0
+Environment=MCP_PORT=8000
+Environment=MCP_PROFILE=public
+Environment=MCP_REQUIRE_AUTH=0
+Environment=MCP_MAX_CONCURRENT_REQUESTS=8
+Environment=MCP_RATE_LIMIT_REQUESTS=120
+Environment=MCP_RATE_LIMIT_WINDOW_SECONDS=60
+Environment=FORWARDED_ALLOW_IPS=127.0.0.1
+Environment=LOG_LEVEL=INFO
+Environment=ECUADOR_MCP_USAGE_LOG=1
+ExecStart=/home/ubuntu/EcuDataMCP/.venv/bin/python main.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+6. Los dos drop-ins descritos arriba y `/etc/caddy/Caddyfile` (cambiar el nombre
+   por `<IP con guiones>.sslip.io`):
+
+```caddyfile
+129-38-110-203.sslip.io {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	log {
+		output file /var/log/caddy/ecudatamcp-access.log {
+			roll_size 50MiB
+			roll_keep 10
+			roll_keep_for 2160h
+		}
+		format json
+	}
+	@allowed path /mcp /mcp/* /health /usage
+	handle @allowed {
+		reverse_proxy 127.0.0.1:8000
+	}
+	handle {
+		respond "EcuDataMCP: use /mcp (MCP endpoint), /health or /usage" 404
+	}
+}
+```
+
+7. `sudo systemctl daemon-reload && sudo systemctl enable --now ecuador-mcp
+   caddy fail2ban`. La base de Supercías se reconstruye sola al arrancar (unos
+   4 minutos, descarga de ~356 MB); `/health` muestra `construccion_en_curso`.
+8. Comprobar desde fuera: solo 22, 80 y 443 abiertos, `/health` en `ok` y
+   `tools/list` con 80 tools.
+
+### Actualizar, con comprobación y vuelta atrás
+
+```bash
+cd ~/EcuDataMCP && git rev-parse --short HEAD     # anotar: punto de vuelta atrás
+git pull --ff-only && ~/.local/bin/uv sync --no-dev
+.venv/bin/python -c "import main"                  # debe terminar sin error
+sudo systemctl restart ecuador-mcp
+curl -s http://127.0.0.1:8000/health               # status ok
+```
+
+Si falla: `git reset --hard <commit anotado>`, `uv sync --no-dev` y reiniciar. La
+reconstrucción de la base se dispara sola cuando cambia la versión del esquema.
