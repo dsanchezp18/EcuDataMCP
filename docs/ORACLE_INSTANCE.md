@@ -184,6 +184,79 @@ si pasa, reconstruir con la lista siguiente. Como el nombre `sslip.io` lleva la
 IP, una VM nueva cambia la URL y cada conector (Claude, ChatGPT) tendría que
 volver a conectarse; con un dominio propio bastaría cambiar un registro A.
 
+#### Temporizador `keep-active` (2026-11-20)
+
+Para que Oracle no clasifique la VM como inactiva hay un temporizador de systemd,
+`keep-active.timer`, que cada hora (más un retraso aleatorio de hasta 10 minutos)
+lanza `keep-active.service`: un bucle ocupado por núcleo (2) durante 10 minutos.
+Oracle solo la marca como inactiva si CPU, red y memoria están **todas** bajo el
+20 % en el percentil 95 de 7 días, así que basta con superar una. Con 10 minutos
+por hora (cerca del 17 % del tiempo al 100 %) el p95 de CPU queda muy por encima.
+
+- Corre con `Nice=19`, `CPUSchedulingPolicy=idle`, `IOSchedulingClass=idle` y
+  `DynamicUser`, así que el servicio MCP siempre tiene prioridad. Comprobado el
+  2026-11-20 con la unidad real: durante la ráfaga la CPU marcó 100 % y `/health`
+  siguió respondiendo en 0,1 s, igual que sin ella.
+- Quitarlo: `sudo systemctl disable --now keep-active.timer && sudo rm
+  /etc/systemd/system/keep-active.service /etc/systemd/system/keep-active.timer
+  /usr/local/bin/keep-active.sh && sudo systemctl daemon-reload`.
+- Límites: no hay forma de consultar cómo clasifica Oracle la instancia, así que
+  no se ha visto aún su efecto; es una zona gris de los términos de Oracle y la
+  decisión la tomó la persona titular de la cuenta. No sustituye el chequeo
+  externo de `/health` ni vigilar el correo.
+
+`/usr/local/bin/keep-active.sh` (modo 755):
+
+```sh
+#!/bin/sh
+# Keeps the instance from looking idle to Oracle's Always Free reclaim check.
+# Runs one busy loop per core for the given number of seconds (default 600).
+# keep-active.timer starts it at idle priority, so the real service always wins.
+seconds="${1:-600}"
+for _ in $(seq "$(nproc)"); do
+    timeout "$seconds" sh -c 'while :; do :; done' &
+done
+wait
+exit 0
+```
+
+`/etc/systemd/system/keep-active.service`:
+
+```ini
+[Unit]
+Description=CPU burst so the instance is not idle for Oracle's reclaim check
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/keep-active.sh 600
+Nice=19
+CPUSchedulingPolicy=idle
+IOSchedulingClass=idle
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+TimeoutStartSec=15min
+```
+
+`/etc/systemd/system/keep-active.timer`:
+
+```ini
+[Unit]
+Description=Hourly CPU burst so the instance is not idle (see docs/ORACLE_INSTANCE.md)
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target
+```
+
+Para instalarlo: copiar los tres archivos, `sudo systemctl daemon-reload` y
+`sudo systemctl enable --now keep-active.timer`.
+
 ### Reconstruir la VM desde cero
 
 1. Región `sa-bogota-1`, forma `VM.Standard.A1.Flex` (2 OCPU, 12 GB), Ubuntu
@@ -264,6 +337,8 @@ WantedBy=multi-user.target
    4 minutos, descarga de ~356 MB); `/health` muestra `construccion_en_curso`.
 8. Comprobar desde fuera: solo 22, 80 y 443 abiertos, `/health` en `ok` y
    `tools/list` con 80 tools.
+9. Reinstalar el temporizador `keep-active` (sección "Riesgo: recuperación por
+   inactividad"), o una VM nueva volverá a quedar bajo el umbral de inactividad.
 
 ### Actualizar, con comprobación y vuelta atrás
 
