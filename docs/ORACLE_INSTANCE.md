@@ -184,6 +184,13 @@ si pasa, reconstruir con la lista siguiente. Como el nombre `sslip.io` lleva la
 IP, una VM nueva cambia la URL y cada conector (Claude, ChatGPT) tendría que
 volver a conectarse; con un dominio propio bastaría cambiar un registro A.
 
+**2026-11-20:** la cuenta se pasó a Pay As You Go. Que eso exima de la
+recuperación sigue sin estar verificado, así que el temporizador de abajo se
+mantiene: no cuesta nada (solo CPU) y se puede quitar cuando se confirme la
+exención. Las instancias dentro de los límites Always Free siguen sin costo; un
+aviso de presupuesto bajo (p. ej. 1 USD) en la consola de Oracle avisaría si
+alguna otra cosa empieza a facturar.
+
 #### Temporizador `keep-active` (2026-11-20)
 
 Para que Oracle no clasifique la VM como inactiva hay un temporizador de systemd,
