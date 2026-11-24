@@ -153,7 +153,7 @@ y recargar con `sudo systemctl reload caddy`.
 
 `20-hide-tools.conf` oculta `search_contratos`, `get_contrato_info`,
 `get_resumen_compras`, `search_infomies_bases_mensuales` y
-`search_infomies_boletines_zonales` (80 tools en vez de 85): SERCOP e infoMIES no
+`search_infomies_boletines_zonales` (81 tools en vez de 86): SERCOP e infoMIES no
 responden desde Oracle Bogotá, así que esas tools solo podían fallar.
 
 Medido el 2026-11-17 desde esta VM:
@@ -343,7 +343,7 @@ WantedBy=multi-user.target
    caddy fail2ban`. La base de Supercías se reconstruye sola al arrancar (unos
    4 minutos, descarga de ~356 MB); `/health` muestra `construccion_en_curso`.
 8. Comprobar desde fuera: solo 22, 80 y 443 abiertos, `/health` en `ok` y
-   `tools/list` con 80 tools.
+   `tools/list` con 81 tools.
 9. Reinstalar el temporizador `keep-active` (sección "Riesgo: recuperación por
    inactividad"), o una VM nueva volverá a quedar bajo el umbral de inactividad.
 
