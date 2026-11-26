@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Referencia – EcuDataMCP</title>
-<meta name="description" content="Los 86 tools de EcuDataMCP, con descripción completa y enlace directo a cada uno.">
+<meta name="description" content="Los 88 tools de EcuDataMCP, con descripción completa y enlace directo a cada uno.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://dweskz.github.io/EcuDataMCP/atlas.html">
 <link rel="alternate" hreflang="es" href="https://dweskz.github.io/EcuDataMCP/atlas.html">
 <link rel="alternate" hreflang="en" href="https://dweskz.github.io/EcuDataMCP/en/atlas.html">
 <link rel="alternate" hreflang="x-default" href="https://dweskz.github.io/EcuDataMCP/atlas.html">
 <meta property="og:title" content="Referencia – EcuDataMCP">
-<meta property="og:description" content="Los 86 tools de EcuDataMCP, con descripción completa y enlace directo a cada uno.">
+<meta property="og:description" content="Los 88 tools de EcuDataMCP, con descripción completa y enlace directo a cada uno.">
 <meta property="og:url" content="https://dweskz.github.io/EcuDataMCP/atlas.html">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_EC">
@@ -76,13 +76,13 @@
 <section class="landing hero">
 <div class="container-page">
 <p class="kicker">Referencia</p>
-<h1>Los <span class="accent">86 tools</span>, uno por uno.</h1>
+<h1>Los <span class="accent">88 tools</span>, uno por uno.</h1>
 <p class="hero-sub">Encuentra un tool por nombre, fuente o tarea. Abre solo el grupo y el detalle que necesitas.</p>
 <div class="atlas-filter-wrap">
 <input type="text" id="atlas-filter" class="atlas-filter" placeholder="Filtrar por nombre o palabra clave…" autocomplete="off">
 </div>
 <div class="atlas-toolbar" aria-live="polite">
-<p id="atlas-result-count">86 tools · abre un grupo para ver sus detalles.</p>
+<p id="atlas-result-count">88 tools · abre un grupo para ver sus detalles.</p>
 <div class="atlas-actions">
 <button type="button" data-atlas-action="open">Expandir grupos</button>
 <button type="button" data-atlas-action="close">Cerrar grupos</button>
@@ -1928,7 +1928,7 @@
 
 <details class="atlas-category">
 <summary class="atlas-category-summary">
-<span class="atlas-category-title">Utilidades de investigación<span class="tag">4</span></span>
+<span class="atlas-category-title">Utilidades de investigación<span class="tag">5</span></span>
 <span class="atlas-category-action">Mostrar</span>
 </summary>
 <div class="atlas-category-tools">
@@ -2010,6 +2010,40 @@
 <tr><td><code>sheet</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Spreadsheet sheet name or 1-based number; empty reads the active sheet.</td></tr>
 
 <tr><td><code>inner_member</code></td><td><code>str</code></td><td><code>vacío</code></td><td>File to read inside a .zip member; only when member is a .zip.</td></tr>
+
+<tr><td><code>format</code></td><td><code>Literal[&#39;text&#39;, &#39;json&#39;]</code></td><td><code>text</code></td><td>text | json</td></tr>
+
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details class="atlas-tool" id="tool-aggregate_csv" data-search="aggregate_csv agrupa y suma un csv/tsv/txt completo desde una url (hasta 30 mb, no solo su inicio): columnas de grupo, sumas, filtros exactos y orden. agrupa las filas de un archivo de texto delimitado completo y suma sus columnas numéricas. read_zip_member y preview_resource_data leen solo los primeros 5 mb de un archivo, así que un total sobre un archivo de 5 a 30 mb dejaría filas fuera; este tool lo baja entero y devuelve una fila por grupo con los valores del grupo, el número de filas (`filas`) y la suma de cada columna, más los totales sobre todas las filas que cumplen los filtros. los nombres de columna se emparejan sin mayúsculas ni tildes (año, año y ano son la misma). el delimitador (coma, `|`, `;` o tabulador) y la codificación (utf-8 con o sin bom, o windows 1252) se detectan; los números pueden traer coma decimal (&quot;1234,56&quot;) o punto, y una coma suelta es decimal (&quot;1,234&quot; es 1,234). las celdas vacías y las que no son número quedan fuera de las sumas y se cuentan en `celdas_vacias` y `celdas_no_numericas`. las sumas son exactas (`decimal`). un archivo de más de 30 mb se rechaza en vez de sumarlo incompleto; un .zip o una hoja de cálculo se leen con list_zip_contents y read_zip_member. ejemplo: los csv de ventas del sri (search_archivos con fuente=&quot;sri_datasets&quot; y query=&quot;ventas&quot;; ~5,5 mb por año, 2017-2026) con group_by=&quot;provincia&quot; y sum_columns=&quot;total_ventas,total_compras&quot;; filters_json='{&quot;mes&quot;: [1, 2, 3]}' da el primer trimestre y group_by=&quot;mes&quot; el año por mes. los nombres de columna cambian entre años (ventas_netas_tarifa_12 en 2018, ventas_netas_tarifa_gravada en 2026): si uno no se encuentra, la respuesta lista las columnas del archivo. url url directa a un csv/tsv/txt de texto plano (de search_archivos o de un recurso ckan). group_by nombres de columna separados por coma para agrupar; vacío da una sola fila de total. sum_columns columnas numéricas a sumar, separadas por coma; vacío solo cuenta filas. filters_json objeto json opcional de filtros exactos, p. ej. '{&quot;provincia&quot;: &quot;pichincha&quot;, &quot;mes&quot;: [1, 2]}'. order_by columna del resultado por la cual ordenar, con asc o desc opcional; por defecto la primera suma, de mayor a menor. limit grupos a devolver (default 50, máx. 500); los totales siempre cubren todos. skip_rows líneas sobre la línea de encabezado (default 0). format text | json">
+<summary class="atlas-tool-summary">
+<code class="atlas-tool-name">aggregate_csv</code>
+<span class="atlas-tool-desc">Agrupa y suma un CSV/TSV/TXT completo desde una URL (hasta 30 MB, no solo su inicio): columnas de grupo, sumas, filtros exactos y orden.</span>
+</summary>
+<div class="atlas-tool-body">
+<p class="atlas-tool-long">Agrupa las filas de un archivo de texto delimitado completo y suma sus columnas numéricas. read_zip_member y preview_resource_data leen solo los primeros 5 MB de un archivo, así que un total sobre un archivo de 5 a 30 MB dejaría filas fuera; este tool lo baja entero y devuelve una fila por grupo con los valores del grupo, el número de filas (`filas`) y la suma de cada columna, más los totales sobre todas las filas que cumplen los filtros. Los nombres de columna se emparejan sin mayúsculas ni tildes (AÑO, año y ano son la misma). El delimitador (coma, `|`, `;` o tabulador) y la codificación (UTF-8 con o sin BOM, o Windows 1252) se detectan; los números pueden traer coma decimal (&#34;1234,56&#34;) o punto, y una coma suelta es decimal (&#34;1,234&#34; es 1,234). Las celdas vacías y las que no son número quedan fuera de las sumas y se cuentan en `celdas_vacias` y `celdas_no_numericas`. Las sumas son exactas (`Decimal`). Un archivo de más de 30 MB se rechaza en vez de sumarlo incompleto; un .zip o una hoja de cálculo se leen con list_zip_contents y read_zip_member. Ejemplo: los CSV de ventas del SRI (search_archivos con fuente=&#34;sri_datasets&#34; y query=&#34;ventas&#34;; ~5,5 MB por año, 2017-2026) con group_by=&#34;PROVINCIA&#34; y sum_columns=&#34;TOTAL_VENTAS,TOTAL_COMPRAS&#34;; filters_json=&#39;{&#34;MES&#34;: [1, 2, 3]}&#39; da el primer trimestre y group_by=&#34;MES&#34; el año por mes. Los nombres de columna cambian entre años (VENTAS_NETAS_TARIFA_12 en 2018, VENTAS_NETAS_TARIFA_GRAVADA en 2026): si uno no se encuentra, la respuesta lista las columnas del archivo.</p>
+
+<table class="atlas-params">
+<thead><tr><th>Parámetro</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr></thead>
+<tbody>
+
+<tr><td><code>url</code></td><td><code>str</code></td><td><code>requerido</code></td><td>URL directa a un CSV/TSV/TXT de texto plano (de search_archivos o de un recurso CKAN).</td></tr>
+
+<tr><td><code>group_by</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Nombres de columna separados por coma para agrupar; vacío da una sola fila de total.</td></tr>
+
+<tr><td><code>sum_columns</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Columnas numéricas a sumar, separadas por coma; vacío solo cuenta filas.</td></tr>
+
+<tr><td><code>filters_json</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Objeto JSON opcional de filtros exactos, p. ej. &#39;{&#34;PROVINCIA&#34;: &#34;PICHINCHA&#34;, &#34;MES&#34;: [1, 2]}&#39;.</td></tr>
+
+<tr><td><code>order_by</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Columna del resultado por la cual ordenar, con asc o desc opcional; por defecto la primera suma, de mayor a menor.</td></tr>
+
+<tr><td><code>limit</code></td><td><code>int</code></td><td><code>50</code></td><td>Grupos a devolver (default 50, máx. 500); los totales siempre cubren todos.</td></tr>
+
+<tr><td><code>skip_rows</code></td><td><code>int</code></td><td><code>0</code></td><td>Líneas sobre la línea de encabezado (default 0).</td></tr>
 
 <tr><td><code>format</code></td><td><code>Literal[&#39;text&#39;, &#39;json&#39;]</code></td><td><code>text</code></td><td>text | json</td></tr>
 
@@ -2274,7 +2308,7 @@
 
 <details class="atlas-category">
 <summary class="atlas-category-summary">
-<span class="atlas-category-title">Fuentes internacionales<span class="tag">3</span></span>
+<span class="atlas-category-title">Fuentes internacionales<span class="tag">4</span></span>
 <span class="atlas-category-action">Mostrar</span>
 </summary>
 <div class="atlas-category-tools">
@@ -2387,6 +2421,42 @@
 </div>
 </details>
 
+<details class="atlas-tool" id="tool-get_clima_nasa_power" data-search="get_clima_nasa_power clima diario o mensual desde 1981 de un cantón (en el centroide de su polígono) o de unas coordenadas: lluvia, temperatura, humedad, viento y radiación solar de nasa power. serie de clima de nasa power para un cantón o un punto de ecuador. nasa power calcula la meteorología con satélites y modelos sobre una rejilla de celdas de decenas de kilómetros, así que un cantón recibe el valor de la celda que rodea su centroide, no la lectura de una estación. el centroide es el centro geométrico del polígono del cantón: en uno costero puede caer en el mar, y un cantón con valle y páramo recibe un solo valor para ambos; para un lugar preciso pasa latitud y longitud. sirve para tendencias, estacionalidad y comparar regiones. la frecuencia mensual da un valor por mes (la lluvia en mm/día, un promedio mensual, con el total del período en resumen.acumulado_mm); la diaria da un valor por día, hasta 366 días por consulta, y omite al final los días que nasa aún no publica (el último con dato figura en ultimo_periodo_con_dato). los datos empiezan el 1981-01-01. sevilla don bosco y juval no tienen centroide en la tabla local: se consultan por coordenadas. canton nombre del cantón o código inec de 4 dígitos (p. ej. &quot;quito&quot;, &quot;1701&quot;). usa este o latitud/longitud. provincia provincia opcional para distinguir cantones con el mismo nombre (bolívar, sucre...). latitud latitud en grados decimales (el sur es negativo), junto con longitud, en lugar de canton. longitud longitud en grados decimales (el oeste es negativo), junto con latitud, en lugar de canton. desde inicio del período: aaaa, aaaa-mm o aaaa-mm-dd. desde 1981. hasta fin del período, mismo formato. por defecto hoy. frecuencia mensual o diaria. variables separadas por comas: lluvia, temperatura, temp_max, temp_min, humedad, viento, radiacion. format formato de salida: `text` (default) o `json`.">
+<summary class="atlas-tool-summary">
+<code class="atlas-tool-name">get_clima_nasa_power</code>
+<span class="atlas-tool-desc">Clima diario o mensual desde 1981 de un cantón (en el centroide de su polígono) o de unas coordenadas: lluvia, temperatura, humedad, viento y radiación solar de NASA POWER.</span>
+</summary>
+<div class="atlas-tool-body">
+<p class="atlas-tool-long">Serie de clima de NASA POWER para un cantón o un punto de Ecuador. NASA POWER calcula la meteorología con satélites y modelos sobre una rejilla de celdas de decenas de kilómetros, así que un cantón recibe el valor de la celda que rodea su centroide, no la lectura de una estación. El centroide es el centro geométrico del polígono del cantón: en uno costero puede caer en el mar, y un cantón con valle y páramo recibe un solo valor para ambos; para un lugar preciso pasa latitud y longitud. Sirve para tendencias, estacionalidad y comparar regiones. La frecuencia mensual da un valor por mes (la lluvia en mm/día, un promedio mensual, con el total del período en resumen.acumulado_mm); la diaria da un valor por día, hasta 366 días por consulta, y omite al final los días que NASA aún no publica (el último con dato figura en ultimo_periodo_con_dato). Los datos empiezan el 1981-01-01. Sevilla Don Bosco y Juval no tienen centroide en la tabla local: se consultan por coordenadas.</p>
+
+<table class="atlas-params">
+<thead><tr><th>Parámetro</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr></thead>
+<tbody>
+
+<tr><td><code>canton</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Nombre del cantón o código INEC de 4 dígitos (p. ej. &#34;Quito&#34;, &#34;1701&#34;). Usa este o latitud/longitud.</td></tr>
+
+<tr><td><code>provincia</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Provincia opcional para distinguir cantones con el mismo nombre (Bolívar, Sucre...).</td></tr>
+
+<tr><td><code>latitud</code></td><td><code>float | None</code></td><td><code>ninguno</code></td><td>Latitud en grados decimales (el sur es negativo), junto con longitud, en lugar de canton.</td></tr>
+
+<tr><td><code>longitud</code></td><td><code>float | None</code></td><td><code>ninguno</code></td><td>Longitud en grados decimales (el oeste es negativo), junto con latitud, en lugar de canton.</td></tr>
+
+<tr><td><code>desde</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Inicio del período: AAAA, AAAA-MM o AAAA-MM-DD. Desde 1981.</td></tr>
+
+<tr><td><code>hasta</code></td><td><code>str</code></td><td><code>vacío</code></td><td>Fin del período, mismo formato. Por defecto hoy.</td></tr>
+
+<tr><td><code>frecuencia</code></td><td><code>Literal[&#39;mensual&#39;, &#39;diaria&#39;]</code></td><td><code>mensual</code></td><td>mensual o diaria.</td></tr>
+
+<tr><td><code>variables</code></td><td><code>str</code></td><td><code>lluvia,temperatura</code></td><td>Separadas por comas: lluvia, temperatura, temp_max, temp_min, humedad, viento, radiacion.</td></tr>
+
+<tr><td><code>format</code></td><td><code>Literal[&#39;text&#39;, &#39;json&#39;]</code></td><td><code>text</code></td><td>Formato de salida: `text` (default) o `json`.</td></tr>
+
+</tbody>
+</table>
+
+</div>
+</details>
+
 </div>
 </details>
 
@@ -2397,13 +2467,13 @@
 </summary>
 <div class="atlas-category-tools">
 
-<details class="atlas-tool" id="tool-search_archivos" data-search="search_archivos enlaces a archivos publicados por una institución (sri, mef, senae, inec, minedec, etc.). busca en el catálogo de archivos de una institución y devuelve enlaces directos (título, url, formato), no el contenido. fuentes: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines y arcotel_mensuales. fuente censo (censoecuador.gob.ec): ~100 archivos con `tipo` tabulado, microdatos, diccionario o documento; los tabulados de resultados por tema (población, vivienda, hogar) en xlsx o csv en zip — el de tic en hogares (celular, internet, computadora, tablet por provincia y cantón) sale con query &quot;internet&quot; o &quot;tic&quot; —, las bases de microdatos por cantón, sector y manzana (csv, spss, redatam) y los diccionarios. descarga con download_resource o read_pdf (tope de 5 mb). fuente turismo: boletines mensuales del boletín de cifras del sector turismo (noviembre 2025 en adelante), ahora publicados por el ministerio de producción; solo pdf, read_pdf extrae las tablas. fuente fedexpor: el reporte estadístico expordata de fedexpor, comercio exterior mensual desde enero 2026, en google drive (~30 mb, sobre el tope de read_pdf; descarga_directa es el enlace directo). fuente aeade: boletines mensuales de ventas de vehículos de aeade (tipo boletin_ventas) y anuarios del sector (tipo anuario). fuentes nuevas: arcotel_series (el xlsx más reciente de cada una de 25 series estadísticas de arcotel, cada uno con historia completa), msp_precios (precios techo de medicamentos, cada revisión desde 2016), mit_vias (informe diario de la red vial estatal del mit) y minedec_bases (registros amie por año lectivo 2009-2010 a 2024-2025, inicio y fin, en xlsx y csv, más archivos temáticos). fuente catálogo a consultar (ver la lista de fuentes). query texto libre que se busca, sin distinguir tildes, en el título y los campos de cada archivo. vacío devuelve todos. limit máximo de archivos devueltos (1-100, default 50). offset desplazamiento de paginación sobre los archivos encontrados. formato formato exacto opcional (pdf, xlsx, csv, zip...); no disponible para sri_datasets, sri_recaudacion ni censo. format formato de salida: `text` (default) o `json`.">
+<details class="atlas-tool" id="tool-search_archivos" data-search="search_archivos enlaces a archivos publicados por una institución (sri, mef, senae, inec, minedec, etc.). busca en el catálogo de archivos de una institución y devuelve enlaces directos (título, url, formato), no el contenido. fuentes: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines y arcotel_mensuales. fuente censo (censoecuador.gob.ec): ~100 archivos con `tipo` tabulado, microdatos, diccionario o documento; los tabulados de resultados por tema (población, vivienda, hogar) en xlsx o csv en zip — el de tic en hogares (celular, internet, computadora, tablet por provincia y cantón) sale con query &quot;internet&quot; o &quot;tic&quot; —, las bases de microdatos por cantón, sector y manzana (csv, spss, redatam) y los diccionarios. descarga con download_resource o read_pdf (tope de 5 mb). fuente turismo: boletines mensuales del boletín de cifras del sector turismo (noviembre 2025 en adelante), ahora publicados por el ministerio de producción; solo pdf, read_pdf extrae las tablas. fuente fedexpor: el reporte estadístico expordata de fedexpor, comercio exterior mensual desde enero 2026, en google drive (~30 mb, sobre el tope de read_pdf; descarga_directa es el enlace directo). fuente aeade: boletines mensuales de ventas de vehículos de aeade (tipo boletin_ventas) y anuarios del sector (tipo anuario). fuentes nuevas: arcotel_series (el xlsx más reciente de cada una de 25 series estadísticas de arcotel, cada uno con historia completa), msp_precios (precios techo de medicamentos, cada revisión desde 2016), mit_vias (informe diario de la red vial estatal del mit) y minedec_bases (registros amie por año lectivo 2009-2010 a 2024-2025, inicio y fin, en xlsx y csv, más archivos temáticos). fuente sni_evaluaciones: el banco de evaluaciones del sni, 108 informes 2011-2026 que evalúan programas y proyectos públicos (pdf; unos pocos .rar o .zip), cada uno con `categoria` (sector), `entidad_ejecutora`, `entidad_evaluadora`, `tipo` de evaluación, `anio` y `objetivo`; read_pdf los lee. fuente catálogo a consultar (ver la lista de fuentes). query texto libre que se busca, sin distinguir tildes, en el título y los campos de cada archivo. vacío devuelve todos. limit máximo de archivos devueltos (1-100, default 50). offset desplazamiento de paginación sobre los archivos encontrados. formato formato exacto opcional (pdf, xlsx, csv, zip...); no disponible para sri_datasets, sri_recaudacion ni censo. format formato de salida: `text` (default) o `json`.">
 <summary class="atlas-tool-summary">
 <code class="atlas-tool-name">search_archivos</code>
 <span class="atlas-tool-desc">Enlaces a archivos publicados por una institución (SRI, MEF, SENAE, INEC, MINEDEC, etc.).</span>
 </summary>
 <div class="atlas-tool-body">
-<p class="atlas-tool-long">Busca en el catálogo de archivos de una institución y devuelve enlaces directos (título, URL, formato), no el contenido. Fuentes: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines y arcotel_mensuales. Fuente censo (censoecuador.gob.ec): ~100 archivos con `tipo` tabulado, microdatos, diccionario o documento; los tabulados de resultados por tema (población, vivienda, hogar) en XLSX o CSV en ZIP — el de TIC en hogares (celular, internet, computadora, tablet por provincia y cantón) sale con query &#34;internet&#34; o &#34;tic&#34; —, las bases de microdatos por cantón, sector y manzana (CSV, SPSS, REDATAM) y los diccionarios. Descarga con download_resource o read_pdf (tope de 5 MB). Fuente turismo: boletines mensuales del Boletín de Cifras del Sector Turismo (noviembre 2025 en adelante), ahora publicados por el Ministerio de Producción; solo PDF, read_pdf extrae las tablas. Fuente fedexpor: el Reporte Estadístico Expordata de FEDEXPOR, comercio exterior mensual desde enero 2026, en Google Drive (~30 MB, sobre el tope de read_pdf; descarga_directa es el enlace directo). Fuente aeade: boletines mensuales de ventas de vehículos de AEADE (tipo boletin_ventas) y anuarios del sector (tipo anuario). Fuentes nuevas: arcotel_series (el XLSX más reciente de cada una de 25 series estadísticas de ARCOTEL, cada uno con historia completa), msp_precios (precios techo de medicamentos, cada revisión desde 2016), mit_vias (informe diario de la Red Vial Estatal del MIT) y minedec_bases (registros AMIE por año lectivo 2009-2010 a 2024-2025, Inicio y Fin, en XLSX y CSV, más archivos temáticos).</p>
+<p class="atlas-tool-long">Busca en el catálogo de archivos de una institución y devuelve enlaces directos (título, URL, formato), no el contenido. Fuentes: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines y arcotel_mensuales. Fuente censo (censoecuador.gob.ec): ~100 archivos con `tipo` tabulado, microdatos, diccionario o documento; los tabulados de resultados por tema (población, vivienda, hogar) en XLSX o CSV en ZIP — el de TIC en hogares (celular, internet, computadora, tablet por provincia y cantón) sale con query &#34;internet&#34; o &#34;tic&#34; —, las bases de microdatos por cantón, sector y manzana (CSV, SPSS, REDATAM) y los diccionarios. Descarga con download_resource o read_pdf (tope de 5 MB). Fuente turismo: boletines mensuales del Boletín de Cifras del Sector Turismo (noviembre 2025 en adelante), ahora publicados por el Ministerio de Producción; solo PDF, read_pdf extrae las tablas. Fuente fedexpor: el Reporte Estadístico Expordata de FEDEXPOR, comercio exterior mensual desde enero 2026, en Google Drive (~30 MB, sobre el tope de read_pdf; descarga_directa es el enlace directo). Fuente aeade: boletines mensuales de ventas de vehículos de AEADE (tipo boletin_ventas) y anuarios del sector (tipo anuario). Fuentes nuevas: arcotel_series (el XLSX más reciente de cada una de 25 series estadísticas de ARCOTEL, cada uno con historia completa), msp_precios (precios techo de medicamentos, cada revisión desde 2016), mit_vias (informe diario de la Red Vial Estatal del MIT) y minedec_bases (registros AMIE por año lectivo 2009-2010 a 2024-2025, Inicio y Fin, en XLSX y CSV, más archivos temáticos). Fuente sni_evaluaciones: el Banco de evaluaciones del SNI, 108 informes 2011-2026 que evalúan programas y proyectos públicos (PDF; unos pocos .rar o .zip), cada uno con `categoria` (sector), `entidad_ejecutora`, `entidad_evaluadora`, `tipo` de evaluación, `anio` y `objetivo`; read_pdf los lee.</p>
 
 <table class="atlas-params">
 <thead><tr><th>Parámetro</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr></thead>
@@ -2505,13 +2575,13 @@
 </summary>
 <div class="atlas-category-tools">
 
-<details class="atlas-tool" id="tool-search_capas_geo" data-search="search_capas_geo capas de geoportales: inamhi y mag (lluvia, cobertura, agro) y arcgis del sector eléctrico (arconel, celec). busca en el catálogo de capas de un geoportal: inamhi (normales de precipitación, anomalías, grillas wrf, cuencas), mag (zonificación agroecológica, cobertura, censos agropecuarios, catastro rural), arconel (balance de energía y pérdidas por distribuidora y mes 1999-abr 2024, facturación, recaudación, subsidios y clientes 1999-2025, centrales, líneas, subestaciones, áreas de servicio) o celec (centrales de celec y red de transmisión snt de marzo 2025; las capas de survey123 se excluyen a propósito). cada capa trae `capa`, el id que recibe get_capa_geo_datos. fuente igm: 737 capas wfs de cartografía oficial del instituto geográfico militar (68 nacionales 1:1m de 2024, 505 a 1:50.000 y 164 a 1:25.000; el espacio reservado igm_reservada queda fuera); categoria elige la escala (nacional, 50k o 25k). fuente msp: 9 capas arcgis online del ministerio de salud pública (6.411 establecimientos de la red pública, establecimientos msp, 18 indicadores de salud sexual y reproductiva por cantón 2018-2026, atenciones y egresos por establecimiento desde 2019, fecundidad, vacunación covid cantonal, áreas eais, distritos). fuente inamhi, mag, arconel o celec. query texto libre que se busca, sin distinguir tildes, en el id, nombre, título o resumen de la capa. vacío devuelve todas. solo_wfs devuelve solo las capas con wfs (datos de atributos). se ignora para arconel y celec. categoria solo para fuente=&quot;mag&quot;: una de sus 8 categorías. se ignora para inamhi. format formato de salida: `text` (default) o `json`.">
+<details class="atlas-tool" id="tool-search_capas_geo" data-search="search_capas_geo capas de geoportales: inamhi y mag (lluvia, cobertura, agro) y arcgis del sector eléctrico (arconel, celec). busca en el catálogo de capas de un geoportal: inamhi (normales de precipitación, anomalías, grillas wrf, cuencas), mag (zonificación agroecológica, cobertura, censos agropecuarios, catastro rural), arconel (balance de energía y pérdidas por distribuidora y mes 1999-abr 2024, facturación, recaudación, subsidios y clientes 1999-2025, centrales, líneas, subestaciones, áreas de servicio) o celec (centrales de celec y red de transmisión snt de marzo 2025; las capas de survey123 se excluyen a propósito). cada capa trae `capa`, el id que recibe get_capa_geo_datos. fuente igm: 737 capas wfs de cartografía oficial del instituto geográfico militar (68 nacionales 1:1m de 2024, 505 a 1:50.000 y 164 a 1:25.000; el espacio reservado igm_reservada queda fuera); categoria elige la escala (nacional, 50k o 25k). fuente msp: 9 capas arcgis online del ministerio de salud pública (6.411 establecimientos de la red pública, establecimientos msp, 18 indicadores de salud sexual y reproductiva por cantón 2018-2026, atenciones y egresos por establecimiento desde 2019, fecundidad, vacunación covid cantonal, áreas eais, distritos). fuente maate: 93 capas wfs del geoserver abierto del ministerio de ambiente y energía (cobertura de la tierra de nueve años entre 1990 y 2024, deforestación por período 1990-2024, áreas protegidas del snap, bosques protectores, carbono, ecosistemas y contaminación minera 2009-2023); el servicio responde solo por http, puerto 8080. fuente inamhi, mag, arconel o celec. query texto libre que se busca, sin distinguir tildes, en el id, nombre, título o resumen de la capa. vacío devuelve todas. solo_wfs devuelve solo las capas con wfs (datos de atributos). se ignora para arconel y celec. categoria solo para fuente=&quot;mag&quot;: una de sus 8 categorías. se ignora para inamhi. format formato de salida: `text` (default) o `json`.">
 <summary class="atlas-tool-summary">
 <code class="atlas-tool-name">search_capas_geo</code>
 <span class="atlas-tool-desc">Capas de geoportales: INAMHI y MAG (lluvia, cobertura, agro) y ArcGIS del sector eléctrico (ARCONEL, CELEC).</span>
 </summary>
 <div class="atlas-tool-body">
-<p class="atlas-tool-long">Busca en el catálogo de capas de un geoportal: inamhi (normales de precipitación, anomalías, grillas WRF, cuencas), mag (zonificación agroecológica, cobertura, censos agropecuarios, catastro rural), arconel (balance de energía y pérdidas por distribuidora y mes 1999-abr 2024, facturación, recaudación, subsidios y clientes 1999-2025, centrales, líneas, subestaciones, áreas de servicio) o celec (centrales de CELEC y red de transmisión SNT de marzo 2025; las capas de Survey123 se excluyen a propósito). Cada capa trae `capa`, el id que recibe get_capa_geo_datos. Fuente igm: 737 capas WFS de cartografía oficial del Instituto Geográfico Militar (68 nacionales 1:1M de 2024, 505 a 1:50.000 y 164 a 1:25.000; el espacio reservado igm_reservada queda fuera); categoria elige la escala (nacional, 50k o 25k). Fuente msp: 9 capas ArcGIS Online del Ministerio de Salud Pública (6.411 establecimientos de la red pública, establecimientos MSP, 18 indicadores de salud sexual y reproductiva por cantón 2018-2026, atenciones y egresos por establecimiento desde 2019, fecundidad, vacunación COVID cantonal, áreas EAIS, distritos).</p>
+<p class="atlas-tool-long">Busca en el catálogo de capas de un geoportal: inamhi (normales de precipitación, anomalías, grillas WRF, cuencas), mag (zonificación agroecológica, cobertura, censos agropecuarios, catastro rural), arconel (balance de energía y pérdidas por distribuidora y mes 1999-abr 2024, facturación, recaudación, subsidios y clientes 1999-2025, centrales, líneas, subestaciones, áreas de servicio) o celec (centrales de CELEC y red de transmisión SNT de marzo 2025; las capas de Survey123 se excluyen a propósito). Cada capa trae `capa`, el id que recibe get_capa_geo_datos. Fuente igm: 737 capas WFS de cartografía oficial del Instituto Geográfico Militar (68 nacionales 1:1M de 2024, 505 a 1:50.000 y 164 a 1:25.000; el espacio reservado igm_reservada queda fuera); categoria elige la escala (nacional, 50k o 25k). Fuente msp: 9 capas ArcGIS Online del Ministerio de Salud Pública (6.411 establecimientos de la red pública, establecimientos MSP, 18 indicadores de salud sexual y reproductiva por cantón 2018-2026, atenciones y egresos por establecimiento desde 2019, fecundidad, vacunación COVID cantonal, áreas EAIS, distritos). Fuente maate: 93 capas WFS del GeoServer abierto del Ministerio de Ambiente y Energía (cobertura de la tierra de nueve años entre 1990 y 2024, deforestación por período 1990-2024, áreas protegidas del SNAP, bosques protectores, carbono, ecosistemas y contaminación minera 2009-2023); el servicio responde solo por HTTP, puerto 8080.</p>
 
 <table class="atlas-params">
 <thead><tr><th>Parámetro</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr></thead>
@@ -2533,13 +2603,13 @@
 </div>
 </details>
 
-<details class="atlas-tool" id="tool-get_capa_geo_datos" data-search="get_capa_geo_datos atributos de una capa de geoportal: muestra de hasta 20 objetos (wfs) o hasta 500 filas filtradas (arcgis). trae los atributos de una capa de search_capas_geo, sin coordenadas de geometría. en inamhi y mag es una muestra por wfs getfeature, sin filtros; las capas sin wfs devuelven error. en arconel y celec es una consulta arcgis rest: `filtro` es una cláusula sql sobre los campos de la capa (listados en `campos`), p. ej. &quot;anio = 2024 and idmes = 4&quot; o &quot;empresa like 'cnel%'&quot;; `total_features_en_capa` cuenta las filas que cumplen el filtro y `hay_mas` indica si seguir con `offset`. las fechas llegan como fechas iso. para igm la muestra trae solo atributos (describefeaturetype y getfeature con propertyname), sin geometría: una provincia pesa ~1,5 mb. fuente inamhi, mag, arconel o celec. capa el campo `capa` de search_capas_geo (inamhi: nombre &quot;geonode:...&quot;; mag: &quot;categoria/store/nombre&quot;; arcgis: el id corto, p. ej. balance_energia). count objetos a traer: 1-20 en inamhi/mag, 1-500 en arconel/celec (default 5). filtro solo arconel/celec: cláusula sql where; vacío trae todas las filas. offset solo arconel/celec: filas a saltar para paginar. agrupar arconel/celec/msp only: comma-separated fields to group by; needs `sumar`. sumar arconel/celec/msp only: comma-separated numeric fields to sum. format formato de salida: `text` (default) o `json`.">
+<details class="atlas-tool" id="tool-get_capa_geo_datos" data-search="get_capa_geo_datos atributos de una capa de geoportal: muestra de hasta 20 objetos (wfs) o hasta 500 filas filtradas (arcgis). trae los atributos de una capa de search_capas_geo, sin coordenadas de geometría. en inamhi y mag es una muestra por wfs getfeature, sin filtros; las capas sin wfs devuelven error. en arconel y celec es una consulta arcgis rest: `filtro` es una cláusula sql sobre los campos de la capa (listados en `campos`), p. ej. &quot;anio = 2024 and idmes = 4&quot; o &quot;empresa like 'cnel%'&quot;; `total_features_en_capa` cuenta las filas que cumplen el filtro y `hay_mas` indica si seguir con `offset`. las fechas llegan como fechas iso. para igm la muestra trae solo atributos (describefeaturetype y getfeature con propertyname), sin geometría: una provincia pesa ~1,5 mb. en maate la muestra también trae solo atributos: las capas de cobertura y deforestación tienen cientos de miles de polígonos. fuente inamhi, mag, arconel o celec. capa el campo `capa` de search_capas_geo (inamhi: nombre &quot;geonode:...&quot;; mag: &quot;categoria/store/nombre&quot;; arcgis: el id corto, p. ej. balance_energia). count objetos a traer: 1-20 en inamhi/mag, 1-500 en arconel/celec (default 5). filtro solo arconel/celec: cláusula sql where; vacío trae todas las filas. offset solo arconel/celec: filas a saltar para paginar. agrupar arconel/celec/msp only: comma-separated fields to group by; needs `sumar`. sumar arconel/celec/msp only: comma-separated numeric fields to sum. format formato de salida: `text` (default) o `json`.">
 <summary class="atlas-tool-summary">
 <code class="atlas-tool-name">get_capa_geo_datos</code>
 <span class="atlas-tool-desc">Atributos de una capa de geoportal: muestra de hasta 20 objetos (WFS) o hasta 500 filas filtradas (ArcGIS).</span>
 </summary>
 <div class="atlas-tool-body">
-<p class="atlas-tool-long">Trae los atributos de una capa de search_capas_geo, sin coordenadas de geometría. En inamhi y mag es una muestra por WFS GetFeature, sin filtros; las capas sin WFS devuelven error. En arconel y celec es una consulta ArcGIS REST: `filtro` es una cláusula SQL sobre los campos de la capa (listados en `campos`), p. ej. &#34;Anio = 2024 AND IdMes = 4&#34; o &#34;Empresa LIKE &#39;CNEL%&#39;&#34;; `total_features_en_capa` cuenta las filas que cumplen el filtro y `hay_mas` indica si seguir con `offset`. Las fechas llegan como fechas ISO. Para igm la muestra trae solo atributos (DescribeFeatureType y GetFeature con propertyName), sin geometría: una provincia pesa ~1,5 MB.</p>
+<p class="atlas-tool-long">Trae los atributos de una capa de search_capas_geo, sin coordenadas de geometría. En inamhi y mag es una muestra por WFS GetFeature, sin filtros; las capas sin WFS devuelven error. En arconel y celec es una consulta ArcGIS REST: `filtro` es una cláusula SQL sobre los campos de la capa (listados en `campos`), p. ej. &#34;Anio = 2024 AND IdMes = 4&#34; o &#34;Empresa LIKE &#39;CNEL%&#39;&#34;; `total_features_en_capa` cuenta las filas que cumplen el filtro y `hay_mas` indica si seguir con `offset`. Las fechas llegan como fechas ISO. Para igm la muestra trae solo atributos (DescribeFeatureType y GetFeature con propertyName), sin geometría: una provincia pesa ~1,5 MB. En maate la muestra también trae solo atributos: las capas de cobertura y deforestación tienen cientos de miles de polígonos.</p>
 
 <table class="atlas-params">
 <thead><tr><th>Parámetro</th><th>Tipo</th><th>Default</th><th>Descripción</th></tr></thead>
@@ -2650,7 +2720,7 @@ window.SITE_SEARCH_EMPTY_LABEL = "Sin resultados.";
     var count = visibleTools().length;
     resultCount.textContent = query
       ? count + " tool" + (count === 1 ? "" : "s") + " coincide" + (count === 1 ? "" : "n") + "."
-      : "86 tools · abre un grupo para ver sus detalles.";
+      : "88 tools · abre un grupo para ver sus detalles.";
   }
 
   function applyFilter(query) {

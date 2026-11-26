@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reference – EcuDataMCP</title>
-<meta name="description" content="EcuDataMCP&#39;s 86 tools, with a full description and a direct link to each one.">
+<meta name="description" content="EcuDataMCP&#39;s 88 tools, with a full description and a direct link to each one.">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://dweskz.github.io/EcuDataMCP/en/atlas.html">
 <link rel="alternate" hreflang="es" href="https://dweskz.github.io/EcuDataMCP/atlas.html">
 <link rel="alternate" hreflang="en" href="https://dweskz.github.io/EcuDataMCP/en/atlas.html">
 <link rel="alternate" hreflang="x-default" href="https://dweskz.github.io/EcuDataMCP/atlas.html">
 <meta property="og:title" content="Reference – EcuDataMCP">
-<meta property="og:description" content="EcuDataMCP&#39;s 86 tools, with a full description and a direct link to each one.">
+<meta property="og:description" content="EcuDataMCP&#39;s 88 tools, with a full description and a direct link to each one.">
 <meta property="og:url" content="https://dweskz.github.io/EcuDataMCP/en/atlas.html">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="en_US">
@@ -76,13 +76,13 @@
 <section class="landing hero">
 <div class="container-page">
 <p class="kicker">Reference</p>
-<h1>All <span class="accent">86 tools</span>, one by one.</h1>
+<h1>All <span class="accent">88 tools</span>, one by one.</h1>
 <p class="hero-sub">Find a tool by name, source, or task. Open only the group and detail you need.</p>
 <div class="atlas-filter-wrap">
 <input type="text" id="atlas-filter" class="atlas-filter" placeholder="Filter by name or keyword…" autocomplete="off">
 </div>
 <div class="atlas-toolbar" aria-live="polite">
-<p id="atlas-result-count">86 tools · open a group to see its details.</p>
+<p id="atlas-result-count">88 tools · open a group to see its details.</p>
 <div class="atlas-actions">
 <button type="button" data-atlas-action="open">Expand groups</button>
 <button type="button" data-atlas-action="close">Collapse groups</button>
@@ -1928,7 +1928,7 @@
 
 <details class="atlas-category">
 <summary class="atlas-category-summary">
-<span class="atlas-category-title">Research utilities<span class="tag">4</span></span>
+<span class="atlas-category-title">Research utilities<span class="tag">5</span></span>
 <span class="atlas-category-action">Show</span>
 </summary>
 <div class="atlas-category-tools">
@@ -2010,6 +2010,40 @@
 <tr><td><code>sheet</code></td><td><code>str</code></td><td><code>empty</code></td><td>Spreadsheet sheet name or 1-based number; empty reads the active sheet.</td></tr>
 
 <tr><td><code>inner_member</code></td><td><code>str</code></td><td><code>empty</code></td><td>File to read inside a .zip member; only when member is a .zip.</td></tr>
+
+<tr><td><code>format</code></td><td><code>Literal[&#39;text&#39;, &#39;json&#39;]</code></td><td><code>text</code></td><td>text | json</td></tr>
+
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details class="atlas-tool" id="tool-aggregate_csv" data-search="aggregate_csv group and total a csv/tsv/txt at a url by reading all of it (up to 30 mb, not just its head): group columns, sums, exact filters and ordering. groups the rows of a whole delimited text file and totals its numeric columns. read_zip_member and preview_resource_data read only the first 5 mb of a file, so a total over a file of 5 to 30 mb would leave rows out; this tool downloads the file whole and returns one row per group with the group values, the row count (`filas`) and the total of each column, plus the totals over every row that passes the filters. column names match ignoring case and accents (año, año and ano are the same). the delimiter (comma, `|`, `;` or tab) and the encoding (utf-8 with or without a bom, or windows 1252) are detected; numbers may use a decimal comma (&quot;1234,56&quot;) or a point, and a lone comma is a decimal mark (&quot;1,234&quot; is 1.234). blank cells and cells that are not numbers are left out of the sums and counted in `celdas_vacias` and `celdas_no_numericas`. sums are exact (`decimal`). a file over 30 mb is refused rather than summed in part; a .zip or a spreadsheet is read with list_zip_contents and read_zip_member. example: sri's sales csvs (search_archivos with fuente=&quot;sri_datasets&quot; and query=&quot;ventas&quot;; about 5.5 mb per year, 2017 to 2026) with group_by=&quot;provincia&quot; and sum_columns=&quot;total_ventas,total_compras&quot;; filters_json='{&quot;mes&quot;: [1, 2, 3]}' gives the first quarter and group_by=&quot;mes&quot; the year by month. column names change between years (ventas_netas_tarifa_12 in 2018, ventas_netas_tarifa_gravada in 2026): when one is not found, the answer lists the file's columns. url direct url to a plain-text csv/tsv/txt file (from search_archivos or a ckan resource). group_by comma-separated column names to group by; empty gives one total row. sum_columns comma-separated numeric columns to total; empty only counts rows. filters_json optional json object of exact filters, e.g. '{&quot;provincia&quot;: &quot;pichincha&quot;, &quot;mes&quot;: [1, 2]}'. order_by result column to sort by, optionally with asc or desc; default is the first total, biggest first. limit groups to return (default 50, max 500); the totals always cover all of them. skip_rows lines above the header line (default 0). format text | json">
+<summary class="atlas-tool-summary">
+<code class="atlas-tool-name">aggregate_csv</code>
+<span class="atlas-tool-desc">Group and total a CSV/TSV/TXT at a URL by reading all of it (up to 30 MB, not just its head): group columns, sums, exact filters and ordering.</span>
+</summary>
+<div class="atlas-tool-body">
+<p class="atlas-tool-long">Groups the rows of a whole delimited text file and totals its numeric columns. read_zip_member and preview_resource_data read only the first 5 MB of a file, so a total over a file of 5 to 30 MB would leave rows out; this tool downloads the file whole and returns one row per group with the group values, the row count (`filas`) and the total of each column, plus the totals over every row that passes the filters. Column names match ignoring case and accents (AÑO, año and ano are the same). The delimiter (comma, `|`, `;` or tab) and the encoding (UTF-8 with or without a BOM, or Windows 1252) are detected; numbers may use a decimal comma (&#34;1234,56&#34;) or a point, and a lone comma is a decimal mark (&#34;1,234&#34; is 1.234). Blank cells and cells that are not numbers are left out of the sums and counted in `celdas_vacias` and `celdas_no_numericas`. Sums are exact (`Decimal`). A file over 30 MB is refused rather than summed in part; a .zip or a spreadsheet is read with list_zip_contents and read_zip_member. Example: SRI&#39;s sales CSVs (search_archivos with fuente=&#34;sri_datasets&#34; and query=&#34;ventas&#34;; about 5.5 MB per year, 2017 to 2026) with group_by=&#34;PROVINCIA&#34; and sum_columns=&#34;TOTAL_VENTAS,TOTAL_COMPRAS&#34;; filters_json=&#39;{&#34;MES&#34;: [1, 2, 3]}&#39; gives the first quarter and group_by=&#34;MES&#34; the year by month. Column names change between years (VENTAS_NETAS_TARIFA_12 in 2018, VENTAS_NETAS_TARIFA_GRAVADA in 2026): when one is not found, the answer lists the file&#39;s columns.</p>
+
+<table class="atlas-params">
+<thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+
+<tr><td><code>url</code></td><td><code>str</code></td><td><code>required</code></td><td>Direct URL to a plain-text CSV/TSV/TXT file (from search_archivos or a CKAN resource).</td></tr>
+
+<tr><td><code>group_by</code></td><td><code>str</code></td><td><code>empty</code></td><td>Comma-separated column names to group by; empty gives one total row.</td></tr>
+
+<tr><td><code>sum_columns</code></td><td><code>str</code></td><td><code>empty</code></td><td>Comma-separated numeric columns to total; empty only counts rows.</td></tr>
+
+<tr><td><code>filters_json</code></td><td><code>str</code></td><td><code>empty</code></td><td>Optional JSON object of exact filters, e.g. &#39;{&#34;PROVINCIA&#34;: &#34;PICHINCHA&#34;, &#34;MES&#34;: [1, 2]}&#39;.</td></tr>
+
+<tr><td><code>order_by</code></td><td><code>str</code></td><td><code>empty</code></td><td>Result column to sort by, optionally with asc or desc; default is the first total, biggest first.</td></tr>
+
+<tr><td><code>limit</code></td><td><code>int</code></td><td><code>50</code></td><td>Groups to return (default 50, max 500); the totals always cover all of them.</td></tr>
+
+<tr><td><code>skip_rows</code></td><td><code>int</code></td><td><code>0</code></td><td>Lines above the header line (default 0).</td></tr>
 
 <tr><td><code>format</code></td><td><code>Literal[&#39;text&#39;, &#39;json&#39;]</code></td><td><code>text</code></td><td>text | json</td></tr>
 
@@ -2274,7 +2308,7 @@
 
 <details class="atlas-category">
 <summary class="atlas-category-summary">
-<span class="atlas-category-title">International sources<span class="tag">3</span></span>
+<span class="atlas-category-title">International sources<span class="tag">4</span></span>
 <span class="atlas-category-action">Show</span>
 </summary>
 <div class="atlas-category-tools">
@@ -2387,6 +2421,42 @@
 </div>
 </details>
 
+<details class="atlas-tool" id="tool-get_clima_nasa_power" data-search="get_clima_nasa_power daily or monthly climate since 1981 for a canton (at its polygon centroid) or a coordinate: rainfall, temperature, humidity, wind and solar radiation from nasa power. a nasa power climate series for a canton or a point in ecuador. nasa power computes meteorology from satellites and weather models on a grid with cells of tens of kilometres, so a canton gets the value of the cell around its centroid, not a station reading. the centroid is the geometric centre of the canton's polygon: for a coastal canton it can fall in the sea, and a canton with a valley and a páramo gets one value for both; for a precise place pass latitud and longitud. use it for trends, seasonality and comparing regions. monthly frequency gives one value per month (rain in mm/day, a monthly mean, with the period's total in resumen.acumulado_mm); daily gives one value per day, up to 366 days per call, and drops from the end the days nasa has not published yet (the last one with data is in ultimo_periodo_con_dato). data starts on 1981-01-01. sevilla don bosco and juval have no centroid in the local table: query them by coordinates. canton canton name or 4-digit inec code (e.g. &quot;quito&quot;, &quot;1701&quot;). use this or latitud/longitud. provincia optional province to tell apart cantons that share a name (bolívar, sucre...). latitud latitude in decimal degrees (south is negative), with longitud, instead of canton. longitud longitude in decimal degrees (west is negative), with latitud, instead of canton. desde start of the period: aaaa, aaaa-mm or aaaa-mm-dd. from 1981. hasta end of the period, same format. default today. frecuencia mensual or diaria. variables comma-separated: lluvia, temperatura, temp_max, temp_min, humedad, viento, radiacion. format output format: `text` (default) or `json`.">
+<summary class="atlas-tool-summary">
+<code class="atlas-tool-name">get_clima_nasa_power</code>
+<span class="atlas-tool-desc">Daily or monthly climate since 1981 for a canton (at its polygon centroid) or a coordinate: rainfall, temperature, humidity, wind and solar radiation from NASA POWER.</span>
+</summary>
+<div class="atlas-tool-body">
+<p class="atlas-tool-long">A NASA POWER climate series for a canton or a point in Ecuador. NASA POWER computes meteorology from satellites and weather models on a grid with cells of tens of kilometres, so a canton gets the value of the cell around its centroid, not a station reading. The centroid is the geometric centre of the canton&#39;s polygon: for a coastal canton it can fall in the sea, and a canton with a valley and a páramo gets one value for both; for a precise place pass latitud and longitud. Use it for trends, seasonality and comparing regions. Monthly frequency gives one value per month (rain in mm/day, a monthly mean, with the period&#39;s total in resumen.acumulado_mm); daily gives one value per day, up to 366 days per call, and drops from the end the days NASA has not published yet (the last one with data is in ultimo_periodo_con_dato). Data starts on 1981-01-01. Sevilla Don Bosco and Juval have no centroid in the local table: query them by coordinates.</p>
+
+<table class="atlas-params">
+<thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+
+<tr><td><code>canton</code></td><td><code>str</code></td><td><code>empty</code></td><td>Canton name or 4-digit INEC code (e.g. &#34;Quito&#34;, &#34;1701&#34;). Use this or latitud/longitud.</td></tr>
+
+<tr><td><code>provincia</code></td><td><code>str</code></td><td><code>empty</code></td><td>Optional province to tell apart cantons that share a name (Bolívar, Sucre...).</td></tr>
+
+<tr><td><code>latitud</code></td><td><code>float | None</code></td><td><code>none</code></td><td>Latitude in decimal degrees (south is negative), with longitud, instead of canton.</td></tr>
+
+<tr><td><code>longitud</code></td><td><code>float | None</code></td><td><code>none</code></td><td>Longitude in decimal degrees (west is negative), with latitud, instead of canton.</td></tr>
+
+<tr><td><code>desde</code></td><td><code>str</code></td><td><code>empty</code></td><td>Start of the period: AAAA, AAAA-MM or AAAA-MM-DD. From 1981.</td></tr>
+
+<tr><td><code>hasta</code></td><td><code>str</code></td><td><code>empty</code></td><td>End of the period, same format. Default today.</td></tr>
+
+<tr><td><code>frecuencia</code></td><td><code>Literal[&#39;mensual&#39;, &#39;diaria&#39;]</code></td><td><code>mensual</code></td><td>mensual or diaria.</td></tr>
+
+<tr><td><code>variables</code></td><td><code>str</code></td><td><code>lluvia,temperatura</code></td><td>Comma-separated: lluvia, temperatura, temp_max, temp_min, humedad, viento, radiacion.</td></tr>
+
+<tr><td><code>format</code></td><td><code>Literal[&#39;text&#39;, &#39;json&#39;]</code></td><td><code>text</code></td><td>Output format: `text` (default) or `json`.</td></tr>
+
+</tbody>
+</table>
+
+</div>
+</details>
+
 </div>
 </details>
 
@@ -2397,13 +2467,13 @@
 </summary>
 <div class="atlas-category-tools">
 
-<details class="atlas-tool" id="tool-search_archivos" data-search="search_archivos file links published by one institution (sri, mef, senae, inec, minedec, etc.). searches one institution's catalog of published files and returns direct links (title, url, format), not contents. sources: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines and arcotel_mensuales. source censo (censoecuador.gob.ec): ~100 files with `tipo` tabulado, microdatos, diccionario or documento; the results tabulados by theme (population, housing, household) as xlsx or csv-in-zip — the household ict one (cellphone, internet, computer, tablet by province and cantón) comes up with query &quot;internet&quot; or &quot;tic&quot; —, the microdata bases by cantón, sector and city block (csv, spss, redatam) and the dictionaries. download with download_resource or read_pdf (5 mb cap). source turismo: the monthly tourism figures bulletins (november 2025 on), now published by the ministry of production; pdf only, read_pdf extracts the tables. source fedexpor: fedexpor's monthly expordata foreign-trade report from january 2026, on google drive (~30 mb, over read_pdf's cap; descarga_directa is the direct link). source aeade: aeade's monthly vehicle-sales bulletins (tipo boletin_ventas) and sector yearbooks (tipo anuario). new sources: arcotel_series (the newest xlsx of each of arcotel's 25 statistical series, each with full history), msp_precios (medicine ceiling prices, every revision since 2016), mit_vias (mit's daily state-road status report) and minedec_bases (amie registers by school year 2009-2010 to 2024-2025, start and end cuts, xlsx and csv, plus thematic files). fuente catalog to search; see the list of sources. query free text matched (accent-insensitive) against each file's title and source fields. empty returns all files. limit max files returned (1-100, default 50). offset pagination offset over the matched files. formato optional exact file format (pdf, xlsx, csv, zip...); not for sri_datasets, sri_recaudacion or censo. format output format: `text` (default) or `json`.">
+<details class="atlas-tool" id="tool-search_archivos" data-search="search_archivos file links published by one institution (sri, mef, senae, inec, minedec, etc.). searches one institution's catalog of published files and returns direct links (title, url, format), not contents. sources: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines and arcotel_mensuales. source censo (censoecuador.gob.ec): ~100 files with `tipo` tabulado, microdatos, diccionario or documento; the results tabulados by theme (population, housing, household) as xlsx or csv-in-zip — the household ict one (cellphone, internet, computer, tablet by province and cantón) comes up with query &quot;internet&quot; or &quot;tic&quot; —, the microdata bases by cantón, sector and city block (csv, spss, redatam) and the dictionaries. download with download_resource or read_pdf (5 mb cap). source turismo: the monthly tourism figures bulletins (november 2025 on), now published by the ministry of production; pdf only, read_pdf extracts the tables. source fedexpor: fedexpor's monthly expordata foreign-trade report from january 2026, on google drive (~30 mb, over read_pdf's cap; descarga_directa is the direct link). source aeade: aeade's monthly vehicle-sales bulletins (tipo boletin_ventas) and sector yearbooks (tipo anuario). new sources: arcotel_series (the newest xlsx of each of arcotel's 25 statistical series, each with full history), msp_precios (medicine ceiling prices, every revision since 2016), mit_vias (mit's daily state-road status report) and minedec_bases (amie registers by school year 2009-2010 to 2024-2025, start and end cuts, xlsx and csv, plus thematic files). source sni_evaluaciones: the sni evaluation bank, 108 reports 2011-2026 evaluating public programs and projects (pdf; a few .rar or .zip), each with `categoria` (sector), `entidad_ejecutora`, `entidad_evaluadora`, evaluation `tipo`, `anio` and `objetivo`; read_pdf reads them. fuente catalog to search; see the list of sources. query free text matched (accent-insensitive) against each file's title and source fields. empty returns all files. limit max files returned (1-100, default 50). offset pagination offset over the matched files. formato optional exact file format (pdf, xlsx, csv, zip...); not for sri_datasets, sri_recaudacion or censo. format output format: `text` (default) or `json`.">
 <summary class="atlas-tool-summary">
 <code class="atlas-tool-name">search_archivos</code>
 <span class="atlas-tool-desc">File links published by one institution (SRI, MEF, SENAE, INEC, MINEDEC, etc.).</span>
 </summary>
 <div class="atlas-tool-body">
-<p class="atlas-tool-long">Searches one institution&#39;s catalog of published files and returns direct links (title, URL, format), not contents. Sources: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines and arcotel_mensuales. Source censo (censoecuador.gob.ec): ~100 files with `tipo` tabulado, microdatos, diccionario or documento; the results tabulados by theme (population, housing, household) as XLSX or CSV-in-ZIP — the household ICT one (cellphone, internet, computer, tablet by province and cantón) comes up with query &#34;internet&#34; or &#34;tic&#34; —, the microdata bases by cantón, sector and city block (CSV, SPSS, REDATAM) and the dictionaries. Download with download_resource or read_pdf (5 MB cap). Source turismo: the monthly tourism figures bulletins (November 2025 on), now published by the Ministry of Production; PDF only, read_pdf extracts the tables. Source fedexpor: FEDEXPOR&#39;s monthly Expordata foreign-trade report from January 2026, on Google Drive (~30 MB, over read_pdf&#39;s cap; descarga_directa is the direct link). Source aeade: AEADE&#39;s monthly vehicle-sales bulletins (tipo boletin_ventas) and sector yearbooks (tipo anuario). New sources: arcotel_series (the newest XLSX of each of ARCOTEL&#39;s 25 statistical series, each with full history), msp_precios (medicine ceiling prices, every revision since 2016), mit_vias (MIT&#39;s daily state-road status report) and minedec_bases (AMIE registers by school year 2009-2010 to 2024-2025, start and end cuts, XLSX and CSV, plus thematic files).</p>
+<p class="atlas-tool-long">Searches one institution&#39;s catalog of published files and returns direct links (title, URL, format), not contents. Sources: sri_datasets, sri_recaudacion, mef, senae, censo, minedec, senescyt, msp, cnig, trabajo_boletin, salarios, arcotel_boletines and arcotel_mensuales. Source censo (censoecuador.gob.ec): ~100 files with `tipo` tabulado, microdatos, diccionario or documento; the results tabulados by theme (population, housing, household) as XLSX or CSV-in-ZIP — the household ICT one (cellphone, internet, computer, tablet by province and cantón) comes up with query &#34;internet&#34; or &#34;tic&#34; —, the microdata bases by cantón, sector and city block (CSV, SPSS, REDATAM) and the dictionaries. Download with download_resource or read_pdf (5 MB cap). Source turismo: the monthly tourism figures bulletins (November 2025 on), now published by the Ministry of Production; PDF only, read_pdf extracts the tables. Source fedexpor: FEDEXPOR&#39;s monthly Expordata foreign-trade report from January 2026, on Google Drive (~30 MB, over read_pdf&#39;s cap; descarga_directa is the direct link). Source aeade: AEADE&#39;s monthly vehicle-sales bulletins (tipo boletin_ventas) and sector yearbooks (tipo anuario). New sources: arcotel_series (the newest XLSX of each of ARCOTEL&#39;s 25 statistical series, each with full history), msp_precios (medicine ceiling prices, every revision since 2016), mit_vias (MIT&#39;s daily state-road status report) and minedec_bases (AMIE registers by school year 2009-2010 to 2024-2025, start and end cuts, XLSX and CSV, plus thematic files). Source sni_evaluaciones: the SNI evaluation bank, 108 reports 2011-2026 evaluating public programs and projects (PDF; a few .rar or .zip), each with `categoria` (sector), `entidad_ejecutora`, `entidad_evaluadora`, evaluation `tipo`, `anio` and `objetivo`; read_pdf reads them.</p>
 
 <table class="atlas-params">
 <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
@@ -2505,13 +2575,13 @@
 </summary>
 <div class="atlas-category-tools">
 
-<details class="atlas-tool" id="tool-search_capas_geo" data-search="search_capas_geo geoportal layers: inamhi and mag (rainfall, land cover, agriculture) and electricity-sector arcgis (arconel, celec). searches one geoportal's layer catalog: inamhi (precipitation normals, anomalies, wrf grids, watersheds), mag (agro-ecological zoning, land cover, agricultural censuses, rural cadastre), arconel (energy balance and losses by distributor and month 1999-apr 2024, billing, collection, subsidies and customers 1999-2025, plants, lines, substations, service areas) or celec (celec's plants and the march 2025 snt transmission network; survey123 layers are excluded on purpose). each layer carries `capa`, the id get_capa_geo_datos takes. source igm: 737 wfs layers of official cartography from the military geographic institute (68 national 1:1m from 2024, 505 at 1:50,000 and 164 at 1:25,000; the reserved igm_reservada workspace is left out); categoria picks the scale (nacional, 50k or 25k). source msp: 9 arcgis online layers of the ministry of public health (6,411 public-network facilities, msp facilities, 18 sexual and reproductive health indicators by canton 2018-2026, visits and discharges by facility since 2019, fertility, covid vaccination by canton, eais areas, districts). fuente inamhi, mag, arconel or celec. query free text matched (accent-insensitive) against the layer's id, name, title or abstract. empty returns all layers. solo_wfs only return layers with wfs (attribute data). ignored for arconel and celec. categoria only for fuente=&quot;mag&quot;: one of its 8 categories. ignored for inamhi. format output format: `text` (default) or `json`.">
+<details class="atlas-tool" id="tool-search_capas_geo" data-search="search_capas_geo geoportal layers: inamhi and mag (rainfall, land cover, agriculture) and electricity-sector arcgis (arconel, celec). searches one geoportal's layer catalog: inamhi (precipitation normals, anomalies, wrf grids, watersheds), mag (agro-ecological zoning, land cover, agricultural censuses, rural cadastre), arconel (energy balance and losses by distributor and month 1999-apr 2024, billing, collection, subsidies and customers 1999-2025, plants, lines, substations, service areas) or celec (celec's plants and the march 2025 snt transmission network; survey123 layers are excluded on purpose). each layer carries `capa`, the id get_capa_geo_datos takes. source igm: 737 wfs layers of official cartography from the military geographic institute (68 national 1:1m from 2024, 505 at 1:50,000 and 164 at 1:25,000; the reserved igm_reservada workspace is left out); categoria picks the scale (nacional, 50k or 25k). source msp: 9 arcgis online layers of the ministry of public health (6,411 public-network facilities, msp facilities, 18 sexual and reproductive health indicators by canton 2018-2026, visits and discharges by facility since 2019, fertility, covid vaccination by canton, eais areas, districts). source maate: 93 wfs layers from the ministry of environment and energy's open geoserver (land cover for nine years between 1990 and 2024, deforestation by period 1990-2024, snap protected areas, protective forests, carbon, ecosystems and mining contamination 2009-2023); the service answers over plain http on port 8080 only. fuente inamhi, mag, arconel or celec. query free text matched (accent-insensitive) against the layer's id, name, title or abstract. empty returns all layers. solo_wfs only return layers with wfs (attribute data). ignored for arconel and celec. categoria only for fuente=&quot;mag&quot;: one of its 8 categories. ignored for inamhi. format output format: `text` (default) or `json`.">
 <summary class="atlas-tool-summary">
 <code class="atlas-tool-name">search_capas_geo</code>
 <span class="atlas-tool-desc">Geoportal layers: INAMHI and MAG (rainfall, land cover, agriculture) and electricity-sector ArcGIS (ARCONEL, CELEC).</span>
 </summary>
 <div class="atlas-tool-body">
-<p class="atlas-tool-long">Searches one geoportal&#39;s layer catalog: inamhi (precipitation normals, anomalies, WRF grids, watersheds), mag (agro-ecological zoning, land cover, agricultural censuses, rural cadastre), arconel (energy balance and losses by distributor and month 1999-Apr 2024, billing, collection, subsidies and customers 1999-2025, plants, lines, substations, service areas) or celec (CELEC&#39;s plants and the March 2025 SNT transmission network; Survey123 layers are excluded on purpose). Each layer carries `capa`, the id get_capa_geo_datos takes. Source igm: 737 WFS layers of official cartography from the Military Geographic Institute (68 national 1:1M from 2024, 505 at 1:50,000 and 164 at 1:25,000; the reserved igm_reservada workspace is left out); categoria picks the scale (nacional, 50k or 25k). Source msp: 9 ArcGIS Online layers of the Ministry of Public Health (6,411 public-network facilities, MSP facilities, 18 sexual and reproductive health indicators by canton 2018-2026, visits and discharges by facility since 2019, fertility, COVID vaccination by canton, EAIS areas, districts).</p>
+<p class="atlas-tool-long">Searches one geoportal&#39;s layer catalog: inamhi (precipitation normals, anomalies, WRF grids, watersheds), mag (agro-ecological zoning, land cover, agricultural censuses, rural cadastre), arconel (energy balance and losses by distributor and month 1999-Apr 2024, billing, collection, subsidies and customers 1999-2025, plants, lines, substations, service areas) or celec (CELEC&#39;s plants and the March 2025 SNT transmission network; Survey123 layers are excluded on purpose). Each layer carries `capa`, the id get_capa_geo_datos takes. Source igm: 737 WFS layers of official cartography from the Military Geographic Institute (68 national 1:1M from 2024, 505 at 1:50,000 and 164 at 1:25,000; the reserved igm_reservada workspace is left out); categoria picks the scale (nacional, 50k or 25k). Source msp: 9 ArcGIS Online layers of the Ministry of Public Health (6,411 public-network facilities, MSP facilities, 18 sexual and reproductive health indicators by canton 2018-2026, visits and discharges by facility since 2019, fertility, COVID vaccination by canton, EAIS areas, districts). Source maate: 93 WFS layers from the Ministry of Environment and Energy&#39;s open GeoServer (land cover for nine years between 1990 and 2024, deforestation by period 1990-2024, SNAP protected areas, protective forests, carbon, ecosystems and mining contamination 2009-2023); the service answers over plain HTTP on port 8080 only.</p>
 
 <table class="atlas-params">
 <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
@@ -2533,13 +2603,13 @@
 </div>
 </details>
 
-<details class="atlas-tool" id="tool-get_capa_geo_datos" data-search="get_capa_geo_datos attributes of a geoportal layer: a sample of up to 20 features (wfs) or up to 500 filtered rows (arcgis). fetches the attributes of a layer from search_capas_geo, geometry coordinates dropped. for inamhi and mag it is a wfs getfeature sample with no filters; layers without wfs return an error. for arconel and celec it is an arcgis rest query: `filtro` is a sql where clause on the layer's fields (listed in `campos`), e.g. &quot;anio = 2024 and idmes = 4&quot; or &quot;empresa like 'cnel%'&quot;; `total_features_en_capa` counts the rows matching it and `hay_mas` says whether to page on with `offset`. dates come back as iso dates. for igm the sample carries attributes only (describefeaturetype then getfeature with propertyname), no geometry: one province weighs ~1.5 mb. fuente inamhi, mag, arconel or celec. capa the layer's `capa` from search_capas_geo (inamhi: &quot;geonode:...&quot; name; mag: &quot;categoria/store/name&quot;; arcgis: the short id, e.g. balance_energia). count features to fetch: 1-20 for inamhi/mag, 1-500 for arconel/celec (default 5). filtro arconel/celec only: sql where clause; empty for all rows. offset arconel/celec only: rows to skip when paging. agrupar arconel/celec/msp only: comma-separated fields to group by; needs `sumar`. sumar arconel/celec/msp only: comma-separated numeric fields to sum. format output format: `text` (default) or `json`.">
+<details class="atlas-tool" id="tool-get_capa_geo_datos" data-search="get_capa_geo_datos attributes of a geoportal layer: a sample of up to 20 features (wfs) or up to 500 filtered rows (arcgis). fetches the attributes of a layer from search_capas_geo, geometry coordinates dropped. for inamhi and mag it is a wfs getfeature sample with no filters; layers without wfs return an error. for arconel and celec it is an arcgis rest query: `filtro` is a sql where clause on the layer's fields (listed in `campos`), e.g. &quot;anio = 2024 and idmes = 4&quot; or &quot;empresa like 'cnel%'&quot;; `total_features_en_capa` counts the rows matching it and `hay_mas` says whether to page on with `offset`. dates come back as iso dates. for igm the sample carries attributes only (describefeaturetype then getfeature with propertyname), no geometry: one province weighs ~1.5 mb. for maate the sample also carries attributes only: the land cover and deforestation layers have hundreds of thousands of polygons. fuente inamhi, mag, arconel or celec. capa the layer's `capa` from search_capas_geo (inamhi: &quot;geonode:...&quot; name; mag: &quot;categoria/store/name&quot;; arcgis: the short id, e.g. balance_energia). count features to fetch: 1-20 for inamhi/mag, 1-500 for arconel/celec (default 5). filtro arconel/celec only: sql where clause; empty for all rows. offset arconel/celec only: rows to skip when paging. agrupar arconel/celec/msp only: comma-separated fields to group by; needs `sumar`. sumar arconel/celec/msp only: comma-separated numeric fields to sum. format output format: `text` (default) or `json`.">
 <summary class="atlas-tool-summary">
 <code class="atlas-tool-name">get_capa_geo_datos</code>
 <span class="atlas-tool-desc">Attributes of a geoportal layer: a sample of up to 20 features (WFS) or up to 500 filtered rows (ArcGIS).</span>
 </summary>
 <div class="atlas-tool-body">
-<p class="atlas-tool-long">Fetches the attributes of a layer from search_capas_geo, geometry coordinates dropped. For inamhi and mag it is a WFS GetFeature sample with no filters; layers without WFS return an error. For arconel and celec it is an ArcGIS REST query: `filtro` is a SQL where clause on the layer&#39;s fields (listed in `campos`), e.g. &#34;Anio = 2024 AND IdMes = 4&#34; or &#34;Empresa LIKE &#39;CNEL%&#39;&#34;; `total_features_en_capa` counts the rows matching it and `hay_mas` says whether to page on with `offset`. Dates come back as ISO dates. For igm the sample carries attributes only (DescribeFeatureType then GetFeature with propertyName), no geometry: one province weighs ~1.5 MB.</p>
+<p class="atlas-tool-long">Fetches the attributes of a layer from search_capas_geo, geometry coordinates dropped. For inamhi and mag it is a WFS GetFeature sample with no filters; layers without WFS return an error. For arconel and celec it is an ArcGIS REST query: `filtro` is a SQL where clause on the layer&#39;s fields (listed in `campos`), e.g. &#34;Anio = 2024 AND IdMes = 4&#34; or &#34;Empresa LIKE &#39;CNEL%&#39;&#34;; `total_features_en_capa` counts the rows matching it and `hay_mas` says whether to page on with `offset`. Dates come back as ISO dates. For igm the sample carries attributes only (DescribeFeatureType then GetFeature with propertyName), no geometry: one province weighs ~1.5 MB. For maate the sample also carries attributes only: the land cover and deforestation layers have hundreds of thousands of polygons.</p>
 
 <table class="atlas-params">
 <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
@@ -2650,7 +2720,7 @@ window.SITE_SEARCH_EMPTY_LABEL = "No results.";
     var count = visibleTools().length;
     resultCount.textContent = query
       ? count + " tool" + (count === 1 ? "" : "s") + " match" + (count === 1 ? "es" : "") + "."
-      : "86 tools · open a group to see its details.";
+      : "88 tools · open a group to see its details.";
   }
 
   function applyFilter(query) {
