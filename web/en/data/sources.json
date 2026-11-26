@@ -744,6 +744,15 @@
             "coverage": "ambienteyenergia.gob.ec",
             "url": "https://www.ambienteyenergia.gob.ec",
             "status": "live"
+          },
+          {
+            "id": "mae-ide",
+            "name": "Environmental spatial data infrastructure (IDE)",
+            "tag": "Environment",
+            "description": "93 open WFS layers: land cover 1990-2024, deforestation by period 1990-2024, protected areas (SNAP), protective forests, carbon and mining contamination",
+            "coverage": "ide.ambiente.gob.ec",
+            "url": "http://ide.ambiente.gob.ec/mapainteractivo/",
+            "status": "live"
           }
         ]
       },
@@ -856,6 +865,20 @@
             "description": "Open audit data and the Annual Control Plan",
             "coverage": "contraloria.gob.ec",
             "url": "https://www.contraloria.gob.ec",
+            "status": "live"
+          }
+        ]
+      },
+      {
+        "name": "National Information System (SNI)",
+        "sources": [
+          {
+            "id": "sni-evaluaciones",
+            "name": "Public-intervention evaluation bank",
+            "tag": "SNI",
+            "description": "108 evaluation reports of public programs and projects, 2011-2026, with sector, executing and evaluating entity, type and objective (mostly PDF)",
+            "coverage": "sni.gob.ec",
+            "url": "https://www.sni.gob.ec/informacion-para-la-planificacion/informacion-estadistica/banco-de-evaluaciones/",
             "status": "live"
           }
         ]
@@ -1067,6 +1090,20 @@
             "description": "Latin Macro Watch (665 resources, 26 countries) and the World Bank/IADB Database of Political Institutions — a standard CKAN portal, reachable with source=\"iadb\" on the generic CKAN tools",
             "coverage": "data.iadb.org",
             "url": "https://data.iadb.org",
+            "status": "live"
+          }
+        ]
+      },
+      {
+        "name": "NASA",
+        "sources": [
+          {
+            "id": "nasa-power",
+            "name": "NASA POWER",
+            "tag": "NASA",
+            "description": "Daily and monthly climate since 1981 (rainfall, temperature, humidity, wind, solar radiation) by canton or coordinate, from a satellite and model grid; not weather stations",
+            "coverage": "power.larc.nasa.gov",
+            "url": "https://power.larc.nasa.gov/",
             "status": "live"
           }
         ]

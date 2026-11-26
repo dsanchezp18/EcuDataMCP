@@ -1,6 +1,121 @@
 # Changelog
 
-## Unreleased
+## 0.15.2 — 2026-11-25
+
+88 tools in the default profile (`aggregate_csv` is new). `aggregate_csv` groups
+and totals a whole CSV at a URL, built for the SRI's yearly sales files, which
+`read_zip_member` could only read to 5 MB; `list_zip_contents` and
+`read_zip_member` now read a zip from a host without HTTP Range; `get_sri_ruc_info`
+keeps the registry record when the SRI's establishments page fails; and the IESS
+certificate waits 75 s instead of 30.
+
+- **New tool `aggregate_csv`: totals and groups over a whole CSV.** The yearly
+  SRI sales files (`search_archivos(fuente="sri_datasets", query="ventas")`,
+  2017 to 2026) weigh 5.2 to 5.7 MB each, not the 12 to 24 MB the SRI's catalog
+  shows, so `read_zip_member` read the first 5 MB and left out about a tenth of
+  the rows, and the host does not honour HTTP Range, so nothing could page
+  through the rest. `aggregate_csv` downloads a CSV/TSV/TXT at a URL whole (up to
+  30 MB; a bigger file is refused rather than summed in part) and returns one row
+  per group with the row count and the total of each `sum_columns` column, plus
+  the totals over every row that passes `filters_json`. It reads what the files
+  actually are: `|`, comma, `;` or tab delimiters, a BOM, UTF-8 or Windows 1252
+  (the 2018 file), decimal commas (`194488,1500`, `"36631,46"`), and column names
+  that differ by year, matched without case or accents. Sums are exact
+  (`Decimal`), and blank or non-numeric cells are counted, not turned into zeros.
+  Checked live against 2018 (50,334 rows, total sales 188,851,629,437.72,
+  identical to a separate sum) and 2025. A `.zip` or a spreadsheet still goes
+  through `read_zip_member`. `search_archivos(fuente="sri_datasets")` now says so
+  when it lists CSV files, and `read_zip_member`'s description points to it.
+
+- **`list_zip_contents` / `read_zip_member`: a host without HTTP Range no longer
+  fails.** A server that answers 200 to a range request (the SRI's does) made both
+  tools stop with "no soporta HTTP Range". Now a .zip of up to 20 MB is downloaded
+  whole once (kept 5 minutes, so reading a member after listing the archive does
+  not download it twice) and the ranges are served from memory through the same
+  checks as before (CRC, sizes, encryption, ZIP64). A bigger .zip on such a host
+  fails with a message that says so; `ECUADOR_MCP_NO_RANGE_ZIP_MB` raises the 20 MB
+  cap (the SRI's province RUC files run from 2 to 156 MB). The previews that told the user to use
+  `download_resource`, itself capped at 5 MB, now point to `list_zip_contents` and
+  `read_zip_member`, or to the direct link.
+
+- **`get_sri_ruc_info`: a failing establishments page no longer discards the
+  RUC record.** On 2026-11-25 the SRI's `ruc-establec.jspa` answered HTTP 500
+  for two RUCs from two different hosts while the registry page
+  (`ruc-datos2.jspa`) answered normally, and the tool failed whole because
+  `include_establecimientos` is on by default. It now returns the record
+  without `establecimientos` and adds `establecimientos_no_disponibles` saying
+  the establishments page did not respond (a 5xx or a network error; a 4xx
+  still fails). No new tool.
+
+- **`get_certificado_cumplimiento_patronal`: waits 75 s for the certificate
+  instead of 30 s.** The IESS form loads in about 1 s but generating the PDF
+  took 12 to 30 s or more when timed on 2026-11-25 (26, 12.6, 13.2 and 30.2 s
+  from one machine, one call past 30 s), so the flat 30 s limit cut off about
+  half the calls from the GitHub runners and both hosted servers. The earlier
+  explanation, the IESS throttling datacenter IPs, did not hold: the same
+  slowness shows from a home connection. No new tool.
+
+## 0.15.1 — 2026-11-24
+
+87 tools in the default profile (`get_anda_materiales` and `get_clima_nasa_power`
+are new). `get_clima_nasa_power` gives daily and monthly rainfall, temperature,
+humidity, wind and solar radiation for any canton or coordinate since 1981;
+`search_capas_geo` gains the Ministry of Environment's layers
+(`fuente="maate"`: land cover, deforestation, protected areas) and
+`search_archivos` the SNI's bank of public-policy evaluations
+(`fuente="sni_evaluaciones"`). `read_zip_member` now reads any sheet, a zip
+inside a zip, a spreadsheet at a plain URL and members past 5 MB; the 2022
+Census tabulados are searchable by table title, level and column; Supercías
+ratios it could not calculate are empty instead of a false 0, compared against
+sector quartiles; `search_sismos` times were five hours off; and the HTTP
+server, the smoke test and the Supercías rebuild are sturdier.
+
+- **`search_capas_geo` / `get_capa_geo_datos`: new source `fuente="maate"`, the
+  Ministry of Environment's open GeoServer.** The server had no environmental
+  data. `ide.ambiente.gob.ec:8080/geoserver` (found through the `config.js` of
+  the ministry's interactive map; no login) serves 93 WFS layers in its
+  `mae_ide` workspace: land cover for nine years between 1990 and 2024 (up to
+  290,004 polygons), deforestation by period from 1990-2000 to 2022-2024
+  (47,895 polygons in the last), the protected-area system SNAP (81 areas),
+  protective forests, carbon by forest stratum, ecosystems and mining
+  contamination 2009-2023. As with IGM, a sample returns attributes only
+  (geometry would be megabytes), the catalog is cached on disk and served
+  stale if the host goes down, and GeoServer's `tiger` demo workspace is left
+  out. The service answers over plain HTTP on port 8080 only; the HTTPS host
+  does not answer. Checked live on 2026-11-24 against the SNAP and 2022-2024
+  deforestation layers. No new tool.
+
+- **`search_archivos`: new source `fuente="sni_evaluaciones"`, the SNI's bank
+  of public-policy evaluations.** The Sistema Nacional de Información
+  (sni.gob.ec, Secretaría Nacional de Planificación) publishes 108 evaluation
+  reports of public programs and projects, 2011 to 2026, in one table on its
+  "Banco de evaluaciones" page. Each row names the sector, the entity that ran
+  the intervention, the entity that evaluated it, the evaluation type, the year
+  and the objective, and links the report (104 PDF, three .rar, one .zip);
+  `read_pdf` opens the PDFs (checked on a 97-page 2026 report). The catalog is
+  cached on disk for six hours and served stale if the site goes down. A query
+  needs every word to appear in one of those fields, ignoring accents, and
+  `formato` filters as for the other sources. The rest of the SNI site is not
+  cataloged: its lists of population projections, statistical inventories and
+  technical norms load through an AJAX filter with a per-page nonce, so the HTML
+  holds only their first three or four items. Checked live on 2026-11-24. No new
+  tool.
+
+- **New tool `get_clima_nasa_power`: daily and monthly rainfall, temperature,
+  humidity, wind and solar radiation for any canton or coordinate, from NASA
+  POWER.** The server had no climate series for a place and a date range:
+  INAMHI's layers are maps, not series. NASA POWER (`power.larc.nasa.gov`, no
+  key) serves satellite- and model-derived meteorology on a global grid, daily
+  from 1981 to a few days before today (the last day was 2026-11-20 on
+  2026-11-24). A canton is queried at its polygon centroid, from a new table
+  `helpers/data/cantones_centroides.json` (224 of the 226 cantons in
+  `cantones.json`; Sevilla Don Bosco and Juval have none, so those take
+  coordinates); `latitud`/`longitud` query any point. Daily answers
+  hold at most 366 days, monthly ones run back to 1981, and days NASA has not
+  published yet (it answers them with -999) are dropped from the end instead of
+  being shown as numbers. A value describes a grid cell of tens of kilometres,
+  not a weather station, and the answer says so. 87 tools.
+
 
 - **`read_zip_member` reads any sheet, a zip inside a zip, and a spreadsheet
   at a plain URL.** Three cases it could not handle on 2026-11-23, while

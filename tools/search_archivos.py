@@ -33,6 +33,7 @@ from helpers import (
     msp_precios_client,
     salarios_sectoriales_client,
     senescyt_client,
+    sni_client,
     sri_client,
     trabajo_boletin_anual_client,
     turismo_client,
@@ -67,6 +68,7 @@ Fuente = Literal[
     "msp_precios",
     "mit_vias",
     "minedec_bases",
+    "sni_evaluaciones",
 ]
 
 # Clients that paginate themselves; the rest return every match and are
@@ -96,6 +98,7 @@ _UNPAGINATED: dict[str, Callable[..., Awaitable[dict[str, Any]]]] = {
     "msp_precios": msp_precios_client.search_precios,
     "mit_vias": mit_client.search_estado_vias,
     "minedec_bases": minedec_client.search_bases,
+    "sni_evaluaciones": sni_client.search_evaluaciones,
 }
 
 # Keys the clients use for the same three things, first match wins.
@@ -158,14 +161,26 @@ async def _search(
         total = len(items)
         items = items[offset : offset + limit]
 
+    archivos = [_normalize_file(item) for item in items]
     nota = result.get("nota") or result.get("nota_cobertura") or result.get("aviso")
+    if not nota and fuente == "sri_datasets" and any(
+        str(a.get("url") or "").lower().endswith(".csv") for a in archivos
+    ):
+        # The yearly sales CSVs are about 5.5 MB: read_zip_member and
+        # preview_resource_data stop at 5 MB, so only a whole-file read answers
+        # a question about totals.
+        nota = (
+            "Los CSV del SRI pesan unos 5 MB y read_zip_member solo lee los primeros "
+            "5 MB: para totales por provincia, cantón o sector usa aggregate_csv con "
+            "la URL del archivo."
+        )
     return {
         "fuente": fuente,
         "nombre_fuente": result.get("source"),
         "url_fuente": result.get("url_fuente") or result.get("url_indice") or result.get("source_url"),
         "total": total,
         "offset": offset,
-        "archivos": [_normalize_file(item) for item in items],
+        "archivos": archivos,
         **({"nota": nota} if nota else {}),
     }
 
@@ -176,7 +191,8 @@ def register_search_archivos_tool(mcp: MCPServer) -> None:
         description=(
             "File links from one institution's catalog, filtered by text: SRI, MEF, "
             "SENAE, Census 2022, MINEDEC, SENESCYT, MSP, CNIG, Trabajo, ARCOTEL and "
-            "BCE, Turismo, FEDEXPOR, AEADE, ARCOTEL series, MSP drug prices, MIT road status. Links, not contents."
+            "BCE, Turismo, FEDEXPOR, AEADE, ARCOTEL series, MSP drug prices, MIT road status, "
+            "SNI public-policy evaluations. Links, not contents."
         ),
         annotations=READ_ONLY,
     )
@@ -277,6 +293,13 @@ def register_search_archivos_tool(mcp: MCPServer) -> None:
         - minedec_bases: MINEDEC per-school-year registers 2009-2010 to
           2024-2025 (Inicio/Fin, XLSX and CSV twins, dictionaries,
           metadata), thematic files and the 1993-2007 statistics.
+        - sni_evaluaciones: the SNI "Banco de evaluaciones" (Secretaría
+          Nacional de Planificación), 108 reports 2011-2026 evaluating public
+          programs and projects (PDF, a few .rar/.zip). Each has `categoria`
+          (sector), `entidad_ejecutora`, `entidad_evaluadora`, `tipo`
+          (design, implementation, results...), `anio` and `objetivo`; the title is
+          the intervention. Every word of `query` must appear in any of
+          those fields. read_pdf reads the reports.
 
         Args:
             fuente: Catalog to search; see the list above.
@@ -323,6 +346,9 @@ def register_search_archivos_tool(mcp: MCPServer) -> None:
                 parts.append(f"   {a['url']}")
                 if a.get("contenido"):
                     parts.append(f"   {a['contenido']}")
+                if a.get("objetivo"):
+                    objetivo = a["objetivo"]
+                    parts.append(f"   Objetivo: {objetivo[:240]}{'…' if len(objetivo) > 240 else ''}")
                 for t in a.get("tablas_coincidentes") or []:
                     niveles = f" [{', '.join(t['niveles'])}]" if t.get("niveles") else ""
                     parts.append(f"   · hoja {t.get('hoja')}: {t.get('titulo')}{niveles}")

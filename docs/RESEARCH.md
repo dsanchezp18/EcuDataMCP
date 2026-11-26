@@ -7132,6 +7132,648 @@ la tercera `parcial=false` con USD 34.713.874,47 y 211 procesos con monto. Coste
 ~150 s por llamada cuando SERCOP está limitando (429), porque completar el
 conjunto exige varias pasadas sobre un muestreo aleatorio.
 
+## Cuadragésima quinta pasada — los mayores vacíos de cobertura: IDE ambiental construida, el resto verificado (2026-11-24)
+
+Pedido de Daniel: encontrar las 2-3 fuentes nuevas que más faltan. Método: se
+cruzaron unos veinte temas contra ROADMAP.md, esta nota y el código (once no
+aparecían con las palabras clave buscadas: finanzas de GAD, planificación/SNI,
+combustibles ARCH, patrimonio INPC, FAOSTAT, Global Forest Watch, los portales
+de datos abiertos de Quito y de Guayaquil, comercio por partida, DINARDAP y
+Registro Social) y las candidatas se verificaron en vivo desde Canadá. Criterio de Daniel: una
+fuente que solo republica datos que ya se alcanzan no sirve, salvo que
+traiga datos nuevos.
+
+### IDE del Ministerio de Ambiente y Energía — construida
+
+El mapa interactivo del ministerio (`http://ide.ambiente.gob.ec/mapainteractivo/`,
+un portal nfms4redd de la FAO) lleva en su `config.js` público la dirección
+de su GeoServer: `http://ide.ambiente.gob.ec:8080/geoserver`. Solo responde
+por HTTP y por el puerto 8080: el HTTPS de `ide.ambiente.gob.ec` y los hosts
+`mapainteractivo.`, `geoportal.` y `sigmaa.ambiente.gob.ec` no contestan, y por
+eso las pruebas iniciales sin el puerto dieron `404` o fallo de conexión.
+
+- **WFS 2.0.0 `GetCapabilities`** (145 KB, sin login): 94 tipos de entidad,
+  93 en el espacio `mae_ide` y uno del espacio de demostración `tiger`
+  (`giant_polygon`), que se deja fuera. El WMS pesa 347 KB.
+- **Capas que importan** (27 de los 94 tipos por palabra clave): cobertura de
+  la tierra `v_ff010_cobertura_vegetal_<año>_a` para 1990, 2000, 2008, 2014,
+  2016, 2018, 2020, 2022 y 2024 (290.004 polígonos en 2024); deforestación
+  `v_fc010_deforestacion_<desde>_<hasta>_a` para 1990-2000, 2000-2008,
+  2008-2014, 2014-2016, 2016-2018, 2018-2020, 2020-2022 y 2022-2024 (47.895
+  polígonos en el último; ojo con los nombres, `90_20` es 1990-2000 y `20_08`
+  es 2000-2008); SNAP `v_fa210_snap_a` (81 áreas; `_d` es la versión de
+  descarga y hay una capa de Galápagos); bosque y vegetación protectores;
+  carbono por estrato de bosque, actual y potencial; ecosistemas; vertientes
+  protegidas; contaminación minera 2009-2023 (25 registros).
+- **Atributos verificados.** SNAP: `fcode`, `csnap` (código, p. ej. HB01003),
+  `nam` (nombre), `map` (p. ej. PARQUE NACIONAL), `ror` y `rom` (decreto o
+  registro oficial de creación y de modificaciones), `psj` (p. ej.
+  TERRESTRE), `subap` (p. ej. ESTATAL), `esc` (escala), `edel` (p. ej.
+  CONCLUIDO o EN REVISIÓN), `txt`, `are` y `orden`. Deforestación 2022-2024:
+  `fcode`, `peri` (el período), `cbos` (la transición, p. ej. "BOSQUE NATIVO A
+  MOSAICO AGROPECUARIO"), `are` y `txt`. No se verificaron las unidades de
+  `are`. **La capa de deforestación 2022-2024 no trae provincia ni cantón**
+  (no se inspeccionaron los demás períodos), así que no hay corte territorial
+  sin geometría.
+- **Muestras con atributos solamente**, como el cliente del IGM: pedir la
+  geometría de 290.004 polígonos no cabe en el tope de descarga. El texto
+  llega en UTF-8 correcto (`GALÁPAGOS`).
+- El `config.js` público del portal incluye además una credencial de correo
+  de un servicio de comentarios. No se usó ni se reproduce aquí.
+- No se calculan superficies agregadas (p. ej. hectáreas deforestadas por
+  período): el WFS no suma y la cuenta exigiría descargar los polígonos. Si
+  se quisiera, sería un agregado preconstruido fuera de línea.
+
+Construido como `fuente="maate"` en `search_capas_geo` y `get_capa_geo_datos`
+(`helpers/maate_client.py`, con la misma lógica de catálogo en disco y copia
+obsoleta que `helpers/igm_client.py`). No suma tools: siguen siendo 86.
+
+### Precios de alimentos de WFP y FAO en HDX — descartada
+
+`wfp-food-prices-for-ecuador` (CC BY-IGO, CSV de 1,15 MB, metadatos
+actualizados el 2026-11-22): 9.184 filas, 2005-01 a 2026-08, 78 productos,
+seis mercados (Quito, Guayaquil, Cuenca, Ambato, Portoviejo, Riobamba). Pero
+el propio metadato de HDX declara como fuentes el MAG (SIPA), SINAGAP e INEC
+"via FAO: GIEWS, FPMA": es una republicación. Lo que trae de 2024 en adelante
+(2.011 filas, 33 productos) es solo precio minorista de Quito y Guayaquil, y
+ninguna serie nace en 2024 o después; el mayorista de arroz de grano largo
+termina en septiembre de 2023. Lo único que no se alcanza hoy
+en forma estructurada es el histórico mayorista 2005-2023, que el SIPA
+publica en PDF mensuales. Decisión de Daniel (2026-11-24): sin datos nuevos
+no vale la pena.
+
+FAOSTAT por API: `faostatservices.fao.org` responde `Missing Authorization
+Header` (exige token) y el host anterior `fenixservices.fao.org` responde 521.
+Los archivos masivos (`bulks-faostat.fao.org`, p. ej. 34 MB para
+producción de cultivos, con `Accept-Ranges`) y los extractos de HDX
+(`ecu-faostat-food-prices`: precios al productor de 2 MB, IPC de alimentos,
+deflactores) son también republicación.
+
+### Verificadas y sin construir
+
+- **Finanzas por GAD.** El MEF publica solo PDF agregados ("Presupuesto
+  Ciudadano", con totales de GAD parroquiales y municipales); los GAD envían
+  sus cédulas presupuestarias al MEF en PDF firmado cada trimestre (circular
+  MEF-VGF-2026-0005-C). No hay datos por GAD publicados como datos.
+- **Comercio por subpartida.** `wits.worldbank.org` `tradestats-trade` responde
+  sin llave en SDMX-JSON, pero para Ecuador solo trae 29 grupos de producto,
+  no HS de 6 dígitos. SENAE entrega la estadística por trámite
+  (SENAE-008-001-001) y el BCE no publica NANDINA; ya estaba en Descartado.
+- **Catastro minero.** Cerrado desde 2018; la reapertura gradual ordenada por
+  acuerdo ministerial seguía estancada según prensa de julio de 2026. ARCOM
+  emite un reporte gráfico catastral (PDF o shapefile) por solicitud y pago
+  (15% de una RBU). Desde Canadá no responden `geo.controlminero.gob.ec` ni
+  `recursosyenergia.gob.ec`.
+- **Instituto Espacial Ecuatoriano.** Los trámites de geoinformación exigen una
+  solicitud y una carta de compromiso de buen uso; la búsqueda ubica su
+  geoportal en `institutoespacial.gob.ec`, que no se probó (se probó
+  `espacial.gob.ec`, que no responde).
+- **SNI (`sni.gob.ec`).** Vivo, pero son inventarios (el Inventario de Fuentes
+  de Información 2025 en XLS) y PDF de planes de desarrollo y ordenamiento
+  territorial; la página "Datos abiertos" está vacía.
+- **Quito.** `aireambiente.quito.gob.ec` está vivo (ASP.NET con DevExpress y
+  Google Maps) pero sin una API visible en el HTML; `datosambiente.quito.gob.ec`
+  y `geoportal.quito.gob.ec` responden 403 desde Canadá; `datos.quito.gob.ec`,
+  `datosabiertos.quito.gob.ec` y `datos.guayaquil.gob.ec` no responden.
+- **INAMHI.** La búsqueda no encontró API ni descarga de series de estación
+  (la prensa habla de unas 90 estaciones); los anuarios son PDF.
+  `servicios.inamhi.gob.ec` responde 200 pero no se llegó a inspeccionar.
+
+### NASA POWER — decidida y construida aparte
+
+`power.larc.nasa.gov/api/temporal/daily/point` (v2.10.5) devuelve lluvia
+(`PRECTOTCORR`) y temperatura (`T2M`) diarias por coordenada, sin llave.
+Quito, 1-3 de enero de 2024: 0,74, 2,25 y 8,62 mm; 18,13, 18,27 y 17,59 °C.
+No hay una serie equivalente en las fuentes ya integradas, pero es una
+rejilla satelital y de modelo, no estaciones, y `helpers/data/cantones.json`
+no trae coordenadas, así que haría falta una tabla de centroides. Daniel
+decidió el 2026-11-24 que vale la pena: se construye como
+`get_clima_nasa_power` y queda registrada en la cuadragésima séptima pasada.
+
+## Cuadragésima sexta pasada — SNI: el Banco de evaluaciones se cataloga y el resto del sitio carga por AJAX (2026-11-24)
+
+Daniel dio por válido el SNI (`sni.gob.ec`, Secretaría Nacional de Planificación)
+como fuente. La revisión previa lo había dejado fuera por ser "inventarios y
+PDF de planes"; al abrirlo de nuevo, una sección sí trae datos propios que
+ninguna otra fuente integrada tiene, y es la que se construyó. El sitio es
+WordPress con Divi; `sni.gob.ec` y `www.sni.gob.ec` responden igual.
+
+### Banco de evaluaciones — construido
+
+La página `/informacion-para-la-planificacion/informacion-estadistica/banco-de-evaluaciones/`
+lleva una tabla TablePress (`tablepress-1`) en el HTML, UTF-8, sin login ni
+JavaScript: 108 filas (Nro 1 a 108), todas con enlace al informe (104 PDF, tres
+`.rar` y un `.zip`). Años de emisión: 2011 (1), 2013 (1), 2014 (2), 2015 (8),
+2016 (4), 2017 (18), 2018 (4), 2019 (8), 2020 (9), 2021 (7), 2022 (16), 2023
+(12), 2024 (12), 2025 (5) y 2026 (1).
+
+- **Columnas:** Nro, Sector, Entidad ejecutora de la intervención, Entidad
+  ejecutora de la evaluación, Tipo de evaluación, Nombre de la intervención
+  evaluada, Año de emisión de la evaluación, Objetivo de la evaluación y Archivo.
+  Varias celdas llevan `<br />` (el tipo de evaluación se lista en líneas
+  sueltas: "Diseño / Implementación / Resultados"), que el cliente reduce a
+  espacios.
+- **Enlaces:** casi todos son relativos (`/wp-content/uploads/...`); dos apuntan
+  a `https://sni.gob.ec/...` sin `www` y responden 200 igual.
+- **Lectura:** `read_pdf` abrió el informe de 2026 de la Estrategia Nacional
+  Agropecuaria para Mujeres Rurales (97 páginas, 1,4 MB) y extrajo el texto; la
+  portada sale vacía porque es una imagen. No se midió el tamaño de los demás
+  informes contra el tope de 5 MB de `read_pdf`.
+
+Construido como `fuente="sni_evaluaciones"` en `search_archivos`
+(`helpers/sni_client.py`, con caché en disco de seis horas y copia obsoleta si
+el sitio falla). El título es la intervención evaluada; `categoria` guarda el
+sector y `tipo` el tipo de evaluación. No suma tools: siguen siendo 86.
+
+### Lo que no se construyó
+
+- **Listas paginadas por AJAX.** Información de apoyo (28 archivos, de a 4 por
+  página en 7 páginas; los cuatro de la primera son planillas XLSX de
+  proyecciones de población parroquiales, cantonales y provinciales y de
+  nacimientos cantonales), Inventario de información estadística (11 archivos,
+  de a 3; los de la primera son el Inventario de Fuentes de Información 2025 en
+  XLS, el de operaciones estadísticas 2017 en ZIP y el de 2018 en XLS) y
+  Documentos técnicos y normativos (41 archivos, de a 3 en 14 páginas; los de
+  la primera son las normas SIL SNPD-052-2015, 056-2015 y 006-2018 en PDF). Usan el
+  módulo "Divi Machine" (`divi-ajax-filter`): el HTML trae `ajax_url`
+  (`wp-admin/admin-ajax.php`) y un `security` (nonce) por página, y consultan
+  tipos de entrada propios (`proyecciones_poblaci`, 20 caracteres, el máximo de
+  WordPress). El HTML contiene solo la primera página de cada lista. Un cliente
+  tendría que leer el nonce y repetir el POST de AJAX; no se intentó.
+- **API de WordPress.** `/wp-json/wp/v2/types` solo expone `post`, `page`,
+  `attachment` (`media`) y `project`; las listas anteriores no están (por
+  ejemplo, `/wp-json/wp/v2/proyecciones_poblaci` responde 404).
+  `/wp-json/wp/v2/media` reporta 716 adjuntos (`X-WP-Total`, 8 páginas de 100)
+  con el nombre del archivo como título. Filtrando por tipo MIME aparece un
+  solo `.xlsx` (`1.Proyeccion-de-poblacion-por-provincia-2020-2025-areas-urbana-y-rural.xlsx`),
+  ningún `.xls` ni `.doc(x)` y un `.zip` (`36.-Evaluacion_plandetur2020.pdf.zip`):
+  las planillas que enlazan las páginas, como `Inventario_de_Fuentes_de_Informacion_2025.xls`,
+  no están en la biblioteca de medios, así que no sirve para completar el catálogo.
+- **Inventario Nacional de Datos Geográficos y Sensores Remotos.** Dos XLS
+  estáticos (`Inventario_Nacional_Datos_Geograficos_2017-2025.xls` e
+  `Inventario_Productos_Sensores_Remotos_2017-2025.xls`, subidos en abril de
+  2026) y un tablero de Power BI. Son inventarios de qué datos geográficos
+  existen, no los datos, y un catálogo propio de dos archivos no se justificó.
+  No se abrieron los XLS ni el tablero.
+- **Páginas sin archivos.** La de planes de desarrollo y ordenamiento
+  territorial (PDOT) no trae enlaces ni iframes en el HTML, solo el título y el
+  menú. "Datos abiertos" solo enlaza a `datosabiertos.gob.ec`. "Instrumentos de
+  planificación nacional" ofrece botones de "ir al sitio web" o "ver planes"
+  (visor del Plan Nacional de Desarrollo, planes sectoriales e institucionales,
+  agendas intersectoriales) y "Instrumentos internacionales" los de los ODS y el
+  Sistema Binacional Ecuador-Colombia, sin archivos en la página; "Sistemas de
+  información local" enlaza a sitios de tres GAD (El Oro, Guayas e Imbabura).
+  Ninguno de esos destinos se siguió, ni la IEDG (`iedg.presidencia.gob.ec`).
+
+## Cuadragésima séptima pasada — clima por cantón con NASA POWER (2026-11-24)
+
+Decisión de Daniel (2026-11-24): NASA POWER vale la pena. Era la candidata
+verificada de la cuadragésima quinta pasada: no hay en las fuentes integradas
+una serie de lluvia o temperatura con lugar y rango de fechas (las capas del
+INAMHI son mapas, no series).
+
+### Lo verificado en vivo (desde Canadá, sin llave)
+
+- **Diaria** (`/api/temporal/daily/point`, v2.10.5): un valor por día desde
+  1981-01-01. El 2026-11-24 el último día con dato era el 2026-11-20 (unos
+  cuatro días de rezago). Los días posteriores **no dan error**: la respuesta
+  es HTTP 200 con el valor de relleno `-999`, que el cliente convierte en
+  `None` y recorta del final. Un `start` anterior a 1981 y un parámetro
+  inexistente dan HTTP 422 con la razón en `messages`.
+- **Mensual** (`/api/temporal/monthly/point`, v2.10.1): pide años enteros
+  (`start=2023&end=2024`) y agrega una clave de "mes 13" por año (`202313`)
+  que es el promedio anual (3,93 mm/día para la lluvia de Quito en 2023, con
+  un promedio de los doce meses de 3,92). El cliente la descarta y calcula su
+  propio resumen.
+- **Variables probadas:** `PRECTOTCORR` (mm/día), `T2M`, `T2M_MAX`, `T2M_MIN`
+  (°C), `RH2M` (%), `WS2M` (m/s), `ALLSKY_SFC_SW_DWN` (MJ/m²/día) y `PS`
+  (kPa; no se expone). Todas con `community=AG`.
+- **Fuente del dato.** Las cabeceras nombran `MERRA2` para lo mensual y
+  `GEOSIT` (y `POWER`) para lo diario reciente; una consulta diaria larga
+  lista varias. Las celdas son de decenas de km, no estaciones: el punto de
+  Quito (centroide del cantón, -0,104 / -78,5192) cae en una celda con
+  elevación de 1.863 m, bien por debajo de los unos 2.850 m de la ciudad.
+- Quito, enero a junio de 2024, mensual: lluvia de 3,1 a 6,28 mm/día y
+  temperatura media de 18,07 a 18,95 °C.
+
+### Coordenadas de los cantones
+
+La capa ArcGIS `Cantones_del_Ecuador` que ya usa `scripts/fetch_cantones.py`
+devuelve el centroide de cada polígono con `returnCentroid=true&outSR=4326`.
+`scripts/fetch_canton_centroides.py` lo guarda en
+`helpers/data/cantones_centroides.json`: 224 cantones.
+
+- La capa todavía lista La Concordia como `0808` (Esmeraldas); el clasificador
+  de `cantones.json` la tiene como `2302` (Santo Domingo de los Tsáchilas). El
+  script traduce el código.
+- Faltan Sevilla Don Bosco (`1413`) y Juval (`9006`, Zona No Delimitada); las
+  otras tres zonas no delimitadas de `cantones.json` sí tienen. La herramienta
+  pide coordenadas en esos dos casos.
+- Es el centro geométrico del polígono, no la cabecera cantonal. El de
+  Guayaquil (-2,4919 / -80,0931) está lejos de la ciudad.
+
+### Una anomalía reciente que no se resolvió
+
+Con el centroide de Guayaquil, el promedio diario de lluvia fue de 21,05
+mm/día en octubre de 2026 y de 29,49 mm/día del 1 al 21 de noviembre (máximo
+de 124,35 mm en un día). La serie mensual de 2016 a 2025 para octubre y
+noviembre va de 0,1 a 1,4 mm/día en ese punto. En Quito, entre el 15 de
+septiembre y el 21 de noviembre, los valores diarios pasan de octubre en
+adelante a decenas de mm (36 el 2 de noviembre), frente a promedios
+mensuales de 0,7 a 7,6 mm/día en 2023 y 2024. No parece un error aislado de
+una variable: en Guayaquil la humedad relativa sube de 66-68 % a 85-94 % y la
+temperatura baja de unos 29 °C a 25-27 °C en el mismo período.
+
+Hasta septiembre de 2026 los promedios diarios coinciden con los mensuales
+(febrero de 2025: 12,63 en ambos). No se contrastó con estaciones del INAMHI
+ni con noticias, así que no se sabe si es un episodio real o un salto en el
+flujo reciente del modelo. La herramienta devuelve lo que NASA publica y su
+nota dice que los valores son de una rejilla de modelo, no de estación; los
+datos de las últimas semanas conviene tratarlos como provisionales.
+
+### No construido
+
+- Serie horaria, varios puntos por consulta, promedios climatológicos
+  (`/temporal/climatology`), presión (`PS`) y la elección de `community`.
+- Centroides de parroquias (el índice de cantones basta para el uso previsto).
+
+## Cuadragésima octava pasada — archivos grandes, fuentes degradadas y las ventas del SRI (2026-11-25)
+
+Punto de partida: el smoke del 2026-11-25 marcó `get_sri_ruc_info` y
+`get_certificado_cumplimiento_patronal` como degradadas, y un agente no pudo
+bajar las ventas del SRI desde el servidor alojado.
+
+### Las dos fuentes degradadas (#159)
+
+- **Ficha del RUC.** La página de establecimientos (`ruc-establec.jspa`) dio
+  HTTP 500 para dos RUC (1790016919001 y 0990004196001) desde los dos servidores
+  alojados, mientras la ficha (`ruc-datos2.jspa`) respondía bien. El tool trae
+  los establecimientos por defecto y fallaba entero. Ahora devuelve la ficha con
+  `establecimientos_no_disponibles`. La nota de `smoke_status.py` decía que
+  *toda* la página daba 500; era solo esa.
+- **Certificado patronal del IESS.** El formulario carga en ~1 s; el envío, que
+  genera el PDF, tardó 26, 12,6, 13,2 y 30,2 s medidos desde una máquina, y una
+  llamada no terminó en 30 s. El límite plano de 30 s cortaba cerca de la
+  mitad de las llamadas, también desde casa: no es un bloqueo a IP de
+  datacenter, como decía la nota anterior. La lectura espera ahora 75 s (el
+  smoke corta a los 90 s).
+
+### Las ventas del SRI (`search_archivos(fuente="sri_datasets", query="ventas")`)
+
+- Ocho CSV anuales (2017-2025) más el de 2026, y un diccionario. **Pesan entre
+  5,2 y 5,7 MB cada uno**, no los 12-24 MB que anuncia el catálogo del SRI ("0,4
+  Mb" para 2026, "24 Mb" para 2018): `read_zip_member` los leía hasta los 5 MB y
+  perdía la última décima parte de las filas, sin forma de paginar el resto
+  porque el host no admite HTTP Range (responde 200, no 206). Unas 48.000 a
+  50.000 filas por año, una por año-mes-sector-provincia-cantón. A 1,4 MB/s
+  bajan en 3 a 6 s.
+- **Los formatos cambian entre años**, y eso decidió el diseño. 2017-2024:
+  delimitador `|`, coma decimal ("194488,1500"), sin comillas; 2018 en Windows
+  1252 (`AÑO` como 0xD1). 2025: delimitador coma, BOM UTF-8, valores entre
+  comillas con coma decimal ("36631,46") y las columnas `TOTAL_VENTAS` y
+  `TOTAL_COMPRAS` en el orden contrario. 2026: `|` otra vez. Las columnas de
+  tarifa pasan de `VENTAS_NETAS_TARIFA_12` (2018) a `..._GRAVADA`, `..._VARIABLE`
+  y `..._5` (2025 y 2026). Hay celdas vacías (2017) y ninguna con miles.
+- **Decisión: `aggregate_csv`, un tool nuevo (88).** Baja el archivo entero (hasta
+  30 MB; más se rechaza en vez de sumarlo incompleto), lo lee en un hilo y devuelve
+  una fila por grupo con el número de filas y las sumas. Detecta delimitador,
+  codificación y coma decimal; empareja columnas sin mayúsculas ni tildes; suma
+  con `Decimal`; cuenta aparte celdas vacías y no numéricas. No lee un .zip ni
+  una hoja de cálculo (para eso `read_zip_member`). Se descartó guardar el
+  archivo en disco entre llamadas (el resultado de cada pregunta se guarda 30
+  minutos en memoria) y un modo "streaming" por bloques: a estos tamaños no lo
+  justifican, y un miembro de .zip seguiría el camino de `read_zip_member`.
+- **Verificación independiente (2018):** una suma aparte con `Decimal` sobre el
+  mismo archivo da 50.334 filas, 188.851.629.437,72 de `TOTAL_VENTAS` y
+  79.478.758.026,36 para Pichincha, idéntico a `aggregate_csv`. 2025:
+  265.976.992.905,41 de ventas y 217.307.142.012,08 de compras, con 47.784 filas.
+
+### ZIP en hosts sin HTTP Range
+
+`list_zip_contents` y `read_zip_member` fallaban con cualquier host que
+respondiera 200 a una petición de rango (el del SRI es uno). Ahora, si el
+.zip pesa hasta 20 MB, se baja entero una vez (se guarda 5 minutos para que
+`read_zip_member` tras `list_zip_contents` no lo baje dos veces) y se sirven
+los rangos desde memoria, con la misma validación (CRC, tamaños, cifrado,
+ZIP64). Pasado ese tamaño el error dice que el host no admite Range y que el
+.zip pesa más de 20 MB. Los mensajes de los previews que mandaban a
+`download_resource` (también de 5 MB) ahora mandan a `list_zip_contents` y
+`read_zip_member`, o al enlace directo.
+
+### Abierto
+
+- `aggregate_csv` no entra en un miembro de .zip: los CSV de INEC dentro de
+  .zip enormes siguen leyéndose por la cabeza con `read_zip_member`.
+- Un host sin Range con un .zip de más de 20 MB sigue sin lectura parcial.
+
+## Archivo del roadmap (2026-11-24)
+
+El 2026-11-24 se limpió [ROADMAP.md](ROADMAP.md). Las filas de ese archivo que ya
+estaban hechas, que se verificaron sin trabajo pendiente o que cargaban historia
+larga salieron de allí, y su texto completo queda aquí sin cambios. Los nombres
+de tools son los de entonces; varios se fusionaron después en `search_archivos`,
+`search_capas_geo`, `search_cortes` y `search_bce_paginas`.
+
+### Ya hecho o resuelto
+
+Filas que ya estaban hechas o resueltas, o que repetían otra fila. Lo hecho quedó en Hecho, en una línea cuando aplicaba.
+
+#### Contrato de respuesta para agentes
+
+*Sección del roadmap: Pendiente › Producto: portable y usable desde móvil.*
+
+**Estado:** Hecho 2026-11-07 salvo lista blanca de campos
+
+**Qué faltaba:** Desde 2026-11-07: tope de bytes uniforme (`ECUADOR_MCP_MAX_RESPONSE_BYTES`, 200 KB) declarado en `metadatos.truncado`, `metadatos.paginacion` común y bloques `resource_link` para las listas de archivos; y los catálogos cacheados responden con la última copia buena (hasta 7 días, `frescura: "obsoleta"`) cuando su fuente cae. Antes: Las 83 tools publican un `outputSchema` por familia (búsqueda, listado, archivos, serie, tabla, ficha; `helpers/result_types.py`) y llevan el bloque `metadatos` (`contrato`, `fuente`, `url_fuente`, `consultado_en`, `esquema`) en `structuredContent`, desde 2026-11-04. Los tools que no lo arman solos reciben uno genérico desde lo que la respuesta ya dice de sí misma (`fecha_corte`/`fecha_publicacion`/`frescura` quedan `null` salvo en BCE y Supercías). El schema publicado es compacto para no pasar el presupuesto de `tools/list` (97k de 110k caracteres). La lista blanca de campos por familia queda fuera a propósito → MCP_ARCHITECTURE.md § Fase 6
+
+#### Rate limiting por usuario/IP y proxy HTTPS
+
+*Sección del roadmap: Pendiente › Producto: portable y usable desde móvil.*
+
+**Estado:** Parcial — falta el proxy real
+
+**Qué faltaba:** Cuotas por cliente/IP + límite global + Bearer opcional + TLS directo vía Uvicorn ya existen; falta proxy HTTPS/DNS/política operativa del endpoint remoto
+
+#### EMOE y coyuntura
+
+*Sección del roadmap: Pendiente › BCE — cobertura completa de BCEData e IEM.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** Expectativas económicas, confianza del consumidor, inflación y ciclo económico resueltos vía sistema de índices; mercado laboral (BCEData id_grupo 64/65/68/102) y pobreza/desigualdad (`search_inec_publicaciones`) confirmados ya cubiertos por tools existentes, sin código nuevo → RESEARCH.md § Vigésimo segunda pasada
+
+#### Catálogo de publicaciones
+
+*Sección del roadmap: Pendiente › BCE — cobertura completa de BCEData e IEM.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** `search_archivos(fuente="bce_publicaciones")` solo expone ventana rodante (~30 recientes), sin fecha ni paginación; Cifras Económicas del Ecuador ya cubierta vía `search_bce_indices` (243 archivos, 2005-2025) y el calendario de publicaciones futuras vía `search_bce_calendario` (523 entradas) → RESEARCH.md § Vigésimo segunda pasada
+
+#### Fuente masiva actualizable
+
+*Sección del roadmap: Pendiente › Supercías — pipeline financiero.*
+
+**Estado:** No iniciado
+
+**Qué faltaba:** Usar el Ranking de Compañías oficial (`bi_ranking.csv` + tablas auxiliares, actualización cada 24h) en vez del proceso manual actual
+
+#### INEC — preview de archivos grandes
+
+*Sección del roadmap: Pendiente › Otros ítems parciales.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** `list_zip_contents` lista miembros de ZIP vía HTTP Range sin descargar todo, y `read_zip_member` (2026-11-07) lee un miembro CSV/TSV/TXT o de hoja de cálculo bajando solo sus bytes (caso real: los 90 tabulados CSV de la ENDI R3); un CSV de cualquier tamaño se lee desde su inicio (hasta 5 MB) y las hojas de cálculo y los .zip internos hasta 20 MB (2026-11-24). Sigue decidido en contra de un índice pre-construido por dataset y de cualquier transferencia completa de archivo. Desde la misma fecha ambos tools leen ZIP64, y read_zip_member detecta el encabezado real de los tabulados (bloque de título arriba, cientos de columnas vacías)
+
+#### Simplificar y armonizar la arquitectura MCP
+
+*Sección del roadmap: Pendiente › Calidad y arquitectura.*
+
+**Estado:** Parcial — fases 0-3 publicadas en 0.8.9
+
+**Qué faltaba:** Duplicados retirados (115 → 113), perfiles público/mantenimiento, `title`/anotaciones/`Literal` en 113/113 y `structuredContent` + `isError` en todas. Lo que la medición del 2026-09-18 dejó abierto son las fases 4-8 de [MCP_ARCHITECTURE.md](MCP_ARCHITECTURE.md), en las filas de abajo
+
+#### Presupuesto de contexto de `tools/list`
+
+*Sección del roadmap: Pendiente › Calidad y arquitectura.*
+
+**Estado:** Hecho en 0.9.0-0.10.0
+
+**Qué faltaba:** 199k → ~80k caracteres (≈50k → ≈20k tokens): descripciones cortas con referencia completa en `ecuador://herramientas/{nombre}`, cada parámetro descrito en el schema, 121 → 90 tools (fusiones por `fuente`, perfil `public` por defecto). Gate en `tests/test_tools_list_budget.py`. Pendiente opcional: perfiles por dominio (decidido no hacerlo por ahora) → MCP_ARCHITECTURE.md
+
+#### `outputSchema` en los tools MCP
+
+*Sección del roadmap: Pendiente › Calidad y arquitectura.*
+
+**Estado:** Hecho 2026-11-04
+
+**Qué faltaba:** Retorno anotado `Annotated[CallToolResult, Resultado<Familia>]` en las 85 tools; el SDK publica y valida el schema. Se publica compacto (`helpers/mcp_server.compact_output_schema`) porque el completo duplicaba `tools/list` a 222k caracteres → MCP_ARCHITECTURE.md § Fase 5
+
+#### Telemetría de uso de tools
+
+*Sección del roadmap: Pendiente › Calidad y arquitectura.*
+
+**Estado:** Hecho en 0.9.0
+
+**Qué faltaba:** `/usage` (HTTP) y `usage.jsonl` con `ECUADOR_MCP_USAGE_LOG=1`, resumido por `scripts/usage_report.py` → MCP_ARCHITECTURE.md § Fase 8
+
+### Verificado, sin trabajo pendiente
+
+Filas verificadas en vivo sin trabajo pendiente: bloqueadas, de bajo valor, fuera de alcance o sin datos nuevos. Quedó una línea en Descartado.
+
+#### Sector eléctrico — Power BI de pérdidas de ARCONEL
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** No iniciado, baja prioridad
+
+**Qué faltaba:** Embed público con esquema accesible; duplica las capas ArcGIS de balance y `reportes.arconel.gob.ec` → RESEARCH.md § Trigésimo quinta pasada
+
+#### Consejo de la Judicatura — Estadística Judicial, resto del portal
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Parcial — 10 tableros construidos (ver Hecho)
+
+**Qué faltaba:** `medidasdeproteccion.html` enlaza un reporte Power BI de otro tenant (`t=b720ecd0-…`) cuya llave no resuelve en ninguno de los clústeres probados (401 `UnableToFindKeyInDBorCacheException`); `causas.html` es un stub vacío (8 KB, sin reporte) y el resto de las páginas listadas en el portal (violencia/femicidio) no tienen reporte propio → RESEARCH.md § Judicatura Power BI
+
+#### Registro Oficial (gaceta oficial)
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Fuera de alcance (decidido 2026-11-07)
+
+**Qué faltaba:** Normativa, no datos estadísticos: Daniel lo dejó fuera del alcance del proyecto. Lo técnico queda anotado por si cambia la decisión: Listado abierto vía `admin-ajax.php` (`action=get_term_post_kilur_con_imagen`) por año, mes y tipo de edición (ordinaria, suplementos, especial, constitucional, jurídica, índice), 12 por página, 2001-2026; PDFs públicos en `esacc.corteconstitucional.gob.ec` sin login ni captcha. Sin filtro por día: se pide el mes y se pagina. Queda la decisión de alcance (ver Datos legislativos) → RESEARCH.md § Trigésimo séptima pasada
+
+#### Enterprise Surveys (Banco Mundial)
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Verificado 2026-11-07, bajo valor
+
+**Qué faltaba:** Fuente 13 de la API del Banco Mundial (115 indicadores), alcanzable con el cliente WDI; pero actualizada por última vez en 2022, solo la ronda 2017 de Ecuador → RESEARCH.md § Trigésimo octava pasada
+
+#### BDE, PRO ECUADOR, SCPM
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Verificado 2026-11-07, no construible hoy
+
+**Qué faltaba:** BDE detrás de Imperva/Incapsula; PRO ECUADOR sin series (estudios e imágenes); SCPM con DNS público apuntando a localhost. Las cuentas provinciales y cantonales del BCE ya están en `search_bce_paginas` → RESEARCH.md § Trigésimo octava pasada
+
+#### CORDES
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** No iniciado, bajo valor confirmado
+
+**Qué faltaba:** Think tank privado (fundado 1984) que publica libros/PDFs; sin evidencia de una base de datos pública o API tras verificación en vivo — protección anti-bot no confirmada pero tampoco relevante si no hay dato estructurado que extraer → RESEARCH.md § Fuentes externas de sociedad civil, § Vigésimo cuarta pasada
+
+#### Nowcast / Encuesta de Expertos
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** No iniciado, valor cuestionado
+
+**Qué faltaba:** Confirmado que el BCE solo publica PIB trimestral con ~3 meses de rezago, sin producto de "nowcast" oficial y en vivo; el EMOE (`indice-de-expectativas-de-la-economia-indice`, ya cubierto vía `search_bce_indices`) es lo más cercano a una encuesta de expectativas real → RESEARCH.md § Vigésimo cuarta pasada
+
+#### Vivienda MIDUVI
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Verificado 2026-11-07, sin datos nuevos
+
+**Qué faltaba:** Vivienda pasó al MIT (`www.mit.gob.ec/vivienda/`, `plan-vivienda.mit.gob.ec`); su API pide token. El CKAN `miduvi` (5 paquetes Casa para Todos) está congelado desde 2021-12 y ya es alcanzable con los tools CKAN → RESEARCH.md § Trigésimo novena pasada. Nota previa: El ministerio se renombró a "Hábitat y Vivienda" (`habitatyvivienda.gob.ec`) — verificado en vivo que también falla a nivel TLS: el certificado presentado cubre ~25 otros dominios `.gob.ec` pero no este, un problema de configuración TLS compartida del gobierno, no solo del dominio viejo; CKAN cubre parcialmente (5 datasets); entidad relacionada `viviendaydesarrollourbano.gob.ec` sin verificar en vivo → RESEARCH.md § Vivienda (MIDUVI), § Vigésimo cuarta pasada
+
+#### Prensa
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** No iniciado, bajo valor confirmado
+
+**Qué faltaba:** Fundamedios real y activo (informe semestral 2026: 100 agresiones enero-junio, histórico desde 2007) pero su contenido es informes narrativos en PDF, no datasets estructurados — encaja mejor con `read_pdf` puntual que con un tool dedicado; SECOM parece ser oficina de comunicación, no publicador de datos → RESEARCH.md § Vigésimo cuarta pasada
+
+#### SENESCYT/Educación Superior
+
+*Sección del roadmap: Pendiente › Otros ítems parciales.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** Biblioteca y SIAU CTI ya cubiertos (ver Hecho); registro de títulos sigue bloqueado por captcha (no automatizable, por política) → RESEARCH.md § SENESCYT, § Vigésimo cuarta pasada
+
+#### CEPAL — geoportal del Censo Ecuador
+
+*Sección del roadmap: Pendiente › Otros ítems parciales.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** 9 capas reales vía API, pero derivadas del Clasificador Geográfico de INEC (fuente primaria); bajo valor salvo interés específico en la geometría → RESEARCH.md § CEPAL
+
+### Detalle retirado de filas que siguen vigentes
+
+Texto completo de filas que siguen vigentes y ahora conservan solo lo que falta.
+
+#### Operación 24/7
+
+*Sección del roadmap: Pendiente › Producto: portable y usable desde móvil.*
+
+**Estado:** Parcial — falta alertas de esquema
+
+**Qué faltaba:** Smoke test diario (`scripts/smoke_e2e.py`) en GitHub Actions, separado de CI: desde 2026-11-04 llama a las 83 tools del perfil público (antes 59), las que necesitan un id mediante cadenas list → get con ids descubiertos en vivo. Falta alertar sobre cambios de esquema específicos → RESEARCH.md § Infraestructura operativa
+
+#### Refresh idempotente y automatización diaria
+
+*Sección del roadmap: Pendiente › Supercías — pipeline financiero.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** Ya existe: reemplazo atómico tras validar, base vieja servida mientras refresca, backoff 1h/6h/24h tras fallos, lock entre procesos con PID (un lock cuyo proceso ya murió se libera al instante), build lanzado desacoplado del servidor para que cerrar una sesión stdio no lo mate, rechazo por filas malformadas (>0,1%) o caída de filas (>20%), estado en `/health`. Falta: construir por cron/Actions y publicar la base como asset versionado (Release) que el servidor solo descarga. El build ya vive en el paquete (`helpers/supercias_financials_build.py`) y escribe en `helpers/paths.data_dir()`
+
+#### Consultas históricas sin respuestas gigantes
+
+*Sección del roadmap: Pendiente › Supercías — pipeline financiero.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** Ya existe: toda la historia 2008-presente en la base, `anio` validado en ambos tools, `desde`/`hasta` en `get_financials`, paginación de rankings. Falta: consultas resumidas por año/compañía/CIIU/métrica
+
+#### Comparabilidad entre años
+
+*Sección del roadmap: Pendiente › Supercías — pipeline financiero.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** Ya existe: ratios que Supercías no pudo calcular guardados como `null` (no 0), cuartiles por sector y año calculados del propio ranking en vez de los promedios de `indicadores_sector.csv`, y `margen_operacional`/`per_med_cobranza`/`per_med_pago` documentados y marcados como sin escala coherente → RESEARCH.md § Supercías — promedios sectoriales, ratios en cero y escala. Falta: registrar cambios de esquema y documentar otras razones no comparables entre años
+
+#### Archivo histórico de cortes de luz (crisis sep-dic 2024) — resto de distribuidoras
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Parcial — Centrosur y EEQ ya construidos (ver Hecho); el snapshot de energia-ecuador.com vía Wayback Machine se retiró el 2026-11-04
+
+**Qué faltaba:** EEQ: la lista semilla puede tener huecos (sep-oct 2024 y abril 2024 solo por buscador) — ampliar con más búsquedas dirigidas; los PDFs de EEQ y Centrosur ya se parsean a filas (ver Hecho); el de Centrosur de sep 2024 es un escaneo que requeriría OCR. Centrosur: carpeta `CortesEstiaje/` enumerada vía Wayback CDX (8 archivos vivos, lista semilla fija); su app de cortes tiene una API JSON (`nest.centrosur.gob.ec/cortes/api/v2/database/findOne`) con la última publicación estructurada (oct-2024), útil como feed en el próximo racionamiento. EEASA: dominio de vuelta, PDFs con texto pero sin enumeración (lista semilla por buscador). EEQ: además, polígonos de corte por alimentador en su ArcGIS público (oct-2024). CNEL: solo cronogramas de emergencia en PDF (2026); CNEL confirmado sin archivo recuperable por ninguna vía probada (ni su WordPress por tag/búsqueda, ni Wayback Machine — sus páginas en energia-ecuador.com nunca tuvieron una captura 200); EERSSA: el 403 parece límite de tasa (las primeras peticiones bajaron `cortes_eerssa_2024.pdf`), no un bloqueo fijo → RESEARCH.md § Vigésimo séptima, Vigésimo octava, Trigésimo primera y Trigésimo quinta pasada
+
+#### Ministerio de Salud Pública — fuera de las gacetas
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Parcial — precios techo y capas ArcGIS construidos 2026-11-07 (ver Hecho)
+
+**Qué faltaba:** Quedan los recursos Nextcloud "Datos Abiertos" de `almacenamiento.msp.gob.ec` (casos COVID, consulta externa, vacunas, emergencias, laboratorio): el host no responde desde Canadá, probar con proxy. Los 7 Power BI de `salud.gob.ec/informacion-de-salud/` responden PowerBINotLicensedException (licencia vencida) → RESEARCH.md § Trigésimo novena pasada. Antes: Las 18 series de gacetas ya están construidas (ver Hecho). Sin explorar: plataforma de datos COVID-19, GeoSalud en Cifras; solo 8 paquetes en la organización CKAN del MSP → RESEARCH.md § Séptima pasada, § Vigésimo tercera pasada
+
+#### Fuentes externas de sociedad civil (FCD, FARO)
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Decisión de alcance pendiente
+
+**Qué faltaba:** Datasets tabulares reales confirmados (votaciones de la Asamblea, declaraciones patrimoniales, ordenanzas municipales Quito/Guayaquil); FCD opera además `observatoriolegislativo.ec` (Asamblea) y `ojoalconcejo.org` (concejos municipales) como portales propios, no solo informes; `cuentasclaras.org` tiene spam inyectado — no tocar sin verificar que está limpio. Nuevo: el portal de declaraciones patrimoniales de Contraloría exige desde abril 2026 cédula/datos personales obligatorios para buscar — más restringido que antes → RESEARCH.md § Fuentes externas de sociedad civil, § Vigésimo cuarta pasada
+
+#### Gremios privados (ASOBANCA)
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Parcial — AEADE y FEDEXPOR construidos 2026-11-07 (ver Hecho)
+
+**Qué faltaba:** AEADE (73 boletines mensuales de ventas por Simple Download Monitor, anuarios en PDF) y FEDEXPOR (16 informes mensuales Expordata en Google Drive) confirmados y descargables, construibles como listado de archivos + `read_pdf`; ASOBANCA Datalab ("Clicstat") confirmado como app **Qlik** embebida (`QlikTicket=` en la URL, no una SPA genérica) — extraerla exige la API del motor Qlik (WebSocket) o un endpoint de exportación, ninguno confirmado todavía → RESEARCH.md § Gremios/asociaciones privadas, § Vigésimo cuarta pasada
+
+#### Datos legislativos/normativos
+
+*Sección del roadmap: Pendiente › Otras fuentes por explorar.*
+
+**Estado:** Investigado, alcance en duda
+
+**Qué faltaba:** Jurisprudencia y proyectos de ley investigados a fondo; Daniel señaló que puede no ser relevante para el alcance del proyecto. FCD opera dos portales dedicados (`observatoriolegislativo.ec`, `ojoalconcejo.org`) que serían el punto de entrada si el alcance cambiara → RESEARCH.md § Datos legislativos, § Vigésimo cuarta pasada
+
+#### Censo 2022 — contenido de los tabulados y visualizadores
+
+*Sección del roadmap: Pendiente › Otros ítems parciales.*
+
+**Estado:** Parcial
+
+**Qué faltaba:** Hecho (2026-11-08): índice de 19 tabulados / 282 tablas (título, niveles, columnas, SHA-256) en `helpers/data/censo_tabulados_index.json`, usado por `search_archivos(fuente="censo")`, reconstruible con `scripts/build_censo_index.py` → RESEARCH.md § Cuadragésima segunda pasada. Faltan el Visualizador (`cubos.inec.gob.ec/AppCensoEcuador/`, sin respuesta desde Canadá), Redatam (`redatam.inec.gob.ec`, sin API documentada) y el tipo de acceso `solicitud` de ANDA (nunca visto en vivo, detectado solo por texto)
+
+#### Resúmenes de compras por comprador
+
+*Sección del roadmap: Pendiente › Calidad y arquitectura.*
+
+**Estado:** Hecho 2026-11-07
+
+**Qué faltaba:** `get_resumen_compras` totaliza procesos, monto, presupuesto, tipos de procedimiento, meses y proveedores de un comprador en un año, sobre la búsqueda OCDS (hasta 300 procesos, marcado `parcial` si hay más). Era la principal brecha frente a otros servidores MCP de compras ecuatorianas. Falta: cobertura completa sin tope de páginas, que pediría un volcado OCDS anual preconstruido como la base de Supercías
+
+#### Capa HTTP compartida y caché persistente
+
+*Sección del roadmap: Pendiente › Calidad y arquitectura.*
+
+**Estado:** Parcial — base hecha 2026-11-04, falta migrar clientes
+
+**Qué faltaba:** `helpers/http_client.py`: fábrica de clientes con timeout por perfil (15/30/120 s), User-Agent y proxy geográfico, y `get_with_retry` con reintento ante 429/5xx, `Retry-After` acotado y cooldown por host. SERCOP ya la usa. `TtlCache(persist=...)` guarda en `data/cache/` y sobrevive reinicios (desactivable con `ECUADOR_MCP_DISK_CACHE=0`); activo para índices del BCE, árbol BCEData, catálogo IEM, Biblioteca y SITREP de SGR, secciones de Superbancos, temas INEC y árbol CEPALSTAT. Falta migrar los otros ~31 clientes con `httpx` directo, fuente por fuente → MCP_ARCHITECTURE.md § Fase 7
+
+#### BCEData — detección de cambios de revisión
+
+*Sección del roadmap: Descartado.*
+
+El endpoint no expone ningún marcador explícito de revisión/versión (`ETag`/`Last-Modified` confirmado ausente, ver Duodécima pasada); solo quedaría comparación por contenido bajo demanda, ya cubierta por `audit_bce_catalog`. Fuera de alcance por decisión explícita de Daniel (2026-09-09)
+
+#### BCEData ↔ IEM — revisar manualmente los ~75 candidatos restantes
+
+*Sección del roadmap: Descartado.*
+
+De 77 candidatos que `compare_bce_sources` señala por similitud de etiqueta, solo 2 fueron confirmados con datos en vivo (Decimotercera pasada); los otros 75 exigirían comparar valores y metodología uno por uno, sin ninguna garantía de que la mayoría resulte en una equivalencia real (3 de los primeros 5 revisados ya resultaron falsos positivos). Daniel decidió no seguir revisando a mano (2026-09-09) — la cola de candidatos sin revisar queda expuesta tal cual en `compare_bce_sources`, sin tratarla como duplicado confirmado
+
+#### IEM — hashing masivo del histórico completo
+
+*Sección del roadmap: Descartado.*
+
+La infraestructura existe y quedó corregida (`hash_catalog_tables` deduplicaba mal — re-descargaba el mismo ZIP legado una vez por tabla miembro en vez de una vez por boletín — corregido 2026-09-09) y es accionable hoy vía `search_bce_iem(hash_archivos=true)`/`scripts/audit_bce_iem.py --hash-xlsx`. Correrla sobre las ~17.000-18.000 URLs únicas de los 367 boletines tomaría varias horas de carga sostenida contra el servidor del BCE sin que nada del proyecto dependa hoy de tener ese manifiesto; Daniel decidió no ejecutarla (2026-09-09)
+
+#### SRI Saiku (OLAP)
+
+*Sección del roadmap: Descartado.*
+
+Tools removidas 2026-09-05 (`srienlinea.sri.gob.ec` inalcanzable desde tres entornos: la conexión TLS se cerraba abruptamente) y re-verificadas en vivo el 2026-10-18: **el servicio volvió a responder, pero la decisión es no reconstruirlas** (2026-10-18). Lo que aportarían ya está cubierto por archivos oficiales que el catálogo alcanza, y con más historia: `Recaudación por impuesto provincia y cantón` (hoja `BDD`: año, provincia, cantón, mes, grupo de impuesto, impuesto, gran contribuyente), `Recaudación por actividad económica` y `Estadísticas de Recaudación` vía `search_archivos(fuente="sri_recaudacion")`, más los 127 datasets del SRI en CKAN (`Recaudación de Impuestos`, `Ventas_Compras`, `Contribuyentes Activos Catastro`, 2017-2026, con recurso CSV). Solo `D101` (balance y resultados de sociedades) y `D103` (retenciones) son exclusivos del cubo, y no compensan un Saiku 2.6 sin contrato ni documentación, detrás de un WAF, que ya se cayó entero una vez y que crea un objeto de consulta en su servidor por cada llamada. Revisar solo si ese hueco pesa → RESEARCH.md § SRI Saiku re-verificado
+
 ## Notas históricas
 
 **Corrección de diagnóstico (2026-08-13):** el 403 de CKAN que se creía un

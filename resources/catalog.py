@@ -145,9 +145,21 @@ def _all_fuentes() -> dict:
                 "tools": ["search_capas_geo", "get_capa_geo_datos"],
             },
             {
+                "id": "maate",
+                "nombre": "Ministerio de Ambiente y Energía (IDE ambiental: 93 capas WFS de deforestación, cobertura de la tierra 1990-2024 y áreas protegidas)",
+                "base": "http://ide.ambiente.gob.ec:8080/geoserver",
+                "tools": ["search_capas_geo", "get_capa_geo_datos"],
+            },
+            {
                 "id": "turismo",
                 "nombre": "Turismo (Boletín de Cifras del Sector Turismo, Ministerio de Producción)",
                 "base": "https://www.produccion.gob.ec/boletin-de-cifras-sector-turismo/",
+                "tools": ["search_archivos"],
+            },
+            {
+                "id": "sni_evaluaciones",
+                "nombre": "SNI (Banco de evaluaciones de intervenciones públicas: 108 informes 2011-2026)",
+                "base": "https://www.sni.gob.ec/informacion-para-la-planificacion/informacion-estadistica/banco-de-evaluaciones/",
                 "tools": ["search_archivos"],
             },
             {
@@ -559,6 +571,12 @@ def _all_fuentes() -> dict:
                 "tools": ["get_serie_internacional"],
             },
             {
+                "id": "nasa_power",
+                "nombre": "NASA POWER (clima diario y mensual de satélite y modelo, por cantón o coordenada)",
+                "base": "https://power.larc.nasa.gov/api/temporal",
+                "tools": ["get_clima_nasa_power"],
+            },
+            {
                 "id": "utilidades",
                 "nombre": "Utilidades transversales (búsqueda global, archivos, orientación)",
                 "tools": [
@@ -566,6 +584,7 @@ def _all_fuentes() -> dict:
                     "investigate_dataset",
                     "list_zip_contents",
                     "read_zip_member",
+                    "aggregate_csv",
                 ],
             },
         ]

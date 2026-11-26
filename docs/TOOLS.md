@@ -1,6 +1,6 @@
 # Herramientas disponibles
 
-Referencia detallada de las 86 herramientas MCP del perfil público (por defecto)
+Referencia detallada de las 88 herramientas MCP del perfil público (por defecto)
 de EcuDataMCP, más 2 herramientas de mantenimiento (`audit_bce_catalog` y
 `compare_bce_sources`) que solo se registran con otro `MCP_PROFILE`. Casi todas
 aceptan `format="json"` además de texto.
@@ -24,7 +24,7 @@ aceptan `format="json"` además de texto.
 | `download_resource` | Baja el archivo crudo de un recurso en base64 (máx. 5 MB), para formatos que no se pueden previsualizar como tabla (.rar, .tar.gz, etc.). |
 | `query_resource_data` | Consulta tabular vía CKAN DataStore (filtros, texto, paginación) sin descargar el archivo. |
 | `detect_series_pattern` | Para datasets con un archivo por período: determina si cada archivo nuevo reemplaza a los anteriores (acumulado) o los complementa (incremental). |
-| `search_archivos` (`fuente="sri_datasets"`) | Buscar entre ~130 archivos del SRI publicados fuera del portal CKAN: catastro RUC por provincia, recaudación, ventas/compras, vehículos, CEL, diccionarios de variables. Incluye `fuente="turismo"`: boletines mensuales de cifras de turismo (PDF, noviembre 2025 en adelante). `fuente="fedexpor"`: informes mensuales Expordata de comercio exterior (Google Drive, ~30 MB). `fuente="aeade"`: boletines mensuales de ventas de vehículos y anuarios. Más: `arcotel_series` (25 series XLSX de ARCOTEL, la más reciente por código, con historia completa), `msp_precios` (precios techo de medicamentos 2016+), `mit_vias` (informe diario de la Red Vial Estatal) y `minedec_bases` (registros AMIE por año lectivo 2009-2025 en XLSX/CSV y archivos temáticos). |
+| `search_archivos` (`fuente="sri_datasets"`) | Buscar entre ~130 archivos del SRI publicados fuera del portal CKAN: catastro RUC por provincia, recaudación, ventas/compras, vehículos, CEL, diccionarios de variables. Incluye `fuente="turismo"`: boletines mensuales de cifras de turismo (PDF, noviembre 2025 en adelante). `fuente="fedexpor"`: informes mensuales Expordata de comercio exterior (Google Drive, ~30 MB). `fuente="aeade"`: boletines mensuales de ventas de vehículos y anuarios. Más: `arcotel_series` (25 series XLSX de ARCOTEL, la más reciente por código, con historia completa), `msp_precios` (precios techo de medicamentos 2016+), `mit_vias` (informe diario de la Red Vial Estatal) y `minedec_bases` (registros AMIE por año lectivo 2009-2025 en XLSX/CSV y archivos temáticos). `fuente="sni_evaluaciones"`: el Banco de evaluaciones del SNI, 108 informes 2011-2026 de programas y proyectos públicos (PDF, con sector, entidad ejecutora y evaluadora, tipo, año y objetivo). |
 
 Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca"` o `source="latacunga"` (portales municipales), o `source="iadb"` (data.iadb.org, el portal de datos abiertos del BID — NO exclusivo de Ecuador, un catálogo regional/global: Latin Macro Watch e indicadores del Banco Mundial/BID).
 
@@ -86,7 +86,7 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 | `get_sgr_sitrep_archivos` | Reportes SITREP en PDF de un evento adverso de la SGR. |
 | `list_archivo_secciones` (`fuente="sgr"`) | Categorías de la biblioteca documental de la SGR (~1660 documentos). |
 | `get_archivo_seccion` (`fuente="sgr"`) | Documentos de una categoría de la biblioteca de la SGR. |
-| `search_capas_geo` (`fuente="inamhi"`) | Catálogo de capas del geoportal de INAMHI (meteorología e hidrología). Incluye `fuente="igm"`: 737 capas WFS de cartografía oficial del IGM (1:1M, 1:50.000, 1:25.000; `categoria` elige la escala). `fuente="msp"`: 9 capas ArcGIS del MSP (establecimientos de la red pública, indicadores de salud sexual y reproductiva por cantón, atenciones y egresos por establecimiento). |
+| `search_capas_geo` (`fuente="inamhi"`) | Catálogo de capas del geoportal de INAMHI (meteorología e hidrología). Incluye `fuente="igm"`: 737 capas WFS de cartografía oficial del IGM (1:1M, 1:50.000, 1:25.000; `categoria` elige la escala). `fuente="msp"`: 9 capas ArcGIS del MSP (establecimientos de la red pública, indicadores de salud sexual y reproductiva por cantón, atenciones y egresos por establecimiento). `fuente="maate"`: 93 capas WFS del GeoServer abierto del Ministerio de Ambiente y Energía (cobertura de la tierra 1990-2024, deforestación por período, áreas protegidas SNAP, bosques protectores, carbono, contaminación minera); solo atributos, el servicio responde por HTTP en el puerto 8080. |
 | `get_capa_geo_datos` (`fuente="inamhi"`) | Muestra de atributos reales de una capa del geoportal de INAMHI. |
 
 ## Exploración
@@ -178,7 +178,8 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 |------|-------------|
 | `investigate_dataset` | Atajo de investigación en un solo paso: busca un dataset, lista sus recursos, y previsualiza los datos reales del más prometedor -- el flujo search_datasets -> list_dataset_resources -> preview_resource_data en una sola llamada, para el caso común de "encuéntrame datos sobre X y muéstrame qué hay dentro" |
 | `list_zip_contents` | Lista los archivos miembro (nombre, tamaño) de un .zip desde una URL directa, sin descargar el archivo completo. |
-| `read_zip_member` | Lee como tabla un archivo (CSV/TSV/TXT, XLSX/XLS/XLSB/ODS) dentro de un .zip remoto, bajando solo los bytes de ese miembro vía HTTP Range. Un CSV/TSV/TXT de cualquier tamaño se lee desde su inicio (baja a lo más 5 MB y marca `truncated`); las hojas de cálculo y los .zip internos se abren completos y pueden pesar hasta 20 MB. Detecta el encabezado bajo el bloque de título de los tabulados y omite columnas vacías. `sheet` elige la hoja por nombre o número y la respuesta lista todas; `inner_member` lee un archivo dentro de un .zip que está dentro del .zip; con `member=''` lee una hoja de cálculo publicada directamente en la URL (hasta 20 MB). |
+| `read_zip_member` | Lee como tabla un archivo (CSV/TSV/TXT, XLSX/XLS/XLSB/ODS) dentro de un .zip remoto, bajando solo los bytes de ese miembro vía HTTP Range. Un CSV/TSV/TXT de cualquier tamaño se lee desde su inicio (baja a lo más 5 MB y marca `truncated`; para totales sobre un CSV entero, `aggregate_csv`); las hojas de cálculo y los .zip internos se abren completos y pueden pesar hasta 20 MB. Detecta el encabezado bajo el bloque de título de los tabulados y omite columnas vacías. `sheet` elige la hoja por nombre o número y la respuesta lista todas; `inner_member` lee un archivo dentro de un .zip que está dentro del .zip; con `member=''` lee una hoja de cálculo publicada directamente en la URL (hasta 20 MB). |
+| `aggregate_csv` | Agrupa y suma un CSV/TSV/TXT completo desde una URL (hasta 30 MB, no solo su inicio): `group_by`, `sum_columns`, filtros exactos (`filters_json`), orden y `limit`. Lee coma decimal, delimitador `\|`, `;`, coma o tabulador y BOM, y ajusta la codificación (UTF-8 o Windows 1252); las columnas se nombran sin importar mayúsculas ni tildes. Suma con precisión decimal exacta y cuenta aparte las celdas vacías y no numéricas. Pensado para los CSV de ventas del SRI (`sri_ventas_AAAA.csv`, ~5,5 MB cada uno): ventas y compras por provincia, cantón y sector. No lee .zip ni hojas de cálculo (para esos, `read_zip_member`). |
 | `read_pdf` | Extrae texto de un documento PDF en una URL directa. |
 
 ## SEPS y economía popular
@@ -258,6 +259,7 @@ Los tools CKAN genéricos aceptan `source="nacional"` (default), `source="cuenca
 |------|-------------|
 | `search_cepalstat_indicadores` | Busca un indicador en el catálogo regional de CEPALSTAT (CEPAL). |
 | `get_cepalstat_indicador` | Observaciones de un indicador de CEPALSTAT, filtradas a un país (Ecuador por defecto). |
+| `get_clima_nasa_power` | Clima diario o mensual desde 1981 de un cantón (en el centroide de su polígono) o de unas coordenadas: lluvia, temperatura, humedad, viento y radiación solar de NASA POWER. Es una rejilla de satélite y modelo, no una estación. |
 
 ## Flujo de trabajo típico
 

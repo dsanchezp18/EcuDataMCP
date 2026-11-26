@@ -382,11 +382,22 @@ async def main() -> int:
                 {"fuente": "igm", "capa": "nacional_2024:poblado_p_2024", "count": 2},
                 ["poblado"],
             ),
+            ("search_capas_geo", {"fuente": "maate", "query": "snap"}, ["mae_ide:v_fa210_snap_a"]),
+            (
+                "get_capa_geo_datos",
+                {"fuente": "maate", "capa": "mae_ide:v_fa210_snap_a", "count": 2},
+                ["csnap"],
+            ),
             ("search_archivos", {"fuente": "turismo", "limit": 3}, ["Turismo"]),
             ("search_archivos", {"fuente": "fedexpor", "limit": 3}, ["Expordata"]),
             ("search_archivos", {"fuente": "arcotel_series", "query": "1.1.1"}, ["Lineas activas"]),
             ("search_archivos", {"fuente": "msp_precios", "limit": 2}, ["precios"]),
             ("search_archivos", {"fuente": "mit_vias"}, ["mit.gob.ec"]),
+            (
+                "search_archivos",
+                {"fuente": "sni_evaluaciones", "query": "agropecuaria", "limit": 3},
+                ["Banco de evaluaciones"],
+            ),
             ("search_archivos", {"fuente": "minedec_bases", "query": "csv 2024-2025"}, ["2024-2025"]),
             ("search_capas_geo", {"fuente": "msp"}, ["indicadores_ssr"]),
             (
@@ -420,6 +431,11 @@ async def main() -> int:
                 ["Hydropower"],
             ),
             ("search_cepalstat_indicadores", {"query": "poblacion"}, []),
+            (
+                "get_clima_nasa_power",
+                {"canton": "Quito", "desde": "2024-01", "hasta": "2024-03", "format": "json"},
+                ["lluvia"],
+            ),
             ("search_cortes", {"distribuidora": "eeq", "format": "json"}, []),
             ("search_cortes", {"distribuidora": "centrosur", "format": "json"}, []),
             ("search_infomies_bases_mensuales", {"serie": "anc", "format": "json"}, []),
@@ -487,6 +503,7 @@ async def main() -> int:
             ("bce: diarios -> indicador", chain_bce_diario(client)),
             ("bce: paginas -> archivos", chain_bce_paginas(client)),
             ("cepalstat: search -> indicador", chain_cepalstat(client)),
+            ("sri: ventas -> aggregate_csv", chain_sri_ventas(client)),
             ("contraloria: list -> informe", chain_contraloria(client)),
             ("arconel: list -> reporte", chain_arconel(client)),
             ("inec: estadistica -> files -> zip", chain_inec_estadistica(client)),
@@ -769,6 +786,40 @@ async def chain_cepalstat(client: httpx.AsyncClient) -> None:
         "get_cepalstat_indicador",
         {"indicator_id": int(indicador["indicator_id"]), "format": "json"},
     )
+
+
+async def chain_sri_ventas(client: httpx.AsyncClient) -> None:
+    # The file's URL carries an id that changes when the SRI re-uploads it, so
+    # it is read from the listing, never hardcoded.
+    listing = json.loads(
+        await call_chain_step(
+            client,
+            "search_archivos",
+            {"fuente": "sri_datasets", "query": "ventas", "format": "json"},
+        )
+    )
+    urls = [
+        a["url"]
+        for a in listing.get("archivos") or []
+        if str(a.get("url") or "").lower().endswith(".csv")
+    ]
+    if not urls:
+        raise AssertionError("El SRI no listó ningún CSV de ventas")
+    result = json.loads(
+        await call_chain_step(
+            client,
+            "aggregate_csv",
+            {
+                "url": urls[0],
+                "group_by": "PROVINCIA",
+                "sum_columns": "TOTAL_VENTAS",
+                "limit": 3,
+                "format": "json",
+            },
+        )
+    )
+    if not result.get("rows") or result.get("filas_leidas", 0) < 1000:
+        raise AssertionError(f"aggregate_csv leyó muy pocas filas: {result.get('filas_leidas')}")
 
 
 async def chain_contraloria(client: httpx.AsyncClient) -> None:

@@ -744,6 +744,15 @@
             "coverage": "ambienteyenergia.gob.ec",
             "url": "https://www.ambienteyenergia.gob.ec",
             "status": "live"
+          },
+          {
+            "id": "mae-ide",
+            "name": "Infraestructura de datos espaciales ambiental (IDE)",
+            "tag": "Ambiente",
+            "description": "93 capas WFS abiertas: cobertura de la tierra 1990-2024, deforestación por período 1990-2024, áreas protegidas (SNAP), bosques protectores, carbono y contaminación minera",
+            "coverage": "ide.ambiente.gob.ec",
+            "url": "http://ide.ambiente.gob.ec/mapainteractivo/",
+            "status": "live"
           }
         ]
       },
@@ -856,6 +865,20 @@
             "description": "Datos abiertos de auditorías y Plan Anual de Control",
             "coverage": "contraloria.gob.ec",
             "url": "https://www.contraloria.gob.ec",
+            "status": "live"
+          }
+        ]
+      },
+      {
+        "name": "Sistema Nacional de Información (SNI)",
+        "sources": [
+          {
+            "id": "sni-evaluaciones",
+            "name": "Banco de evaluaciones de intervenciones públicas",
+            "tag": "SNI",
+            "description": "108 informes de evaluación de programas y proyectos públicos, 2011-2026, con sector, entidad ejecutora y evaluadora, tipo y objetivo (en su mayoría PDF)",
+            "coverage": "sni.gob.ec",
+            "url": "https://www.sni.gob.ec/informacion-para-la-planificacion/informacion-estadistica/banco-de-evaluaciones/",
             "status": "live"
           }
         ]
@@ -1067,6 +1090,20 @@
             "description": "Latin Macro Watch (665 recursos, 26 países) y la Database of Political Institutions del Banco Mundial/BID — portal CKAN estándar, accesible con source=\"iadb\" en los tools CKAN genéricos",
             "coverage": "data.iadb.org",
             "url": "https://data.iadb.org",
+            "status": "live"
+          }
+        ]
+      },
+      {
+        "name": "NASA",
+        "sources": [
+          {
+            "id": "nasa-power",
+            "name": "NASA POWER",
+            "tag": "NASA",
+            "description": "Clima diario y mensual desde 1981 (lluvia, temperatura, humedad, viento, radiación solar) por cantón o coordenada, de una rejilla de satélite y modelo; no son estaciones",
+            "coverage": "power.larc.nasa.gov",
+            "url": "https://power.larc.nasa.gov/",
             "status": "live"
           }
         ]

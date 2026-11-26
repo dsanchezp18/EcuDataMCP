@@ -10,7 +10,7 @@ Contribuciones son bienvenidas. Por favor:
 
 Servidor MCP de datos abiertos *del gobierno ecuatoriano* (CKAN nacional y
 municipal, gob.ec, SRI, BCE, Supercías, IESS/SENESCYT, IG-EPN, SERCOP, SGR y
-más): 86 tools en el perfil `public`. Python, MCP SDK 2.x
+más): 88 tools en el perfil `public`. Python, MCP SDK 2.x
 (`mcp.server.mcpserver.MCPServer`), transporte stdio o HTTP streamable.
 Antes de dar por nueva una fuente, mira [docs/ROADMAP.md](docs/ROADMAP.md)
 (qué está integrado y qué falta), [docs/RESEARCH.md](docs/RESEARCH.md) (los
@@ -61,8 +61,8 @@ uv run python -m helpers.supercias_financials_build  # reconstruir la base de Su
   de la URL manda cuando es reconocible, y un sniff del `Content-Type`
   (`helpers/csv_reader.sniff_content_type`) es el último recurso. Varios
   bugs reales del portal (`.tar.gz` declarado como CSV, `.xlsx` declarado
-  como CSV) vinieron de fiarse del `format` — ver la sección "Formatos y
-  tipos de recursos" de docs/ROADMAP.md.
+  como CSV) vinieron de fiarse del `format` — ver la fila "Formatos de
+  archivo" en "Calidad, formatos y operación" de docs/ROADMAP.md.
 - Los previews de archivos comprimidos (`.zip`, `.tar.gz`) eligen el
   miembro con `helpers/csv_reader._pick_member` (`.csv` > `.tsv` > `.txt`,
   `None` si no hay nada tabular); no caer en "el primer archivo del zip".

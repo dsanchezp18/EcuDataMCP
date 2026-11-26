@@ -5,6 +5,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 from helpers.geo_proxy import GEOBLOCKED_TOOLS, explicit_hidden_tools, hide_geoblocked
 from helpers.logging import MAIN_LOGGER_NAME
+from tools.aggregate_csv import register_aggregate_csv_tool
 from tools.archivo_secciones import register_archivo_secciones_tools
 from tools.arconel_reportes import (
     register_get_arconel_reporte_tool,
@@ -31,6 +32,7 @@ from tools.get_cepalstat_indicador import register_get_cepalstat_indicador_tool
 from tools.get_certificado_cumplimiento_patronal import (
     register_get_certificado_cumplimiento_patronal_tool,
 )
+from tools.get_clima_nasa_power import register_get_clima_nasa_power_tool
 from tools.get_compania_info import register_get_compania_info_tool
 from tools.get_contraloria_informe import register_get_contraloria_informe_tool
 from tools.get_contrato_info import register_get_contrato_info_tool
@@ -158,6 +160,7 @@ def register_tools(mcp: MCPServer) -> None:
     register_read_pdf_tool(mcp)
     register_list_zip_contents_tool(mcp)
     register_read_zip_member_tool(mcp)
+    register_aggregate_csv_tool(mcp)
     register_investigate_dataset_tool(mcp)
 
     register_search_tramites_tool(mcp)
@@ -233,6 +236,7 @@ def register_tools(mcp: MCPServer) -> None:
     register_search_cepalstat_indicadores_tool(mcp)
     register_get_cepalstat_indicador_tool(mcp)
     register_serie_internacional_tools(mcp)
+    register_get_clima_nasa_power_tool(mcp)
 
     _remove_explicitly_hidden_tools(mcp)
 
