@@ -7372,24 +7372,54 @@ devuelve el centroide de cada polígono con `returnCentroid=true&outSR=4326`.
 - Es el centro geométrico del polígono, no la cabecera cantonal. El de
   Guayaquil (-2,4919 / -80,0931) está lejos de la ciudad.
 
-### Una anomalía reciente que no se resolvió
+### Una anomalía reciente (resuelta el 2026-11-27)
 
-Con el centroide de Guayaquil, el promedio diario de lluvia fue de 21,05
-mm/día en octubre de 2026 y de 29,49 mm/día del 1 al 21 de noviembre (máximo
-de 124,35 mm en un día). La serie mensual de 2016 a 2025 para octubre y
+El 2026-11-24, con el centroide de Guayaquil, el promedio diario de lluvia fue
+de 21,05 mm/día en octubre de 2026 y de 29,49 mm/día del 1 al 21 de noviembre
+(máximo de 124,35 mm en un día). La serie mensual de 2016 a 2025 para octubre y
 noviembre va de 0,1 a 1,4 mm/día en ese punto. En Quito, entre el 15 de
 septiembre y el 21 de noviembre, los valores diarios pasan de octubre en
 adelante a decenas de mm (36 el 2 de noviembre), frente a promedios
-mensuales de 0,7 a 7,6 mm/día en 2023 y 2024. No parece un error aislado de
-una variable: en Guayaquil la humedad relativa sube de 66-68 % a 85-94 % y la
-temperatura baja de unos 29 °C a 25-27 °C en el mismo período.
+mensuales de 0,7 a 7,6 mm/día en 2023 y 2024. En Guayaquil la humedad relativa
+subía de 66-68 % a 85-94 % y la temperatura bajaba de unos 29 °C a 25-27 °C en
+el mismo período.
 
-Hasta septiembre de 2026 los promedios diarios coinciden con los mensuales
-(febrero de 2025: 12,63 en ambos). No se contrastó con estaciones del INAMHI
-ni con noticias, así que no se sabe si es un episodio real o un salto en el
-flujo reciente del modelo. La herramienta devuelve lo que NASA publica y su
-nota dice que los valores son de una rejilla de modelo, no de estación; los
-datos de las últimas semanas conviene tratarlos como provisionales.
+**Qué es.** Son dos cosas distintas, y la herramienta no avisaba de ninguna.
+
+1. **Un episodio real en Guayaquil, de septiembre a octubre.** El 2026-10-19 el
+   COE cantonal registró 170,37 mm hasta las 08:00 y 57 zonas inundadas (El
+   Comercio, publicado ese día 08:57; titular "Guayaquil acumula 170 litros de
+   lluvia por metro cuadrado y 57 zonas están afectadas"). NASA da 34,5 mm ese
+   día para la celda del centroide, que está lejos de la ciudad. Open-Meteo
+   (reanálisis, otro modelo) coincide en el sentido, con promedios de 5,75
+   mm/día en septiembre y 12,41 en octubre en el mismo punto, frente a 0,06-1,18
+   en los octubres de 2019 a 2025; la correlación diaria entre los dos del 20 de
+   septiembre al 21 de noviembre es 0,59.
+2. **Un salto de producto el 1 de noviembre.** `header.sources` de la API diaria
+   lista `MERRA2` hasta el último mes completo y `GEOSIT` (corrida casi en
+   tiempo real, provisional) para los días siguientes. Una consulta que termina
+   el 2026-10-31 nombra solo `MERRA2`; una que termina el 11-01 nombra los dos.
+   En Quito la lluvia diaria pasa de 4,88 mm el 10-31 a 40,59 mm el 11-01, y el
+   promedio del 1 al 21 de noviembre es de 23,0 mm/día frente a 1,6-5,9 en los
+   noviembres de 2019 a 2025, mientras Open-Meteo da 9,5 mm/día para el mismo
+   punto (3,4-10,2 en esos años) y no tiene escalón. En Guayaquil noviembre
+   queda en 29,5 mm/día (Open-Meteo: 26,5), así que ahí el salto de producto se
+   suma a un mes también lluvioso.
+
+**Los 21 mm/día de octubre ya no se reproducen.** El 11-27 la API da 8,02
+mm/día para todo octubre en la celda de Guayaquil (19,3 del 18 al 28) y 2,75 en
+la de Quito, con `MERRA2` como única fuente; el 11-24 eran 21,05 en Guayaquil y
+decenas de mm en Quito. Lo más probable es que octubre fuera entonces de GEOS-IT
+y que NASA lo reemplazara por MERRA-2 en esos tres días (no se guardó la
+cabecera del 11-24, así que no está comprobado). Noviembre sigue en GEOS-IT y
+es de esperar que baje cuando llegue MERRA-2.
+
+**Qué hace ahora la herramienta.** Una consulta diaria con lluvia cuyo
+`fuentes_datos` incluye GEOSIT agrega a `nota` que esos días son provisionales y
+que GEOS-IT da mucha más lluvia en Ecuador, con los números de arriba. No se
+verificó contra estaciones del INAMHI: sus series no están integradas y el
+reporte periodístico es de un solo día. Open-Meteo no es una fuente integrada;
+se usó solo para esta comprobación.
 
 ### No construido
 
@@ -7462,9 +7492,77 @@ ZIP64). Pasado ese tamaño el error dice que el host no admite Range y que el
 
 ### Abierto
 
-- `aggregate_csv` no entra en un miembro de .zip: los CSV de INEC dentro de
-  .zip enormes siguen leyéndose por la cabeza con `read_zip_member`.
-- Un host sin Range con un .zip de más de 20 MB sigue sin lectura parcial.
+Los dos pendientes de esta pasada se resolvieron en la cuadragésima novena.
+
+## Cuadragésima novena pasada — .zip grandes: Range del SRI, respaldo en disco y `aggregate_csv` sobre un miembro (2026-11-27)
+
+Punto de partida: los dos pendientes de la pasada anterior. `aggregate_csv` no
+entraba en un miembro de .zip (el CSV de Pichincha pesa 740 MB y solo se leía
+por la cabeza), y un host sin Range con un .zip de más de 20 MB no tenía lectura
+parcial (los RUC de Guayas y Pichincha, 148 y 156 MB, exigían subir
+`ECUADOR_MCP_NO_RANGE_ZIP_MB`).
+
+### El host de los RUC sí admite Range
+
+- Los .zip de RUC están en
+  `descargas.sri.gob.ec/download/datosAbiertos/SRI_RUC_<Provincia>.zip`. Con
+  `curl -H "Range: bytes=-65579"` responde 206. Con
+  `Accept-Encoding: gzip, deflate`, que es lo que httpx manda por defecto,
+  responde 200 con el archivo entero (10,8 MB recibidos en 25 s antes de cortar);
+  con `Accept-Encoding: identity` vuelve a dar 206. Por eso el cliente lo tomaba
+  por un host sin Range y bajaba el .zip completo: en Azuay (29 MB)
+  `list_zip_contents` tardaba 51 s.
+- `_fetch_range` manda ahora `Accept-Encoding: identity`: Azuay lista en 3,1 s y
+  nada se baja entero. Los offsets de un .zip son de los bytes guardados, así
+  que `identity` es también lo correcto en general.
+- Velocidad medida desde una conexión doméstica el 2026-11-27: 0,5 MB/s con
+  `curl` y de 0,16 a 0,23 MB/s dentro de las dos lecturas completas de Azuay. A
+  ese ritmo Pichincha (156 MB) tardaría de 5 a 16 minutos y pasaría el plazo de
+  10; no se midió desde Render, y desde Oracle el SRI no responde.
+- `www.sri.gob.ec` (los CSV de ventas) no contestó a `curl` desde esta máquina,
+  con ni sin `identity`: no se pudo ver si ese host también depende del
+  encabezado. Esos CSV no son .zip y `aggregate_csv` los baja enteros.
+
+### Respaldo en disco para hosts que sí ignoran Range
+
+- El .zip entero se baja a un `tempfile.SpooledTemporaryFile`: en memoria hasta
+  20 MB y en un archivo temporal sin nombre más allá. El sistema operativo lo
+  borra al cerrarlo o al terminar el proceso, también tras un fallo, así que no
+  queda nada que barrer. `helpers/zip_blob.SpooledBlob` se corta con `blob[a:b]`
+  igual que `bytes`, y todo el análisis del directorio central y de los miembros
+  sigue como estaba.
+- El tope de la descarga pasa de 20 a 400 MB (`ECUADOR_MCP_NO_RANGE_ZIP_MB`,
+  máximo 1024) y tiene un plazo de 10 minutos; una lectura detenida sigue
+  fallando a los 30 s. Dos llamadas por el mismo .zip comparten una descarga. La
+  caché de 5 minutos guarda hasta dos archivos y un `call_later` suelta el
+  temporal cuando vence la entrada.
+
+### `aggregate_csv` sobre un miembro (`member`)
+
+- `locate_zip_member` busca el miembro (solo `.csv`, `.tsv`, `.txt`; rechaza
+  carpetas, cifrados, métodos distintos de stored y deflate, y tamaños fuera de
+  300 MB comprimido o 2 GB descomprimido) y deja sus bytes comprimidos a mano:
+  el .zip entero si el host no admite Range, o solo los del miembro, bajados con
+  Range a un archivo temporal, si lo admite. `iter_zip_member` los descomprime en
+  trozos de 4 MB sin pasar del tamaño declarado y, al final, comprueba tamaño y
+  CRC32: un .zip dañado falla en vez de dar un total sobre filas equivocadas.
+- `aggregate_stream` es el mismo agrupador que `aggregate_bytes`, pero sobre un
+  flujo, con un plazo de lectura de 180 s que revisa cada 65.536 filas.
+- Medido con un CSV sintético de 734 MB y 4,6 millones de filas (67 MB
+  comprimido, nueve columnas con el aspecto del RUC): 23,5 s (31 MB/s) y una
+  memoria de proceso de 38 a 48 MB. Con datos reales, el RUC de Azuay (29 MB
+  comprimido, 143 MB de texto, 413.846 filas) agrupado por
+  `ESTADO_CONTRIBUYENTE`: ACTIVO 199.493, SUSPENDIDO 180.065, PASIVO 34.288
+  (suman las 413.846 filas). Dos lecturas completas dieron los mismos totales, en
+  127 y 183 s, casi todo descarga a la velocidad de arriba.
+
+### Sin probar
+
+- El miembro de Pichincha completo (740 MB) no se leyó de verdad: desde esta
+  conexión la descarga sola pasaría de 5 minutos. Las cifras de 740 MB son del
+  archivo sintético.
+- Ni Render ni Oracle: no se sabe cuánto disco temporal permiten ni a qué
+  velocidad les llega el SRI. Oracle no alcanza al SRI.
 
 ## Archivo del roadmap (2026-11-24)
 

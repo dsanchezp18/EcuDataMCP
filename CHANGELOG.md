@@ -1,5 +1,65 @@
 # Changelog
 
+## Unreleased
+
+- **`get_clima_nasa_power`: the latest days of a daily rain series now carry a
+  warning that they are provisional.** NASA POWER serves MERRA-2 up to its
+  latest complete month and the near-real-time GEOS-IT run for the days after
+  it (`fuentes_datos` lists both), and GEOS-IT gives far more rain in Ecuador.
+  At the Quito point the daily rain went from 4.9 mm on 2026-10-31 to 40.6 mm on
+  2026-11-01, and the November average was 23 mm/day against 9.5 in Open-Meteo,
+  which shows no step; October's Guayaquil average read 21 mm/day on
+  2026-11-24 and 8 mm/day on 11-27, once MERRA-2 covered it. This was the
+  "unresolved oddity" in the 47th RESEARCH pass. The wet September and October
+  at Guayaquil are real: the COE reported 170 mm and 57 flooded zones on
+  2026-10-19, and Open-Meteo agrees. A daily query with rain whose sources
+  include GEOSIT adds that to `nota`; monthly answers, MERRA-2-only ranges and
+  queries without rain are unchanged.
+- **`aggregate_csv` reads a CSV inside a .zip, however large (new `member`
+  parameter).** The SRI's RUC file for Pichincha is 156 MB zipped and 740 MB of
+  text, so `read_zip_member` could only show its first 5 MB and `aggregate_csv`
+  refused any .zip. With `url` set to the .zip and `member` to the file's name
+  (`list_zip_contents` lists them), the member is decompressed in 4 MB pieces
+  and only the group totals are kept: a synthetic 734 MB, 4.6 million row file
+  grouped in 23.5 s with the process memory staying near 48 MB. The stream
+  checks the declared size and the CRC32 at the end, so a damaged .zip fails
+  instead of giving a total over wrong rows; a member over 300 MB zipped, 2 GB
+  unzipped or 3 minutes of reading is refused rather than summed in part. A host
+  that honors Range sends only that member's bytes, to a temporary file.
+- **A .zip from a host without Range can now be bigger than memory.** The
+  whole-download fallback of 0.15.2 kept the file in memory up to 20 MB and
+  refused anything larger unless `ECUADOR_MCP_NO_RANGE_ZIP_MB` was raised, which
+  left the Guayas (148 MB) and Pichincha (156 MB) RUC zips out. The download now
+  stays in memory up to 20 MB and goes to an unnamed temporary file beyond that
+  (the operating system removes it when it is closed, even after a crash); the
+  default cap is 400 MB (the variable now goes up to 1024), the download has a
+  10-minute deadline (a stalled read still fails after 30 s), two calls for the
+  same .zip share one download, and the file is released when its 5-minute cache
+  entry expires.
+- **The SRI's download host honors Range after all.** `descargas.sri.gob.ec`
+  (the RUC zips) answers 200 with the whole file whenever the request offers
+  `Accept-Encoding: gzip, deflate`, which httpx sends by default, and 206 once
+  it says `identity`; that is why the zips looked range-less. Range requests now
+  send `Accept-Encoding: identity`. On the Azuay RUC zip (29 MB)
+  `list_zip_contents` went from 51 s, by downloading it whole, to 3 s. The whole-
+  download fallback stays for hosts that really ignore Range.
+
+- **Smoke test: a check that only timed out gets a second try after the other
+  checks, and is degraded if it then answers.** The in-call retries (5 s and
+  15 s) only span 20 s, so a host that was unreachable for a minute still failed
+  the run. On 2026-11-25 `get_cortes_horarios` for EEASA hit a `ConnectTimeout`
+  three times from the runner and ended the scheduled run red, while the same
+  call answered from Render, the Oracle VM and a home connection that day, and
+  had passed in every other run since 2026-11-09. Twelve of the last twenty
+  scheduled runs failed, each on a different host's timeout. A check whose final
+  answer is still a timeout, a dropped connection or a 502/503/504 is now held
+  back (`DEFER`), re-run once after 60 s and after the last check (`== second
+  pass ==`), and reported as `RECOVERED` and counted as degraded
+  (`timeout:<tool>` in the Actions summary) if it answers. Timing out again, or
+  any other failure, still fails the run, and a source already named in
+  `smoke_status` keeps its own handling. Flat checks and chains share the same
+  path through `run_check` and `run_chain`.
+
 ## 0.15.2 — 2026-11-25
 
 88 tools in the default profile (`aggregate_csv` is new). `aggregate_csv` groups
