@@ -50,6 +50,7 @@ uv run main.py                           # transporte HTTP (default)
 uv run python main.py --transport stdio  # transporte stdio
 uv run pytest                            # tests
 uv run ruff check .                      # lint
+uv run ruff format .                     # formato (CI corre --check)
 uv run python -m helpers.supercias_financials_build  # reconstruir la base de Supercías
 ```
 
