@@ -153,7 +153,7 @@ y recargar con `sudo systemctl reload caddy`.
 
 `20-hide-tools.conf` oculta `search_contratos`, `get_contrato_info`,
 `get_resumen_compras`, `search_infomies_bases_mensuales` y
-`search_infomies_boletines_zonales` (81 tools en vez de 86): SERCOP e infoMIES no
+`search_infomies_boletines_zonales` (83 tools en vez de 88): SERCOP e infoMIES no
 responden desde Oracle Bogotá, así que esas tools solo podían fallar.
 
 Medido el 2026-11-17 desde esta VM:
@@ -343,7 +343,7 @@ WantedBy=multi-user.target
    caddy fail2ban`. La base de Supercías se reconstruye sola al arrancar (unos
    4 minutos, descarga de ~356 MB); `/health` muestra `construccion_en_curso`.
 8. Comprobar desde fuera: solo 22, 80 y 443 abiertos, `/health` en `ok` y
-   `tools/list` con 81 tools.
+   `tools/list` con 83 tools.
 9. Reinstalar el temporizador `keep-active` (sección "Riesgo: recuperación por
    inactividad"), o una VM nueva volverá a quedar bajo el umbral de inactividad.
 
@@ -355,7 +355,22 @@ git pull --ff-only && ~/.local/bin/uv sync --no-dev
 .venv/bin/python -c "import main"                  # debe terminar sin error
 sudo systemctl restart ecuador-mcp
 curl -s http://127.0.0.1:8000/health               # status ok
+git rev-parse HEAD                                 # debe ser el "commit" de /health
 ```
+
+`/health` devuelve `commit` (el SHA del que arrancó el servicio) desde la versión
+posterior a la 0.15.3; antes solo daba `version`, y dos instancias en la misma
+versión podían estar en commits distintos sin que se notara. Para saber si la VM
+quedó atrás del `main` de este fork, desde cualquier máquina:
+
+```bash
+git ls-remote https://github.com/dsanchezp18/EcuDataMCP.git refs/heads/main
+curl -s https://129-38-110-203.sslip.io/health      # comparar "commit"
+curl -s https://ecuador-mcp-lb0s.onrender.com/health # Render: se actualiza solo
+```
+
+Render toma el SHA de `RENDER_GIT_COMMIT`; la VM, de `git rev-parse HEAD` en el
+clon. Si los tres no coinciden, la VM necesita el bloque de arriba.
 
 Si falla: `git reset --hard <commit anotado>`, `uv sync --no-dev` y reiniciar. La
 reconstrucción de la base se dispara sola cuando cambia la versión del esquema.

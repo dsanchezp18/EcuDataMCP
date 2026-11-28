@@ -34,6 +34,16 @@ changes when someone updates it. To update it, on the VM:
 cd ~/EcuDataMCP && git pull && uv sync --no-dev && sudo systemctl restart ecuador-mcp
 ```
 
+Render redeploys on every push to this fork's `main`; the VM does not, so the
+two can drift. After the release that follows 0.15.3, `/health` on both returns
+`commit`, the SHA the server started from. Compare it with this branch:
+
+```bash
+git ls-remote https://github.com/dsanchezp18/EcuDataMCP.git refs/heads/main
+curl -s https://129-38-110-203.sslip.io/health
+curl -s https://ecuador-mcp-lb0s.onrender.com/health
+```
+
 Setup details (network rules, proxy, usage logs, and which sources are
 reachable from Bogotá) are in `docs/ORACLE_INSTANCE.md`.
 
