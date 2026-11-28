@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.15.3 — 2026-11-27
+
+88 tools in the default profile (none new). `aggregate_csv` takes a new `member`
+parameter and reads a CSV inside a .zip however large (the SRI's RUC file for
+Pichincha is 156 MB zipped and 741 MiB of text); the SRI's download host is read
+by Range after all; a .zip from a host that ignores Range can now be bigger than
+memory; `get_clima_nasa_power` warns that the latest days of a daily rain series
+are provisional; and the smoke test gives a check that timed out a second try.
 
 - **`get_clima_nasa_power`: the latest days of a daily rain series now carry a
   warning that they are provisional.** NASA POWER serves MERRA-2 up to its
@@ -21,7 +28,9 @@
   refused any .zip. With `url` set to the .zip and `member` to the file's name
   (`list_zip_contents` lists them), the member is decompressed in 4 MB pieces
   and only the group totals are kept: a synthetic 734 MB, 4.6 million row file
-  grouped in 23.5 s with the process memory staying near 48 MB. The stream
+  grouped in 23.5 s with the process memory staying near 48 MB, and on Render the
+  real Pichincha file (156 MB zipped, 741 MiB of text, 2,164,275 rows) grouped in
+  338 s, download included, at about 0.46 MB/s of zip. The stream
   checks the declared size and the CRC32 at the end, so a damaged .zip fails
   instead of giving a total over wrong rows; a member over 300 MB zipped, 2 GB
   unzipped or 3 minutes of reading is refused rather than summed in part. A host
