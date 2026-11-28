@@ -443,16 +443,42 @@ def test_a_utf8_file_with_a_late_accent_is_still_utf8():
 # -- temporary files: one fetch per member, a ceiling on members in flight ------
 
 
-async def test_two_calls_for_the_same_member_share_one_range_fetch(httpx_mock):
+async def test_two_calls_for_the_same_member_share_one_range_fetch(httpx_mock, monkeypatch):
     _serve(httpx_mock, _make_zip({MEMBER: _rows(500)}))
+    real_fetch = csv_reader._spool_member_data
+    real_shared = csv_reader._shared_member_spool
+    release = asyncio.Event()
+    fetches = waiting = 0
 
-    first, second = await asyncio.gather(
-        *(
+    # Only a fetch still in flight is shared, so the first one is held until
+    # the second call is waiting on it; a file this small would otherwise be
+    # done before the second call asked.
+    async def held(*args):
+        nonlocal fetches
+        fetches += 1
+        await release.wait()
+        return await real_fetch(*args)
+
+    async def counted(*args):
+        nonlocal waiting
+        waiting += 1
+        return await real_shared(*args)
+
+    monkeypatch.setattr(csv_reader, "_spool_member_data", held)
+    monkeypatch.setattr(csv_reader, "_shared_member_spool", counted)
+
+    calls = [
+        asyncio.ensure_future(
             csv_reader.locate_zip_member(URL, MEMBER, max_compressed=10**9, max_uncompressed=10**9)
-            for _ in range(2)
         )
-    )
+        for _ in range(2)
+    ]
+    while waiting < 2:
+        await asyncio.sleep(0.01)
+    release.set()
+    first, second = await asyncio.gather(*calls)
 
+    assert fetches == 1
     assert first.source is second.source
     assert csv_reader._spools_in_flight == {}
     # Each call reads the directory and the local header; the data comes once.
