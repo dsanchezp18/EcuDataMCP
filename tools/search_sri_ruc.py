@@ -58,7 +58,7 @@ def register_search_sri_ruc_tool(mcp: MCPServer) -> None:
 
         def to_text(data: dict) -> str:
             parts = [
-                f"Búsqueda RUC por razón social: \"{data['razon_social_buscada']}\"",
+                f'Búsqueda RUC por razón social: "{data["razon_social_buscada"]}"',
                 f"Total reportado por el SRI: {data['total_reportado']}",
                 "",
             ]
@@ -71,7 +71,9 @@ def register_search_sri_ruc_tool(mcp: MCPServer) -> None:
                 return "\n".join(parts)
             parts.append(f"Resultados devueltos ({len(resultados)}):")
             for r in resultados:
-                parts.append(f"- {r['ruc']}: {r['razon_social']} ({r['estado']}, {r['tipo_contribuyente']})")
+                parts.append(
+                    f"- {r['ruc']}: {r['razon_social']} ({r['estado']}, {r['tipo_contribuyente']})"
+                )
             return "\n".join(parts)
 
         return render_structured(result, format, text_builder=to_text)

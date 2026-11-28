@@ -43,7 +43,9 @@ def test_generic_envelope_reads_provenance_from_the_payload():
 
 
 def test_generic_envelope_keeps_a_partial_block_and_a_full_one():
-    partial = ensure_response_metadata({"filas": [], "metadatos": {"truncado": {"filas_omitidas": 3}}})
+    partial = ensure_response_metadata(
+        {"filas": [], "metadatos": {"truncado": {"filas_omitidas": 3}}}
+    )
     assert partial["metadatos"]["truncado"] == {"filas_omitidas": 3}
     assert partial["metadatos"]["contrato"] == CONTRACT_VERSION
 

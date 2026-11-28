@@ -104,15 +104,11 @@ def register_search_infomies_boletines_zonales_tool(mcp: MCPServer) -> None:
             return render_structured(
                 {"zonas": zonas},
                 format,
-                text_builder=lambda d: (
-                    "Zonas válidas para modo='zonal': " + ", ".join(d["zonas"])
-                ),
+                text_builder=lambda d: "Zonas válidas para modo='zonal': " + ", ".join(d["zonas"]),
             )
 
         try:
-            result = await infomies_client.get_boletines_zonales(
-                zona=zona, anio=anio, query=query
-            )
+            result = await infomies_client.get_boletines_zonales(zona=zona, anio=anio, query=query)
         except ValueError as e:
             raise ToolError(str(e)) from e
         except Exception as e:

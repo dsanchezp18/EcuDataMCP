@@ -116,7 +116,9 @@ async def get_survey(
                 numeric_id = None if by_numeric_id else await _numeric_id_for_idno(idno, session)
                 if numeric_id is None:
                     raise ValueError(f"No se encontró ninguna encuesta con idno '{idno}' en ANDA.")
-                logger.debug("ANDA idno route missed %r; retrying by catalog id %s", idno, numeric_id)
+                logger.debug(
+                    "ANDA idno route missed %r; retrying by catalog id %s", idno, numeric_id
+                )
                 resp = await session.get(
                     _anda_url(f"catalog/{numeric_id}"),
                     params={"id_format": "id"},
@@ -146,7 +148,10 @@ async def _numeric_id_for_idno(idno: str, session: httpx.AsyncClient) -> str | N
     wanted = idno.strip().casefold()
     for query in (idno.strip(), ""):
         for row in await search_catalog_all(query=query, max_pages=10, session=session):
-            if str(row.get("idno") or "").strip().casefold() == wanted and row.get("id") is not None:
+            if (
+                str(row.get("idno") or "").strip().casefold() == wanted
+                and row.get("id") is not None
+            ):
                 return str(row["id"])
     return None
 
@@ -262,7 +267,9 @@ def parse_microdata_page(html: str) -> dict[str, Any]:
 
     external_links = [{"nombre": n, "url": u} for u, n in external.items()]
     direct_files = [{"filename": n, "url": u} for u, n in files.items()]
-    text = _squash(re.sub(r"<(script|style).*?</\1>", "", html, flags=re.DOTALL | re.IGNORECASE)).lower()
+    text = _squash(
+        re.sub(r"<(script|style).*?</\1>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    ).lower()
 
     if direct_files:
         return {
@@ -295,7 +302,9 @@ def parse_microdata_page(html: str) -> dict[str, Any]:
             "enlaces_externos": [],
             "nota": "ANDA indica 'Data Access Not Available' para este estudio.",
         }
-    if re.search(r"access-licensed|solicitar (el )?acceso|request access|/request", html, re.IGNORECASE):
+    if re.search(
+        r"access-licensed|solicitar (el )?acceso|request access|/request", html, re.IGNORECASE
+    ):
         return {
             "tipo_acceso": ACCESS_REQUEST,
             "archivos": [],

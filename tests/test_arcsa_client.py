@@ -75,16 +75,13 @@ async def test_list_categorias_returns_only_top_level(httpx_mock):
 
     assert nombres["Alimentos"]["total_archivos"] == 1
     assert (
-        nombres["Inspecciones en Establecimientos Farmacéuticos Controlados"][
-            "total_archivos"
-        ]
-        == 2
+        nombres["Inspecciones en Establecimientos Farmacéuticos Controlados"]["total_archivos"] == 2
     )
     # An empty category is listed, not hidden.
     assert (
-        nombres[
-            "Medicamentos incluidos en el certificado sanitario de provisión de medicamentos"
-        ]["total_archivos"]
+        nombres["Medicamentos incluidos en el certificado sanitario de provisión de medicamentos"][
+            "total_archivos"
+        ]
         == 0
     )
 
@@ -109,9 +106,7 @@ async def test_get_categoria_archivos_nested_by_year(httpx_mock):
 
     result = await client.get_categoria_archivos("401")
 
-    assert (
-        result["nombre"] == "Inspecciones en Establecimientos Farmacéuticos Controlados"
-    )
+    assert result["nombre"] == "Inspecciones en Establecimientos Farmacéuticos Controlados"
     assert result["total"] == 2
     by_title = {a["titulo"]: a for a in result["archivos"]}
     assert (

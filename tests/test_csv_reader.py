@@ -328,9 +328,7 @@ async def test_download_bytes_retries_with_os_trust_on_cert_error(httpx_mock, mo
 
     url = "https://www.censoecuador.gob.ec/data-y-resultados/"
     exc = httpx.ConnectError("cert failure", request=httpx.Request("GET", url))
-    exc.__context__ = ssl.SSLCertVerificationError(
-        "unable to get local issuer certificate"
-    )
+    exc.__context__ = ssl.SSLCertVerificationError("unable to get local issuer certificate")
     httpx_mock.add_exception(exc)
     httpx_mock.add_response(url=url, content=b"real page content")
 
@@ -408,9 +406,7 @@ async def test_preview_zip_over_5mb_gives_actionable_truncation_message(httpx_mo
         await preview_zip(url)
 
 
-async def test_preview_xlsb_over_20mb_gives_actionable_truncation_message(
-    httpx_mock, monkeypatch
-):
+async def test_preview_xlsb_over_20mb_gives_actionable_truncation_message(httpx_mock, monkeypatch):
     # .xlsb is a ZIP container too (BIFF12 records instead of XLSX's XML),
     # so it fails the exact same way as a truncated .zip: confirmed live
     # that zipfile can't open it at all once the central directory is cut
@@ -454,9 +450,7 @@ async def test_preview_zip_with_no_tabular_member_gives_clear_message(httpx_mock
         await preview_zip(url)
 
 
-async def test_preview_targz_with_no_tabular_member_gives_clear_message(
-    httpx_mock, monkeypatch
-):
+async def test_preview_targz_with_no_tabular_member_gives_clear_message(httpx_mock, monkeypatch):
     def _fake_getaddrinfo(host, port, *args, **kwargs):
         return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0))]
 
@@ -534,9 +528,7 @@ def _make_ods(rows: list[list[str]], pad_columns: int = 0, pad_rows: int = 0) ->
 
 
 def test_parse_eocd_rejects_zip64_sentinels():
-    tail = struct.pack(
-        "<4sHHHHIIH", b"PK\x05\x06", 0, 0, 0xFFFF, 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0
-    )
+    tail = struct.pack("<4sHHHHIIH", b"PK\x05\x06", 0, 0, 0xFFFF, 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0)
     with pytest.raises(ValueError, match="ZIP64"):
         _parse_eocd(tail)
 
@@ -602,9 +594,7 @@ async def test_list_zip_contents_fetches_central_directory_separately_when_outsi
         match_headers={"Range": f"bytes={cd_offset}-{cd_offset + cd_size - 1}"},
         status_code=206,
         content=zip_bytes[cd_offset : cd_offset + cd_size],
-        headers={
-            "Content-Range": f"bytes {cd_offset}-{cd_offset + cd_size - 1}/{total}"
-        },
+        headers={"Content-Range": f"bytes {cd_offset}-{cd_offset + cd_size - 1}/{total}"},
     )
 
     result = await list_zip_contents(url)

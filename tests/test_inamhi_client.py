@@ -104,12 +104,8 @@ _WFS_EXCEPTION_XML = """<?xml version="1.0" encoding="UTF-8"?>
 </ows:ExceptionReport>
 """
 
-_WMS_CAPS_URL = (
-    f"{inamhi_client._WMS_URL}?service=WMS&version=1.3.0&request=GetCapabilities"
-)
-_WFS_CAPS_URL = (
-    f"{inamhi_client._WFS_URL}?service=WFS&version=2.0.0&request=GetCapabilities"
-)
+_WMS_CAPS_URL = f"{inamhi_client._WMS_URL}?service=WMS&version=1.3.0&request=GetCapabilities"
+_WFS_CAPS_URL = f"{inamhi_client._WFS_URL}?service=WFS&version=2.0.0&request=GetCapabilities"
 
 
 def _mock_capabilities(httpx_mock, wms_xml=_WMS_CAPABILITIES_XML, wfs_xml=_WFS_CAPABILITIES_XML):

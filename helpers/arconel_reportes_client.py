@@ -60,9 +60,7 @@ _MAX_PAGINAS_TOPE = 40
 # project-wide `ecuador-mcp/...`) as a downlevel browser, and every async
 # postback then fails with a bare `0|error|500||` — confirmed 2026-09-25.
 # A generic Mozilla token is enough to get the uplevel code path.
-_USER_AGENT = (
-    "Mozilla/5.0 (compatible; ecuador-mcp; +https://github.com/DweskZ/EcuDataMCP)"
-)
+_USER_AGENT = "Mozilla/5.0 (compatible; ecuador-mcp; +https://github.com/DweskZ/EcuDataMCP)"
 
 GRUPOS = {
     "todos": "1",
@@ -77,9 +75,7 @@ _catalogo_cache = TtlCache(ttl_seconds=86400.0, max_entries=1)
 # take minutes; serializing keeps concurrent tool calls from hammering it.
 _report_lock = asyncio.Lock()
 
-_HIDDEN_RE = re.compile(
-    r'<input type="hidden" name="([^"]+)" id="[^"]*" value="([^"]*)"'
-)
+_HIDDEN_RE = re.compile(r'<input type="hidden" name="([^"]+)" id="[^"]*" value="([^"]*)"')
 _RV_INPUT_RE = re.compile(
     r'<input[^>]*name="(ctl00\$contenidoCentro\$ReportViewer1\$[^"]+)"[^>]*value="([^"]*)"'
 )
@@ -201,9 +197,7 @@ def _to_value(cell: str) -> Any:
 # --- Session ----------------------------------------------------------------
 
 
-async def _request(
-    client: httpx.AsyncClient, method: str, **kwargs: Any
-) -> httpx.Response:
+async def _request(client: httpx.AsyncClient, method: str, **kwargs: Any) -> httpx.Response:
     # The server intermittently refuses or drops connections (seen several
     # times on 2026-09-25 between otherwise successful requests); a short
     # backoff retry rides through it. Only connection-level failures are
@@ -265,9 +259,7 @@ class _Session:
         self.hidden = {n: html.unescape(v) for n, v in _HIDDEN_RE.findall(resp.text)}
         return resp.text
 
-    async def post(
-        self, extra: dict[str, str], manager: str
-    ) -> list[tuple[str, str, str]]:
+    async def post(self, extra: dict[str, str], manager: str) -> list[tuple[str, str, str]]:
         resp = await _request(
             self.client,
             "POST",
@@ -279,9 +271,7 @@ class _Session:
         )
         resp.raise_for_status()
         if not resp.text[:1].isdigit():
-            raise ArconelError(
-                "respuesta inesperada del servidor (no es un delta MS AJAX)"
-            )
+            raise ArconelError("respuesta inesperada del servidor (no es un delta MS AJAX)")
         blocks = parse_delta(resp.text)
         for typ, id_, content in blocks:
             if typ == "hiddenField":
@@ -304,18 +294,12 @@ class _Session:
 
     async def change(self, field: str) -> str:
         target = f"ctl00${field}"
-        blocks = await self.post(
-            {"__EVENTTARGET": target}, f"ctl00$UpdatePanel1|{target}"
-        )
-        return "".join(
-            c for t, i, c in blocks if t == "updatePanel" and i == "UpdatePanel1"
-        )
+        blocks = await self.post({"__EVENTTARGET": target}, f"ctl00$UpdatePanel1|{target}")
+        return "".join(c for t, i, c in blocks if t == "updatePanel" and i == "UpdatePanel1")
 
 
 def _panel(blocks: list[tuple[str, str, str]], suffix: str) -> str:
-    return next(
-        (c for t, i, c in blocks if t == "updatePanel" and i.endswith(suffix)), ""
-    )
+    return next((c for t, i, c in blocks if t == "updatePanel" and i.endswith(suffix)), "")
 
 
 def _toolbar(blocks: list[tuple[str, str, str]]) -> tuple[int, int, bool] | None:
@@ -329,9 +313,7 @@ def _toolbar(blocks: list[tuple[str, str, str]]) -> tuple[int, int, bool] | None
 def _check_option(opciones: list[tuple[str, str]], value: str, what: str) -> None:
     valid = [v for v, _ in opciones if v not in ("", "0") and not v.startswith("---")]
     if value not in valid:
-        raise ArconelError(
-            f"{what} no disponible: {value!r}. Opciones: {', '.join(valid)}"
-        )
+        raise ArconelError(f"{what} no disponible: {value!r}. Opciones: {', '.join(valid)}")
 
 
 def _client() -> httpx.AsyncClient:
@@ -464,9 +446,7 @@ async def _run_report(
     s = _Session(client)
     await s.start()
 
-    logger.info(
-        "ARCONEL: generando reporte %s %s grupo=%s mes=%s", tipo, anio, grupo, mes
-    )
+    logger.info("ARCONEL: generando reporte %s %s grupo=%s mes=%s", tipo, anio, grupo, mes)
     s.sel["tipo"] = tipo
     form = await s.change("dpTipo")
 
@@ -490,9 +470,7 @@ async def _run_report(
 
     generar = "ctl00$contenidoCentro$brtGenerar"
     await s.post({generar: "Generar Reporte"}, f"ctl00$UpdatePanel1|{generar}")
-    blocks = await s.post(
-        {"__EVENTTARGET": _ASYNC_LOAD}, f"{_RV}ctl09$ReportArea|{_ASYNC_LOAD}"
-    )
+    blocks = await s.post({"__EVENTTARGET": _ASYNC_LOAD}, f"{_RV}ctl09$ReportArea|{_ASYNC_LOAD}")
 
     columnas: list[str] = []
     filas: list[list[str]] = []
@@ -516,9 +494,7 @@ async def _run_report(
 
         toolbar = _toolbar(blocks)
         if toolbar is None:
-            raise ArconelError(
-                f"no se encontró el estado de paginación en la página {paginas}"
-            )
+            raise ArconelError(f"no se encontró el estado de paginación en la página {paginas}")
         current, total, estimado = toolbar
         if current != paginas:
             raise ArconelError(
@@ -539,17 +515,10 @@ async def _run_report(
         )
 
     # SSRS pads every row and header with empty spacer columns; drop them.
-    keep = [
-        i
-        for i, c in enumerate(columnas)
-        if c or any(i < len(r) and r[i] for r in filas)
-    ]
+    keep = [i for i, c in enumerate(columnas) if c or any(i < len(r) and r[i] for r in filas)]
     columnas = [columnas[i] for i in keep]
     registros = [
-        {
-            columnas[n]: _to_value(r[i]) if i < len(r) else None
-            for n, i in enumerate(keep)
-        }
+        {columnas[n]: _to_value(r[i]) if i < len(r) else None for n, i in enumerate(keep)}
         for r in filas
     ]
     return {

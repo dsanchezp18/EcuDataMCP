@@ -154,7 +154,9 @@ async def test_rejected_nonce_reloads_the_index_once(httpx_mock):
     httpx_mock.add_response(url=cne_client._PAGE_URL, html=_PAGE_HTML)
     httpx_mock.add_response(url=_listsub("8325"), text="-1")
     # Reload of the page, then the listing succeeds with the new nonce.
-    httpx_mock.add_response(url=cne_client._PAGE_URL, html=_PAGE_HTML.replace("a7bcbf6abe", "ffffffffff"))
+    httpx_mock.add_response(
+        url=cne_client._PAGE_URL, html=_PAGE_HTML.replace("a7bcbf6abe", "ffffffffff")
+    )
     httpx_mock.add_response(url=_listsub("8325"), html=_PROCESO_HTML)
     httpx_mock.add_response(url=_listsub("8328"), html=_REGISTRO_HTML)
     httpx_mock.add_response(url=_listsub("8329"), html=_RESULTADOS_HTML)
@@ -162,7 +164,9 @@ async def test_rejected_nonce_reloads_the_index_once(httpx_mock):
     result = await cne_client.get_proceso_archivos("8325")
 
     assert len(result["archivos"]) == 3
-    nonces = [r.url.params["__wpdmacn"] for r in httpx_mock.get_requests() if "listsub" in str(r.url)]
+    nonces = [
+        r.url.params["__wpdmacn"] for r in httpx_mock.get_requests() if "listsub" in str(r.url)
+    ]
     assert nonces[0] == "a7bcbf6abe"
     assert nonces[-1] == "ffffffffff"
 

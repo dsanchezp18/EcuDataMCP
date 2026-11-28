@@ -79,9 +79,9 @@ async def test_search_operaciones_spnf_lists_all_files(httpx_mock):
     assert entry["carpeta_publicacion"] == "2026-06"
     # The extra uploads/downloads/<year>/<month> nesting is still matched.
     assert "1.BAJO LA LINEA SPNF GG 2013 2023 31 01 2025 1" in labels
-    assert labels["1.BAJO LA LINEA SPNF GG 2013 2023 31 01 2025 1"][
-        "carpeta_publicacion"
-    ] == "2025-02"
+    assert (
+        labels["1.BAJO LA LINEA SPNF GG 2013 2023 31 01 2025 1"]["carpeta_publicacion"] == "2025-02"
+    )
 
 
 @pytest.mark.asyncio

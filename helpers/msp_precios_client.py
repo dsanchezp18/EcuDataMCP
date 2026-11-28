@@ -27,7 +27,9 @@ from helpers.csv_reader import download_bytes
 from helpers.text_utils import strip_accents
 
 _MEDIA_URL = "https://www.salud.gob.ec/wp-json/wp/v2/media"
-_PAGE_URL = "https://www.salud.gob.ec/consejo-nacional-de-fijacion-y-revision-de-precios-de-medicamentos/"
+_PAGE_URL = (
+    "https://www.salud.gob.ec/consejo-nacional-de-fijacion-y-revision-de-precios-de-medicamentos/"
+)
 _SEARCHES = {
     "precios_techo": "Consolidado-precios-techo",
     "segmentos_mercado": "Segmentos-de-mercado",
@@ -85,7 +87,7 @@ async def _fetch_fresh() -> list[dict[str, Any]]:
             if len(batch) < 100:
                 break
         archivos.extend(parse_media(items, tipo))
-    archivos.sort(key=lambda a: (a["fecha_corte"] or a["fecha"] or ""), reverse=True)
+    archivos.sort(key=lambda a: a["fecha_corte"] or a["fecha"] or "", reverse=True)
     if archivos:
         _cache.set("archivos", archivos)
     return archivos
@@ -107,7 +109,8 @@ async def search_precios(query: str = "") -> dict[str, Any]:
     q = strip_accents(query)
     if q:
         archivos = [
-            a for a in archivos
+            a
+            for a in archivos
             if q in strip_accents(f"{a['titulo']} {a['tipo']} {a['fecha_corte'] or ''}")
         ]
     return {

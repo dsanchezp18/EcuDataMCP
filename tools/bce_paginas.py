@@ -43,7 +43,9 @@ async def _search(catalogo: str, query: str) -> dict[str, Any]:
     return {**result, "catalogo": catalogo}
 
 
-async def _get_archivos(catalogo: str, pagina_id: str, anio: int, max_archivos: int) -> dict[str, Any]:
+async def _get_archivos(
+    catalogo: str, pagina_id: str, anio: int, max_archivos: int
+) -> dict[str, Any]:
     if catalogo == "indices":
         result = await bce_indices_client.get_archivo(
             pagina_id=pagina_id, anio=anio, max_archivos=max_archivos

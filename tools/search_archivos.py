@@ -153,7 +153,11 @@ async def _search(
         else:
             result = await _UNPAGINATED[fuente](query=query)
             items = next(
-                (result[k] for k in ("archivos", "ediciones", "publicaciones") if isinstance(result.get(k), list)),
+                (
+                    result[k]
+                    for k in ("archivos", "ediciones", "publicaciones")
+                    if isinstance(result.get(k), list)
+                ),
                 [],
             )
         if fmt:
@@ -163,8 +167,10 @@ async def _search(
 
     archivos = [_normalize_file(item) for item in items]
     nota = result.get("nota") or result.get("nota_cobertura") or result.get("aviso")
-    if not nota and fuente == "sri_datasets" and any(
-        str(a.get("url") or "").lower().endswith(".csv") for a in archivos
+    if (
+        not nota
+        and fuente == "sri_datasets"
+        and any(str(a.get("url") or "").lower().endswith(".csv") for a in archivos)
     ):
         # The yearly sales CSVs are about 5.5 MB: read_zip_member and
         # preview_resource_data stop at 5 MB, so only a whole-file read answers
@@ -177,7 +183,9 @@ async def _search(
     return {
         "fuente": fuente,
         "nombre_fuente": result.get("source"),
-        "url_fuente": result.get("url_fuente") or result.get("url_indice") or result.get("source_url"),
+        "url_fuente": result.get("url_fuente")
+        or result.get("url_indice")
+        or result.get("source_url"),
         "total": total,
         "offset": offset,
         "archivos": archivos,
@@ -348,11 +356,15 @@ def register_search_archivos_tool(mcp: MCPServer) -> None:
                     parts.append(f"   {a['contenido']}")
                 if a.get("objetivo"):
                     objetivo = a["objetivo"]
-                    parts.append(f"   Objetivo: {objetivo[:240]}{'…' if len(objetivo) > 240 else ''}")
+                    parts.append(
+                        f"   Objetivo: {objetivo[:240]}{'…' if len(objetivo) > 240 else ''}"
+                    )
                 for t in a.get("tablas_coincidentes") or []:
                     niveles = f" [{', '.join(t['niveles'])}]" if t.get("niveles") else ""
                     parts.append(f"   · hoja {t.get('hoja')}: {t.get('titulo')}{niveles}")
-                extra = a.get("tablas_coincidentes_total", 0) - len(a.get("tablas_coincidentes") or [])
+                extra = a.get("tablas_coincidentes_total", 0) - len(
+                    a.get("tablas_coincidentes") or []
+                )
                 if extra > 0:
                     parts.append(f"   · … y {extra} tabla(s) más en este archivo")
             return "\n".join(parts)

@@ -29,9 +29,7 @@ logger = logging.getLogger(MAIN_LOGGER_NAME)
 # INEC posts about crashes: quarterly "Siniestros de Tránsito", the historical
 # series and the annual "Estadísticas de Transporte" yearbooks.
 _INEC_QUERIES = ("siniestros de tránsito", "estadísticas de transporte")
-_INEC_TITLE_RE = re.compile(
-    r"siniestro|accidente|estad[ií]sticas de transporte", re.IGNORECASE
-)
+_INEC_TITLE_RE = re.compile(r"siniestro|accidente|estad[ií]sticas de transporte", re.IGNORECASE)
 _CKAN_QUERIES = ("siniestros", "accidentes de tránsito")
 _CKAN_TITLE_RE = re.compile(
     r"siniestro|accidente|fallecid|v[ií]ctima|lesionad|exceso|licencia", re.IGNORECASE
@@ -125,9 +123,7 @@ async def _ckan_datasets(
         datasets.setdefault(pkg["name"], pkg)
     found = list(datasets.values())
     if anio:
-        found = [
-            p for p in found if anio in _years(p.get("title", "") + p.get("name", ""))
-        ]
+        found = [p for p in found if anio in _years(p.get("title", "") + p.get("name", ""))]
     if query:
         found = [p for p in found if _matches(p.get("title", ""), query)]
     return [

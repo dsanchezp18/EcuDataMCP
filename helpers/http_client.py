@@ -49,7 +49,9 @@ class RateLimitedError(RuntimeError):
     """A host kept answering 429, or is still in its cooldown."""
 
     def __init__(self, host: str, seconds_left: float) -> None:
-        super().__init__(f"{host} limitó las consultas (HTTP 429); reintenta en ~{seconds_left:.0f} s")
+        super().__init__(
+            f"{host} limitó las consultas (HTTP 429); reintenta en ~{seconds_left:.0f} s"
+        )
         self.host = host
         self.seconds_left = seconds_left
 

@@ -168,10 +168,7 @@ async def test_get_topic_files(httpx_mock):
 
     assert result["titulo"] == "Índice de Precios al Consumidor – IPC"
     urls = [f["url"] for f in result["archivos"]]
-    assert (
-        "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Boletin_Tecnico_2026.pdf"
-        in urls
-    )
+    assert "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Boletin_Tecnico_2026.pdf" in urls
     assert (
         "https://www.ecuadorencifras.gob.ec/documentos/web-inec/"
         "Tabulados_y_series_historicas_CSV.zip" in urls
@@ -181,9 +178,7 @@ async def test_get_topic_files(httpx_mock):
 
     formats = {f["url"]: f["format"] for f in result["archivos"]}
     assert (
-        formats[
-            "https://www.ecuadorencifras.gob.ec/documentos/web-inec/Boletin_Tecnico_2026.pdf"
-        ]
+        formats["https://www.ecuadorencifras.gob.ec/documentos/web-inec/Boletin_Tecnico_2026.pdf"]
         == "PDF"
     )
 
@@ -233,9 +228,7 @@ async def test_get_topic_files_follows_related_landing_pages(httpx_mock):
 
     result = await inec_client.get_topic_files(topic_url)
 
-    assert [f["url"].rsplit("/", 1)[-1] for f in result["archivos"]] == [
-        "BDD_ENDI_R2_dta.zip"
-    ]
+    assert [f["url"].rsplit("/", 1)[-1] for f in result["archivos"]] == ["BDD_ENDI_R2_dta.zip"]
     assert result["paginas_relacionadas"] == [round_url]
 
 
@@ -256,9 +249,7 @@ def _hub_page(*slugs: str) -> str:
 async def test_get_topic_files_related_pages_year_filter(httpx_mock):
     r1 = _BASE + "endi_desnutricion_infantil_2023/"
     r2 = _BASE + "endi_desnutricion_infantil_2024/"
-    httpx_mock.add_response(
-        url=_HUB_URL, html=_hub_page(r1.split("/")[-2], r2.split("/")[-2])
-    )
+    httpx_mock.add_response(url=_HUB_URL, html=_hub_page(r1.split("/")[-2], r2.split("/")[-2]))
     httpx_mock.add_response(url=r1, html=_file_page("BDD_2023.zip"))
     httpx_mock.add_response(url=r2, html=_file_page("BDD_2024.zip"))
 

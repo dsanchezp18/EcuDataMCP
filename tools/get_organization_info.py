@@ -61,9 +61,7 @@ def register_get_organization_info_tool(mcp: MCPServer) -> None:
         q = _strip(query)
         if q:
             datasets = [
-                ds
-                for ds in datasets
-                if q in _strip(ds.get("title") or ds.get("name") or "")
+                ds for ds in datasets if q in _strip(ds.get("title") or ds.get("name") or "")
             ]
         payload = {
             "name": org.get("name"),
@@ -98,7 +96,9 @@ def register_get_organization_info_tool(mcp: MCPServer) -> None:
             parts.append(f"Estado: {data.get('state') or 'Desconocido'}")
             shown_datasets = data.get("datasets") or []
             if data.get("query"):
-                parts.append(f"Filtrado por: '{data['query']}' ({data.get('datasets_total', 0)} coincidencia(s))")
+                parts.append(
+                    f"Filtrado por: '{data['query']}' ({data.get('datasets_total', 0)} coincidencia(s))"
+                )
             if shown_datasets:
                 parts.append("")
                 parts.append(f"Datasets publicados ({data.get('datasets_total', 0)}):")

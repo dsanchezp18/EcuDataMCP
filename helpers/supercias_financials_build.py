@@ -94,8 +94,13 @@ _MIN_ROWS_VS_PREVIOUS = 0.8
 _DOWNLOAD_DEADLINE_SECONDS = BUILD_TIMEOUT_SECONDS - 10 * 60
 
 _RANKING_INT_COLUMNS = {
-    "anio", "expediente", "posicion_general", "cia_imvalores",
-    "id_estado_financiero", "n_empleados", "cod_segmento",
+    "anio",
+    "expediente",
+    "posicion_general",
+    "cia_imvalores",
+    "id_estado_financiero",
+    "n_empleados",
+    "cod_segmento",
 }
 _RANKING_TEXT_COLUMNS = {"ciiu_n1", "ciiu_n6"}
 
@@ -112,24 +117,45 @@ _RANKING_TEXT_COLUMNS = {"ciiu_n1", "ciiu_n6"}
 # rounding to 0.00) keep it.
 _RATIO_DENOMINATORS = {
     "ingresos_ventas": (
-        "margen_bruto", "margen_operacional", "rent_neta_ventas",
-        "per_med_cobranza", "impac_gasto_a_v", "impac_carga_finan",
-        "rent_neta_activo", "rent_ope_activo",
+        "margen_bruto",
+        "margen_operacional",
+        "rent_neta_ventas",
+        "per_med_cobranza",
+        "impac_gasto_a_v",
+        "impac_carga_finan",
+        "rent_neta_activo",
+        "rent_ope_activo",
     ),
     "activos": (
-        "end_activo", "rot_ventas", "rent_neta_activo", "rent_ope_activo",
+        "end_activo",
+        "rot_ventas",
+        "rent_neta_activo",
+        "rent_ope_activo",
         "roa",
     ),
     "patrimonio": (
-        "end_patrimonial", "apalancamiento", "end_patrimonial_ct",
-        "end_patrimonial_nct", "rent_ope_patrimonio", "roe",
+        "end_patrimonial",
+        "apalancamiento",
+        "end_patrimonial_ct",
+        "end_patrimonial_nct",
+        "rent_ope_patrimonio",
+        "roe",
     ),
 }
 _ZERO_MEANS_MISSING = (
-    "liquidez_corriente", "prueba_acida", "end_activo_fijo",
-    "cobertura_interes", "apalancamiento", "apalancamiento_financiero",
-    "rot_cartera", "rot_activo_fijo", "rot_ventas", "per_med_cobranza",
-    "per_med_pago", "margen_bruto", "margen_operacional",
+    "liquidez_corriente",
+    "prueba_acida",
+    "end_activo_fijo",
+    "cobertura_interes",
+    "apalancamiento",
+    "apalancamiento_financiero",
+    "rot_cartera",
+    "rot_activo_fijo",
+    "rot_ventas",
+    "per_med_cobranza",
+    "per_med_pago",
+    "margen_bruto",
+    "margen_operacional",
 )
 # Fewer filings than this in a sector and year give no quartiles: three or
 # four companies are not a sector benchmark.
@@ -169,9 +195,7 @@ _MAX_FILE_BYTES = 1024 * 1024 * 1024
 _MIN_FREE_BYTES = 2 * 1024 * 1024 * 1024
 
 
-def _download_to(
-    client: httpx.Client, name: str, dest: Path, deadline: float
-) -> None:
+def _download_to(client: httpx.Client, name: str, dest: Path, deadline: float) -> None:
     url = _RESOURCES_BASE + name
     print(f"Descargando {name}...", flush=True)
     t0 = time.time()
@@ -324,9 +348,7 @@ def _load_csv_table(
         header = [h.strip() for h in next(reader)]
         types = [_column_type(h, int_cols, text_cols) for h in header]
 
-        cols_sql = ", ".join(
-            f"{_quote_ident(h)} {t}" for h, t in zip(header, types, strict=True)
-        )
+        cols_sql = ", ".join(f"{_quote_ident(h)} {t}" for h, t in zip(header, types, strict=True))
         table_ident = _quote_ident(table)
         conn.execute(f"DROP TABLE IF EXISTS {table_ident}")
         conn.execute(f"CREATE TABLE {table_ident} ({cols_sql})")
@@ -382,9 +404,7 @@ def _null_uncalculated_ratios(conn: sqlite3.Connection) -> None:
         ]
         if col in _ZERO_MEANS_MISSING:
             conditions.append(f"{col} = 0")
-        assignments.append(
-            f"{col} = CASE WHEN {' OR '.join(conditions)} THEN NULL ELSE {col} END"
-        )
+        assignments.append(f"{col} = CASE WHEN {' OR '.join(conditions)} THEN NULL ELSE {col} END")
     # Years without ratios (before 2018) have nothing to clear.
     # The trailing NULL keeps COALESCE valid with a single ratio column.
     has_ratio = f"COALESCE({', '.join(ratios)}, NULL) IS NOT NULL"
@@ -433,12 +453,8 @@ def _build_sector_quartiles(conn: sqlite3.Connection) -> None:
                 if len(values) < _MIN_SECTOR_FILINGS:
                     continue
                 rows.append((anio, ciiu_n1, col, len(values), *_quartiles(values)))
-    conn.executemany(
-        "INSERT INTO cuartiles_sector VALUES (?, ?, ?, ?, ?, ?, ?)", rows
-    )
-    conn.execute(
-        "CREATE INDEX idx_cuartiles_anio_ciiu ON cuartiles_sector(anio, ciiu_n1)"
-    )
+    conn.executemany("INSERT INTO cuartiles_sector VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
+    conn.execute("CREATE INDEX idx_cuartiles_anio_ciiu ON cuartiles_sector(anio, ciiu_n1)")
     conn.commit()
     print(f"  cuartiles_sector: {len(rows)} filas", flush=True)
 
@@ -453,9 +469,7 @@ def _check_not_shrunk(new_path: Path, previous_path: Path) -> None:
         return
     conn = sqlite3.connect(f"file:{new_path.as_posix()}?mode=ro", uri=True)
     try:
-        min_anio, new_rows = conn.execute(
-            "SELECT MIN(anio), COUNT(*) FROM ranking"
-        ).fetchone()
+        min_anio, new_rows = conn.execute("SELECT MIN(anio), COUNT(*) FROM ranking").fetchone()
     finally:
         conn.close()
     try:
@@ -565,9 +579,7 @@ def _verify_build(db_path: Path) -> None:
             ("ciiu", {"ciiu", "descripcion"}),
             ("cuartiles_sector", {"anio", "ciiu_n1", "indicador", "mediana"}),
         ):
-            cols = {
-                row[1] for row in conn.execute(f"PRAGMA table_info({_quote_ident(table)})")
-            }
+            cols = {row[1] for row in conn.execute(f"PRAGMA table_info({_quote_ident(table)})")}
             missing = required_cols - cols
             if missing:
                 raise RuntimeError(f"Tabla '{table}' sin columnas {missing}")
@@ -587,9 +599,7 @@ def _verify_build(db_path: Path) -> None:
             )
         # Guards against the int-conversion bug that once nulled out 100% of
         # n_empleados silently coming back.
-        n_empleados_rows = conn.execute(
-            "SELECT COUNT(n_empleados) FROM ranking"
-        ).fetchone()[0]
+        n_empleados_rows = conn.execute("SELECT COUNT(n_empleados) FROM ranking").fetchone()[0]
         if n_empleados_rows == 0:
             raise RuntimeError(
                 "La columna 'n_empleados' de 'ranking' quedó completamente vacía "
@@ -664,9 +674,7 @@ def _build() -> None:
         cutoff = None
         if max_anio is not None and years_to_keep is not None:
             cutoff = max_anio - (years_to_keep - 1)
-            deleted = conn.execute(
-                "DELETE FROM ranking WHERE anio < ?", (cutoff,)
-            ).rowcount
+            deleted = conn.execute("DELETE FROM ranking WHERE anio < ?", (cutoff,)).rowcount
             conn.commit()
             print(
                 f"  Recortado a anio >= {cutoff} ({_YEARS_ENV}={years_to_keep}); "

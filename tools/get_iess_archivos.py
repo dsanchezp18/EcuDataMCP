@@ -60,9 +60,7 @@ def register_get_iess_archivos_tool(mcp: MCPServer) -> None:
                 result = await iess_client.list_boletines(anio=anio, query=query)
                 items_key = "boletines"
             elif coleccion == "estudios_actuariales":
-                result = await iess_client.list_estudios_actuariales(
-                    anio=anio, query=query
-                )
+                result = await iess_client.list_estudios_actuariales(anio=anio, query=query)
                 items_key = "documentos"
             else:
                 if anio is None:
@@ -71,9 +69,7 @@ def register_get_iess_archivos_tool(mcp: MCPServer) -> None:
                         "Use list_catalogo(fuente='iess') para ver los años disponibles "
                         "(2007-2026 confirmado) y su conteo de documentos."
                     )
-                result = await iess_client.get_auditoria_documentos(
-                    anio=anio, query=query
-                )
+                result = await iess_client.get_auditoria_documentos(anio=anio, query=query)
                 items_key = "documentos"
         except ToolError:
             raise
@@ -92,15 +88,11 @@ def register_get_iess_archivos_tool(mcp: MCPServer) -> None:
                 parts.append("No se encontraron documentos con esos filtros.")
                 return "\n".join(parts)
             for item in items:
-                etiqueta_partes = [
-                    p for p in (item.get("grupo"), item.get("titulo")) if p
-                ]
+                etiqueta_partes = [p for p in (item.get("grupo"), item.get("titulo")) if p]
                 etiqueta = " / ".join(etiqueta_partes)
                 anios = item.get("anios") or ([item["anio"]] if "anio" in item else [])
                 anios_str = f" ({', '.join(str(a) for a in anios)})" if anios else ""
-                parts.append(
-                    f"- {etiqueta}{anios_str} [{item.get('formato', 'DESCONOCIDO')}]"
-                )
+                parts.append(f"- {etiqueta}{anios_str} [{item.get('formato', 'DESCONOCIDO')}]")
                 if item.get("descripcion"):
                     parts.append(f"   {item['descripcion']}")
                 parts.append(f"   {item.get('url') or '(sin URL resuelta)'}")

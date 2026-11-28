@@ -83,9 +83,7 @@ logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 # Hit the post-merger domain directly -- see module docstring for why the
 # old finanzas.gob.ec host is skipped.
-_MEF_PAGE_URL = (
-    "https://www.economicoproductivo.gob.ec/estadistica-nueva-metodologia-2017-2022/"
-)
+_MEF_PAGE_URL = "https://www.economicoproductivo.gob.ec/estadistica-nueva-metodologia-2017-2022/"
 # Bare aduana.gob.ec has no A record live -- only the www host resolves.
 _SENAE_PAGE_URL = "https://www.aduana.gob.ec/de-interes/tributos-recaudados/"
 
@@ -290,9 +288,7 @@ async def search_senae_tributos(query: str = "") -> dict[str, Any]:
     archivos = await _fetch_senae()
     q = _strip(query)
     matched = [
-        a
-        for a in archivos
-        if not q or q in _strip(a["label"]) or q in _strip(a["categoria"])
+        a for a in archivos if not q or q in _strip(a["label"]) or q in _strip(a["categoria"])
     ]
     return {
         "total": len(matched),

@@ -24,9 +24,7 @@ def _snapshot(series: list[str], errors: list[dict] | None = None) -> dict:
                 "frecuencias": ["Mensual"],
                 "unidades": {"Mensual": ["Número"]},
                 "rango": {"minYm": "2020-01", "maxYm": "2026-06"},
-                "rango_por_frecuencia": {
-                    "Mensual": {"minYm": "2020-01", "maxYm": "2026-06"}
-                },
+                "rango_por_frecuencia": {"Mensual": {"minYm": "2020-01", "maxYm": "2026-06"}},
                 "bundle_ok": True,
             }
         ],
@@ -60,7 +58,6 @@ def test_persist_snapshot_keeps_partial_attempt_from_latest_valid(tmp_path, monk
     assert saved["errores"] == []
     assert (tmp_path / "latest-attempt.json").exists()
     assert len(list(tmp_path.glob("snapshot-*.json"))) == 2
-    assert (
-        bce_catalog_store.snapshot_fingerprint(saved)
-        == bce_catalog_store.snapshot_fingerprint(valid)
+    assert bce_catalog_store.snapshot_fingerprint(saved) == bce_catalog_store.snapshot_fingerprint(
+        valid
     )

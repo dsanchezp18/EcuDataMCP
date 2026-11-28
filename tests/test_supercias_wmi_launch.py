@@ -17,9 +17,7 @@ from helpers import supercias_financials
 
 @pytest.fixture(autouse=True)
 def isolated_data_dir(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        supercias_financials, "DB_PATH", tmp_path / "data" / "financials.sqlite3"
-    )
+    monkeypatch.setattr(supercias_financials, "DB_PATH", tmp_path / "data" / "financials.sqlite3")
     monkeypatch.setattr(supercias_financials, "_build_process", None)
     monkeypatch.setattr(supercias_financials, "_build_started_at", None)
 
@@ -74,9 +72,7 @@ def test_wmi_launch_returns_the_pid_and_hands_over_only_the_build_environment(
         OSError("powershell vanished"),
     ],
 )
-def test_wmi_launch_failure_returns_none_and_leaves_no_env_file(
-    monkeypatch, tmp_path, result
-):
+def test_wmi_launch_failure_returns_none_and_leaves_no_env_file(monkeypatch, tmp_path, result):
     _, log_path = _stub_wmi(monkeypatch, tmp_path, result)
 
     assert supercias_financials._spawn_via_wmi(log_path) is None
@@ -109,9 +105,7 @@ def test_wmi_build_tracks_its_process_by_pid_and_creation_time(monkeypatch):
     alive = {"yes": True}
     created = {"time": 111}
     monkeypatch.setattr(supercias_financials, "_pid_alive", lambda pid: alive["yes"])
-    monkeypatch.setattr(
-        supercias_financials, "_process_creation_time", lambda pid: created["time"]
-    )
+    monkeypatch.setattr(supercias_financials, "_process_creation_time", lambda pid: created["time"])
     build = supercias_financials._WmiBuild(900)
 
     assert build.poll() is None
@@ -137,9 +131,7 @@ def test_wmi_build_kill_never_touches_a_reused_pid(monkeypatch):
     runs: list[list[str]] = []
     created = {"time": 1}
     monkeypatch.setattr(supercias_financials, "_pid_alive", lambda pid: True)
-    monkeypatch.setattr(
-        supercias_financials, "_process_creation_time", lambda pid: created["time"]
-    )
+    monkeypatch.setattr(supercias_financials, "_process_creation_time", lambda pid: created["time"])
     monkeypatch.setattr(
         supercias_financials.subprocess, "run", lambda args, **kw: runs.append(args)
     )
@@ -199,8 +191,10 @@ def test_wmi_started_build_survives_its_parents_job_and_a_plain_detached_one_doe
     with helper_log.open("wb") as log:
         helper = subprocess.Popen(
             [sys.executable, "-c", _HELPER_CODE, str(tmp_path)],
-            cwd=supercias_financials._PACKAGE_ROOT, stdin=subprocess.DEVNULL,
-            stdout=log, stderr=subprocess.STDOUT,
+            cwd=supercias_financials._PACKAGE_ROOT,
+            stdin=subprocess.DEVNULL,
+            stdout=log,
+            stderr=subprocess.STDOUT,
         )
     pids: dict[str, int] = {}
 
@@ -251,5 +245,6 @@ def test_wmi_started_build_survives_its_parents_job_and_a_plain_detached_one_doe
         for pid in pids.values():
             subprocess.run(
                 ["taskkill", "/PID", str(pid), "/T", "/F"],
-                capture_output=True, check=False,
+                capture_output=True,
+                check=False,
             )

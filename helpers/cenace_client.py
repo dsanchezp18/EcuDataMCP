@@ -55,7 +55,9 @@ _cache = TtlCache(ttl_seconds=180.0, max_entries=1)
 
 _H2_RE = re.compile(r"<h2>([^<]+)</h2>")
 _PERIOD_RE = re.compile(r"</header>\s*<div[^>]*>\s*<span>([^<]+)</span>")
-_RESUMEN_BOX_RE = re.compile(r'<div class="resumen-box \w+"><div>([^<]+)</div><div>([^<]+)</div></div>')
+_RESUMEN_BOX_RE = re.compile(
+    r'<div class="resumen-box \w+"><div>([^<]+)</div><div>([^<]+)</div></div>'
+)
 _DISTRIBUIDORA_RE = re.compile(r"<title>([^&<]+)&#10;([\d\s\xa0]+) MW</title>")
 
 _TABS = {
@@ -141,7 +143,6 @@ async def get_tablero(tablero: str) -> dict[str, Any]:
     }
     if tablero == "demanda_tiempo_real":
         result["por_distribuidora_mw"] = {
-            unescape(name).strip(): _to_number(mw)
-            for name, mw in _DISTRIBUIDORA_RE.findall(block)
+            unescape(name).strip(): _to_number(mw) for name, mw in _DISTRIBUIDORA_RE.findall(block)
         }
     return result

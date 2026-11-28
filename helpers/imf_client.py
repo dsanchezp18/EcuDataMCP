@@ -108,9 +108,7 @@ async def get_serie(
         # Verified live: an unknown flow is a 404; a key naming a value the
         # flow lacks is a 400 with an unrelated Jackson error message.
         if e.status == 404:
-            raise ValueError(
-                f"El FMI no tiene el flujo {flujo!r}. Búscalo con `query`."
-            ) from e
+            raise ValueError(f"El FMI no tiene el flujo {flujo!r}. Búscalo con `query`.") from e
         if e.status == 400:
             raise ValueError(
                 f"El FMI rechazó la clave {key!r} para {flujo} (valor inexistente o "

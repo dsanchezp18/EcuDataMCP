@@ -79,9 +79,7 @@ def register_search_sismos_tool(mcp: MCPServer) -> None:
             ]
             for i, ev in enumerate(events, 1):
                 estado = _ESTADOS.get(ev.get("estado", ""), ev.get("estado", "?"))
-                parts.append(
-                    f"{i}. M {ev.get('magnitud')} — {ev.get('localizacion', '?')}"
-                )
+                parts.append(f"{i}. M {ev.get('magnitud')} — {ev.get('localizacion', '?')}")
                 parts.append(
                     f"   Hora local: {ev.get('tiempo_local')} (UTC: {ev.get('tiempo_utc')})"
                 )

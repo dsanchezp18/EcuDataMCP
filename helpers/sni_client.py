@@ -69,7 +69,9 @@ def parse_evaluaciones(page: bytes) -> list[dict[str, Any]]:
             {
                 "titulo": _text(cells[5]),
                 "url": url,
-                "formato": url.rsplit(".", 1)[-1].upper() if "." in url.rsplit("/", 1)[-1] else None,
+                "formato": url.rsplit(".", 1)[-1].upper()
+                if "." in url.rsplit("/", 1)[-1]
+                else None,
                 "nro": int(number) if number.isdigit() else None,
                 "anio": int(year) if year.isdigit() else None,
                 "categoria": _text(cells[1]),
@@ -89,7 +91,9 @@ async def _fetch_evaluaciones_fresh() -> list[dict[str, Any]]:
         return cached
     raw, truncated = await download_bytes(_PAGE_URL)
     if truncated:
-        raise ValueError("La página del Banco de evaluaciones del SNI superó el límite de descarga.")
+        raise ValueError(
+            "La página del Banco de evaluaciones del SNI superó el límite de descarga."
+        )
     entries = parse_evaluaciones(raw)
     if entries:
         _cache.set("evaluaciones", entries)

@@ -33,9 +33,9 @@ def snapshot_dir() -> Path:
 
 
 def _json_bytes(value: Any) -> bytes:
-    return json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
 
 
 def snapshot_fingerprint(snapshot: dict[str, Any]) -> str:
@@ -67,9 +67,7 @@ def _group_comparable(group: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def compare_snapshots(
-    previous: dict[str, Any] | None, current: dict[str, Any]
-) -> dict[str, Any]:
+def compare_snapshots(previous: dict[str, Any] | None, current: dict[str, Any]) -> dict[str, Any]:
     """Describe catalog groups and series that changed since ``previous``."""
     if previous is None:
         return {
@@ -83,12 +81,10 @@ def compare_snapshots(
     old_revision = previous.get("revision_fuente") or {}
     new_revision = current.get("revision_fuente") or {}
     revision_comparable = (
-        old_revision.get("disponible") is True
-        and new_revision.get("disponible") is True
+        old_revision.get("disponible") is True and new_revision.get("disponible") is True
     )
-    revision_changed = (
-        revision_comparable
-        and old_revision.get("valor") != new_revision.get("valor")
+    revision_changed = revision_comparable and old_revision.get("valor") != new_revision.get(
+        "valor"
     )
 
     old = {
@@ -109,9 +105,7 @@ def compare_snapshots(
         after = _group_comparable(new[group_id])
         if before == after:
             continue
-        changed_fields = [
-            key for key in before if before[key] != after[key]
-        ]
+        changed_fields = [key for key in before if before[key] != after[key]]
         series_before = set(before.get("series") or [])
         series_after = set(after.get("series") or [])
         changed.append(
@@ -166,11 +160,7 @@ def persist_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     """Persist an attempt and promote it only when every group succeeded."""
     directory = snapshot_dir()
     now = datetime.now(UTC)
-    stamp = (
-        _TIMESTAMP_RE.sub("-", now.isoformat()).strip("-")
-        + "-"
-        + uuid4().hex[:12]
-    )
+    stamp = _TIMESTAMP_RE.sub("-", now.isoformat()).strip("-") + "-" + uuid4().hex[:12]
     enriched = {
         **snapshot,
         "snapshot_id": stamp,
@@ -181,9 +171,7 @@ def persist_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     _atomic_write(directory / _LATEST_ATTEMPT, enriched)
 
     errors = enriched.get("errores") or []
-    complete = not errors and enriched.get("total_grupos") == len(
-        enriched.get("grupos") or []
-    )
+    complete = not errors and enriched.get("total_grupos") == len(enriched.get("grupos") or [])
     if complete:
         _atomic_write(directory / _LATEST_VALID, enriched)
     return {
@@ -198,11 +186,7 @@ def persist_grid_audit(audit: dict[str, Any]) -> dict[str, Any]:
     """Persist a bounded value-probe report separately from catalog metadata."""
     directory = snapshot_dir()
     now = datetime.now(UTC)
-    stamp = (
-        _TIMESTAMP_RE.sub("-", now.isoformat()).strip("-")
-        + "-"
-        + uuid4().hex[:12]
-    )
+    stamp = _TIMESTAMP_RE.sub("-", now.isoformat()).strip("-") + "-" + uuid4().hex[:12]
     enriched = {**audit, "persistido_en": now.isoformat(), "auditoria_id": stamp}
     path = directory / f"grid-audit-{stamp}.json"
     _atomic_write(path, enriched)

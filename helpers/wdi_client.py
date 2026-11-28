@@ -55,7 +55,12 @@ async def _fetch_json(path: str, **params: Any) -> Any:
             async with asyncio.timeout(35):
                 content, truncated = await download_bytes(url)
             break
-        except (TimeoutError, httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError):
+        except (
+            TimeoutError,
+            httpx.TimeoutException,
+            httpx.NetworkError,
+            httpx.RemoteProtocolError,
+        ):
             if attempt:
                 raise
         except httpx.HTTPStatusError as exc:
@@ -113,7 +118,10 @@ async def search_indicadores(query: str = "", limit: int = 30) -> dict[str, Any]
     matched = [
         i
         for i in catalog
-        if not q or q in _strip(i["indicador"]) or q in _strip(i["nombre"]) or q in _strip(i["descripcion"])
+        if not q
+        or q in _strip(i["indicador"])
+        or q in _strip(i["nombre"])
+        or q in _strip(i["descripcion"])
     ]
     return {
         "total": len(matched),

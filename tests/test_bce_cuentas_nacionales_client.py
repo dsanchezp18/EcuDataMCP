@@ -65,9 +65,7 @@ _MEI_URL = f"{bce_cuentas_nacionales_client._BASE}/{_MEI_PAGE['pagina_id']}/"
 
 @pytest.fixture(autouse=True)
 def small_catalog(monkeypatch):
-    monkeypatch.setattr(
-        bce_cuentas_nacionales_client, "_PAGINAS", (_CNA_PAGE, _MEI_PAGE)
-    )
+    monkeypatch.setattr(bce_cuentas_nacionales_client, "_PAGINAS", (_CNA_PAGE, _MEI_PAGE))
     bce_cuentas_nacionales_client._catalog_cache.clear()
     yield
     bce_cuentas_nacionales_client._catalog_cache.clear()
@@ -83,9 +81,7 @@ async def test_search_lists_both_pages_with_file_counts(httpx_mock):
     assert result["total"] == 2
     assert result["total_paginas"] == 2
     by_id = {p["pagina_id"]: p for p in result["paginas"]}
-    assert (
-        by_id["cuadros-de-resultados-cuentas-nacionales-anuales"]["total_archivos"] == 2
-    )
+    assert by_id["cuadros-de-resultados-cuentas-nacionales-anuales"]["total_archivos"] == 2
     assert by_id["matriz-de-empleo-e-ingresos-mei"]["total_archivos"] == 1
     # Summaries never carry the file list itself.
     assert "archivos" not in by_id["matriz-de-empleo-e-ingresos-mei"]
@@ -96,9 +92,7 @@ async def test_search_filters_by_query_accent_insensitive(httpx_mock):
     httpx_mock.add_response(url=_CNA_URL, html=_CNA_HTML)
     httpx_mock.add_response(url=_MEI_URL, html=_MEI_HTML)
 
-    result = await bce_cuentas_nacionales_client.search_cuentas_nacionales(
-        query="empleo"
-    )
+    result = await bce_cuentas_nacionales_client.search_cuentas_nacionales(query="empleo")
 
     assert result["total"] == 1
     assert result["paginas"][0]["pagina_id"] == "matriz-de-empleo-e-ingresos-mei"
@@ -116,10 +110,7 @@ async def test_get_archivo_extracts_labels_and_decodes_entities(httpx_mock):
     assert result["total_archivos"] == 2
     labels = {a["label"]: a for a in result["archivos"]}
     assert "Informe de resultados Cuentas Nacionales Anuales TOU 2023" in labels
-    assert (
-        labels["Informe de resultados Cuentas Nacionales Anuales TOU 2023"]["format"]
-        == "PDF"
-    )
+    assert labels["Informe de resultados Cuentas Nacionales Anuales TOU 2023"]["format"] == "PDF"
     # HTML entities (&oacute;/&aacute;) must be decoded, not left literal.
     assert "Serie Histórica y PIB Per Cápita" in labels
     assert labels["Serie Histórica y PIB Per Cápita"]["format"] == "XLSX"

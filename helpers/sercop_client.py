@@ -94,7 +94,9 @@ async def _get_json(
         try:
             return resp.json()
         except ValueError as exc:
-            raise SercopResponseError("SERCOP devolvió JSON inválido; no se pudieron obtener los datos.") from exc
+            raise SercopResponseError(
+                "SERCOP devolvió JSON inválido; no se pudieron obtener los datos."
+            ) from exc
     finally:
         if own:
             await session.aclose()
@@ -158,11 +160,11 @@ async def search_contracts(
             if supplier.strip():
                 params["supplier"] = supplier.strip()
 
-            result = await _get_json(
-                _sercop_url("search_ocds"), params=params, session=session
-            )
-            if not isinstance(result, dict) or not isinstance(result.get("data"), list) or not all(
-                isinstance(row, dict) for row in result["data"]
+            result = await _get_json(_sercop_url("search_ocds"), params=params, session=session)
+            if (
+                not isinstance(result, dict)
+                or not isinstance(result.get("data"), list)
+                or not all(isinstance(row, dict) for row in result["data"])
             ):
                 raise SercopResponseError(
                     "SERCOP devolvió una respuesta de búsqueda con estructura inesperada; "
@@ -198,15 +200,12 @@ async def get_contract_record(
     cached = sercop_search_cache.get(cache_key)
     if isinstance(cached, dict):
         return cached
-    result = await _get_json(
-        _sercop_url("record"), params={"ocid": ocid}, session=session
-    )
+    result = await _get_json(_sercop_url("record"), params={"ocid": ocid}, session=session)
     if not isinstance(result, dict) or not (
         isinstance(result.get("records"), list) or isinstance(result.get("releases"), list)
     ):
         raise SercopResponseError(
-            "SERCOP devolvió un registro con estructura inesperada; "
-            "no se pudo obtener el contrato."
+            "SERCOP devolvió un registro con estructura inesperada; no se pudo obtener el contrato."
         )
     sercop_search_cache.set(cache_key, result)
     return result
@@ -408,6 +407,7 @@ async def summarize_buyer(
 
         async def fetch_guarded(page: int) -> None:
             nonlocal requests_made, stop_reason
+
             def exhausted() -> bool:
                 return bool(stop_reason) or requests_made >= budget or time.monotonic() > deadline
 

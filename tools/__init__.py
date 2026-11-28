@@ -142,7 +142,6 @@ def register_tools(mcp: MCPServer) -> None:
     register_list_aip_aerodromos_tool(mcp)
     register_get_aip_aerodromo_tool(mcp)
 
-
     register_search_datasets_tool(mcp)
     register_get_dataset_info_tool(mcp)
     register_list_dataset_resources_tool(mcp)
@@ -178,7 +177,6 @@ def register_tools(mcp: MCPServer) -> None:
         register_get_anda_materiales_tool(mcp)
         register_download_anda_microdata_tool(mcp)
 
-
     register_search_inec_estadisticas_tool(mcp)
     register_get_inec_estadistica_files_tool(mcp)
     register_search_inec_publicaciones_tool(mcp)
@@ -193,8 +191,6 @@ def register_tools(mcp: MCPServer) -> None:
     register_get_regulacion_info_tool(mcp)
 
     register_get_sipa_resumen_indicadores_tool(mcp)
-
-
 
     register_list_catalogo_tool(mcp)
     register_get_sut_indicador_schema_tool(mcp)
@@ -232,14 +228,12 @@ def register_tools(mcp: MCPServer) -> None:
         register_search_auditores_tool(mcp)
         register_get_auditor_info_tool(mcp)
 
-
     register_search_cepalstat_indicadores_tool(mcp)
     register_get_cepalstat_indicador_tool(mcp)
     register_serie_internacional_tools(mcp)
     register_get_clima_nasa_power_tool(mcp)
 
     _remove_explicitly_hidden_tools(mcp)
-
 
 
 def register_maintenance_tools(mcp: MCPServer) -> None:

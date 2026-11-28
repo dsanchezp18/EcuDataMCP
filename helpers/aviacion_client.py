@@ -437,9 +437,7 @@ def _parse_aip_secciones(html: str) -> list[dict[str, Any]]:
             }
             for field_m in _AIP_FIELD_ROW_RE.finditer(block)
         ]
-        secciones.append(
-            {"titulo": _clean_inline(header_m.group("titulo")), "campos": campos}
-        )
+        secciones.append({"titulo": _clean_inline(header_m.group("titulo")), "campos": campos})
     return secciones
 
 
@@ -527,9 +525,7 @@ async def list_aip_aerodromos() -> dict[str, Any]:
                 # SID 4 - ...") — those aren't a distinct aerodrome.
                 continue
             seen.add(icao)
-            aerodromos.append(
-                {"designador": icao, "nombre": nombre_m.group("nombre").strip()}
-            )
+            aerodromos.append({"designador": icao, "nombre": nombre_m.group("nombre").strip()})
 
         result = {
             "total": len(aerodromos),

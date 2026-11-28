@@ -63,8 +63,14 @@ _DATA_JSON = {
     "body": {
         "metadata": {"indicator_id": 4788, "indicator_name": "Población total, según sexo"},
         "data": [
-            {"value": "3516.8", "source_id": 6547, "notes_ids": "13637", "iso3": "ECU",
-             "dim_208": 229, "dim_29117": 68109},
+            {
+                "value": "3516.8",
+                "source_id": 6547,
+                "notes_ids": "13637",
+                "iso3": "ECU",
+                "dim_208": 229,
+                "dim_29117": 68109,
+            },
         ],
         "dimensions": [
             {
@@ -91,9 +97,7 @@ def clear_cache():
 
 
 async def test_search_indicadores_flattens_tree_with_area_breadcrumb(httpx_mock):
-    httpx_mock.add_response(
-        url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON
-    )
+    httpx_mock.add_response(url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON)
 
     result = await client.search_indicadores(query="poblacion total")
 
@@ -101,15 +105,11 @@ async def test_search_indicadores_flattens_tree_with_area_breadcrumb(httpx_mock)
     assert result["total"] == 1
     ind = result["indicadores"][0]
     assert ind["indicator_id"] == 4788
-    assert ind["area"] == (
-        "Clasificación temática general > Demográficos y sociales > Población"
-    )
+    assert ind["area"] == ("Clasificación temática general > Demográficos y sociales > Población")
 
 
 async def test_search_indicadores_matches_on_area_breadcrumb_too(httpx_mock):
-    httpx_mock.add_response(
-        url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON
-    )
+    httpx_mock.add_response(url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON)
 
     result = await client.search_indicadores(query="economicos")
 
@@ -118,9 +118,7 @@ async def test_search_indicadores_matches_on_area_breadcrumb_too(httpx_mock):
 
 
 async def test_search_indicadores_empty_query_returns_everything(httpx_mock):
-    httpx_mock.add_response(
-        url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON
-    )
+    httpx_mock.add_response(url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON)
 
     result = await client.search_indicadores()
 
@@ -234,9 +232,7 @@ async def test_get_indicador_empty_pais_skips_dimensions_lookup_and_filter(httpx
 
 
 async def test_thematic_tree_is_cached_across_calls(httpx_mock):
-    httpx_mock.add_response(
-        url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON
-    )
+    httpx_mock.add_response(url=client._build_url("/thematic-tree", lang="es"), json=_TREE_JSON)
 
     first = await client.search_indicadores(query="poblacion")
     second = await client.search_indicadores(query="pobreza")

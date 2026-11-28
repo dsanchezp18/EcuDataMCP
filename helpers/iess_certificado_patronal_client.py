@@ -73,8 +73,7 @@ from helpers.user_agent import USER_AGENT
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 CERTIFICADO_URL = (
-    "https://www.iess.gob.ec/empleador-web/pages/morapatronal/"
-    "certificadoCumplimientoPublico.jsf"
+    "https://www.iess.gob.ec/empleador-web/pages/morapatronal/certificadoCumplimientoPublico.jsf"
 )
 # The form loads in about 1 s, but the submit generates the PDF on the IESS
 # side and took 12 to 30 s or more when timed on 2026-11-25 (26, 12.6, 13.2 and
@@ -109,9 +108,7 @@ _CERT_TEXT_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 # Stop before "Validez del Certificado" in case both land on one line.
-_EMITIDO_RE = re.compile(
-    r"Emitido el\s+(.+?)(?=\s*Validez del Certificado|\n|$)", re.IGNORECASE
-)
+_EMITIDO_RE = re.compile(r"Emitido el\s+(.+?)(?=\s*Validez del Certificado|\n|$)", re.IGNORECASE)
 _VALIDEZ_RE = re.compile(r"Validez del Certificado\s+(\d+)\s+días", re.IGNORECASE)
 
 

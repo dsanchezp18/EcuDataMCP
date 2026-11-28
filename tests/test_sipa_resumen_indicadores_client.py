@@ -81,7 +81,9 @@ def clear_cache():
 
 
 def test_year_url_uses_bare_path_for_2018_and_suffixed_for_later_years():
-    assert client._year_url(2018) == "https://sipa.agricultura.gob.ec/index.php/resumen-de-indicadores"
+    assert (
+        client._year_url(2018) == "https://sipa.agricultura.gob.ec/index.php/resumen-de-indicadores"
+    )
     assert (
         client._year_url(2025)
         == "https://sipa.agricultura.gob.ec/index.php/resumen-de-indicadores/2025"

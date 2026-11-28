@@ -40,9 +40,7 @@ def clear_cache():
 @pytest.mark.asyncio
 async def test_list_informes(httpx_mock):
     httpx_mock.add_response(url=contraloria_client._SEED_URL, html=_PAGE_HTML)
-    httpx_mock.add_response(
-        url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML
-    )
+    httpx_mock.add_response(url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML)
 
     informes = await contraloria_client.list_informes()
 
@@ -51,9 +49,7 @@ async def test_list_informes(httpx_mock):
     assert first["id"] == "67"
     assert first["tipo"] == "pesdoc"
     assert first["label"] == "Informes aprobados enero - marzo 2023"
-    assert first["url"] == (
-        "https://www.contraloria.gob.ec/WFDescarga.aspx?id=67&tipo=pesdoc&op=d"
-    )
+    assert first["url"] == ("https://www.contraloria.gob.ec/WFDescarga.aspx?id=67&tipo=pesdoc&op=d")
     plan_2025 = next(i for i in informes if i["id"] == "2812")
     assert plan_2025["tipo"] == "doc"
     assert plan_2025["label"] == "Acuerdo aprobación Plan anual de control 2025"
@@ -62,9 +58,7 @@ async def test_list_informes(httpx_mock):
 @pytest.mark.asyncio
 async def test_get_informe_downloads_and_parses_csv(httpx_mock):
     httpx_mock.add_response(url=contraloria_client._SEED_URL, html=_PAGE_HTML)
-    httpx_mock.add_response(
-        url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML
-    )
+    httpx_mock.add_response(url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML)
     httpx_mock.add_response(
         url="https://www.contraloria.gob.ec/WFDescarga.aspx?id=67&tipo=pesdoc&op=d",
         content=_CSV_BYTES,
@@ -81,26 +75,20 @@ async def test_get_informe_downloads_and_parses_csv(httpx_mock):
 @pytest.mark.asyncio
 async def test_get_informe_returns_metadata_only_for_plan_anual_pdf(httpx_mock):
     httpx_mock.add_response(url=contraloria_client._SEED_URL, html=_PAGE_HTML)
-    httpx_mock.add_response(
-        url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML
-    )
+    httpx_mock.add_response(url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML)
 
     result = await contraloria_client.get_informe("2812")
 
     assert result["is_pdf"] is True
     assert result["tipo"] == "doc"
     assert result["label"] == "Acuerdo aprobación Plan anual de control 2025"
-    assert result["url"] == (
-        "https://www.contraloria.gob.ec/WFDescarga.aspx?id=2812&tipo=doc&op=d"
-    )
+    assert result["url"] == ("https://www.contraloria.gob.ec/WFDescarga.aspx?id=2812&tipo=doc&op=d")
 
 
 @pytest.mark.asyncio
 async def test_get_informe_rejects_unknown_id(httpx_mock):
     httpx_mock.add_response(url=contraloria_client._SEED_URL, html=_PAGE_HTML)
-    httpx_mock.add_response(
-        url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML
-    )
+    httpx_mock.add_response(url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML)
 
     with pytest.raises(ValueError, match="no encontrado"):
         await contraloria_client.get_informe("999")
@@ -109,13 +97,9 @@ async def test_get_informe_rejects_unknown_id(httpx_mock):
 @pytest.mark.asyncio
 async def test_empty_scrape_result_is_not_cached(httpx_mock):
     httpx_mock.add_response(url=contraloria_client._SEED_URL, html=_EMPTY_PAGE_HTML)
-    httpx_mock.add_response(
-        url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_EMPTY_PAGE_HTML
-    )
+    httpx_mock.add_response(url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_EMPTY_PAGE_HTML)
     httpx_mock.add_response(url=contraloria_client._SEED_URL, html=_PAGE_HTML)
-    httpx_mock.add_response(
-        url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML
-    )
+    httpx_mock.add_response(url=contraloria_client._PLAN_ANUAL_SEED_URL, html=_PLAN_ANUAL_PAGE_HTML)
 
     with pytest.raises(ValueError, match="Contraloría"):
         await contraloria_client.list_informes()

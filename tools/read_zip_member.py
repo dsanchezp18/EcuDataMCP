@@ -117,9 +117,7 @@ def register_read_zip_member_tool(mcp: MCPServer) -> None:
             # The guard's message names the resolved private IP: keep that
             # detail in the server log, never in the client-facing error.
             logger.warning("read_zip_member rechazó la URL %s: %s", url, e)
-            raise ToolError(
-                "URL rechazada por seguridad: el destino no es público"
-            ) from e
+            raise ToolError("URL rechazada por seguridad: el destino no es público") from e
         except ValueError as e:
             raise ToolError(str(e)) from e
         except Exception as e:
@@ -165,22 +163,18 @@ def register_read_zip_member_tool(mcp: MCPServer) -> None:
                 )
             if data.get("preamble"):
                 parts.append(
-                    f"Encabezado detectado en la fila {data['header_row'] + 1}; "
-                    "filas de título:"
+                    f"Encabezado detectado en la fila {data['header_row'] + 1}; filas de título:"
                 )
                 parts.extend(f"  {line}" for line in data["preamble"])
             if data.get("dropped_empty_columns"):
-                parts.append(
-                    f"Columnas vacías omitidas: {data['dropped_empty_columns']}"
-                )
+                parts.append(f"Columnas vacías omitidas: {data['dropped_empty_columns']}")
             if data.get("truncated"):
                 parts.append(
                     "⚠ Hay más filas: sube offset para paginar (o el archivo pasa de 5 MB)"
                 )
             if data.get("dropped_columns"):
                 parts.append(
-                    "⚠ Columnas de geometría omitidas (WKT): "
-                    + ", ".join(data["dropped_columns"])
+                    "⚠ Columnas de geometría omitidas (WKT): " + ", ".join(data["dropped_columns"])
                 )
             if data.get("converted_decimal_columns"):
                 parts.append(

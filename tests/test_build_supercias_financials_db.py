@@ -14,15 +14,12 @@ def _valid_db(path: Path) -> None:
         "posicion_general INTEGER, n_empleados INTEGER)"
     )
     conn.execute("INSERT INTO ranking VALUES (2025, 1, 10, 5)")
-    conn.execute(
-        "CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)"
-    )
+    conn.execute("CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)")
     conn.execute("INSERT INTO companias VALUES (1, '1790013731001', 'ACME')")
     conn.execute("CREATE TABLE segmentos (id_segmento INTEGER, segmento TEXT)")
     conn.execute("CREATE TABLE ciiu (ciiu TEXT, descripcion TEXT)")
     conn.execute(
-        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, "
-        "indicador TEXT, mediana REAL)"
+        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, indicador TEXT, mediana REAL)"
     )
     conn.commit()
     conn.close()
@@ -79,15 +76,12 @@ def test_verify_build_rejects_empty_ranking_table(tmp_path):
         "CREATE TABLE ranking (anio INTEGER, expediente INTEGER, "
         "posicion_general INTEGER, n_empleados INTEGER)"
     )
-    conn.execute(
-        "CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)"
-    )
+    conn.execute("CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)")
     conn.execute("INSERT INTO companias VALUES (1, '1790013731001', 'ACME')")
     conn.execute("CREATE TABLE segmentos (id_segmento INTEGER, segmento TEXT)")
     conn.execute("CREATE TABLE ciiu (ciiu TEXT, descripcion TEXT)")
     conn.execute(
-        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, "
-        "indicador TEXT, mediana REAL)"
+        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, indicador TEXT, mediana REAL)"
     )
     conn.commit()
     conn.close()
@@ -104,14 +98,11 @@ def test_verify_build_rejects_empty_companias_table(tmp_path):
         "posicion_general INTEGER, n_empleados INTEGER)"
     )
     conn.execute("INSERT INTO ranking VALUES (2025, 1, 10, 5)")
-    conn.execute(
-        "CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)"
-    )
+    conn.execute("CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)")
     conn.execute("CREATE TABLE segmentos (id_segmento INTEGER, segmento TEXT)")
     conn.execute("CREATE TABLE ciiu (ciiu TEXT, descripcion TEXT)")
     conn.execute(
-        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, "
-        "indicador TEXT, mediana REAL)"
+        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, indicador TEXT, mediana REAL)"
     )
     conn.commit()
     conn.close()
@@ -126,15 +117,12 @@ def test_verify_build_rejects_missing_required_column(tmp_path):
     # 'posicion_general' missing.
     conn.execute("CREATE TABLE ranking (anio INTEGER, expediente INTEGER)")
     conn.execute("INSERT INTO ranking VALUES (2025, 1)")
-    conn.execute(
-        "CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)"
-    )
+    conn.execute("CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)")
     conn.execute("INSERT INTO companias VALUES (1, '1790013731001', 'ACME')")
     conn.execute("CREATE TABLE segmentos (id_segmento INTEGER, segmento TEXT)")
     conn.execute("CREATE TABLE ciiu (ciiu TEXT, descripcion TEXT)")
     conn.execute(
-        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, "
-        "indicador TEXT, mediana REAL)"
+        "CREATE TABLE cuartiles_sector (anio INTEGER, ciiu_n1 TEXT, indicador TEXT, mediana REAL)"
     )
     conn.commit()
     conn.close()
@@ -192,9 +180,7 @@ def test_check_not_shrunk_rejects_sharp_drop(tmp_path):
 def isolated_state(tmp_path, monkeypatch):
     from helpers import supercias_financials
 
-    monkeypatch.setattr(
-        supercias_financials, "DB_PATH", tmp_path / "data" / "financials.sqlite3"
-    )
+    monkeypatch.setattr(supercias_financials, "DB_PATH", tmp_path / "data" / "financials.sqlite3")
     return supercias_financials
 
 
@@ -516,10 +502,7 @@ def test_build_sector_quartiles_uses_quartiles_not_means():
     # One extreme filing would drag a mean to ~200; the quartiles ignore it.
     values = [0.5, 1.0, 1.5, 2.0, 1000.0]
     conn = _ratio_db(
-        [
-            (2023, "C", i, 100.0, 50.0, 20.0, v, None, None, None)
-            for i, v in enumerate(values, 1)
-        ]
+        [(2023, "C", i, 100.0, 50.0, 20.0, v, None, None, None) for i, v in enumerate(values, 1)]
         # Too few filings for a benchmark.
         + [(2023, "A", 9, 100.0, 50.0, 20.0, 1.0, None, None, None)]
         # Ratios not calculated don't count as filings.

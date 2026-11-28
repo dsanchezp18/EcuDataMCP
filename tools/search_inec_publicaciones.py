@@ -57,9 +57,7 @@ def register_search_inec_publicaciones_tool(mcp: MCPServer) -> None:
         offset = max(offset, 0)
 
         try:
-            result = await inec_client.search_publicaciones(
-                query=query, limit=limit, offset=offset
-            )
+            result = await inec_client.search_publicaciones(query=query, limit=limit, offset=offset)
         except Exception as e:
             raise ToolError(
                 f"Error al buscar publicaciones de Ecuador en Cifras (INEC): {e}"

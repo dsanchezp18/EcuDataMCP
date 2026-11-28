@@ -15,8 +15,7 @@ def register_search_auditores_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Buscar auditores externos autorizados",
         description=(
-            "Search Supercías' registry of 1,447 authorized external auditors by "
-            "name or ID."
+            "Search Supercías' registry of 1,447 authorized external auditors by name or ID."
         ),
         annotations=READ_ONLY,
     )
@@ -55,9 +54,7 @@ def register_search_auditores_tool(mcp: MCPServer) -> None:
                 offset=offset,
             )
         except Exception as e:
-            raise ToolError(
-                f"Error al consultar el listado de auditores externos: {e}"
-            ) from e
+            raise ToolError(f"Error al consultar el listado de auditores externos: {e}") from e
 
         def to_text(data: dict) -> str:
             auditores = data.get("auditores") or []
@@ -76,9 +73,7 @@ def register_search_auditores_tool(mcp: MCPServer) -> None:
                 parts.append(f"   Identificación: {a.get('identificacion')}")
                 if a.get("provincia") or a.get("canton"):
                     ubicacion = "  ·  ".join(
-                        part
-                        for part in (a.get("provincia"), a.get("canton"))
-                        if part
+                        part for part in (a.get("provincia"), a.get("canton")) if part
                     )
                     parts.append(f"   {ubicacion}")
                 if a.get("numero_de_resolucion"):

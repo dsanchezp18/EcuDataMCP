@@ -97,7 +97,9 @@ def _strip_refresh(url: str) -> str:
 
 
 def _parse_handles(html: str) -> list[dict[str, str]]:
-    return [{"id": m.group("id"), "nombre": _clean(m.group("name"))} for m in _HANDLE_RE.finditer(html)]
+    return [
+        {"id": m.group("id"), "nombre": _clean(m.group("name"))} for m in _HANDLE_RE.finditer(html)
+    ]
 
 
 def _parse_files(html: str) -> list[dict[str, Any]]:

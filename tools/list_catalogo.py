@@ -178,7 +178,9 @@ def _text_iess(data: dict) -> str:
         if c["coleccion"] == "boletines":
             parts.append(f"   Años: {c['anio_min']}-{c['anio_max']}")
         elif c["coleccion"] == "estudios_actuariales":
-            parts.append(f"   Años disponibles: {', '.join(str(a) for a in c['anios_disponibles'])}")
+            parts.append(
+                f"   Años disponibles: {', '.join(str(a) for a in c['anios_disponibles'])}"
+            )
         else:
             anios = ", ".join(f"{a['anio']} ({a['total_documentos']})" for a in c["anios"])
             parts.append(f"   Años (con conteo): {anios}")

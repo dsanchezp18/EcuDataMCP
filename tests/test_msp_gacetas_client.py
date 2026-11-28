@@ -11,15 +11,24 @@ _WP_URL = re.compile(rf"^{re.escape(client._WP_API_URL)}\?.*search=gaceta")
 # series, an unrelated news post, and an empty landing page that matches no
 # series.
 _POSTS = [
-    {"slug": "gacetas-vectoriales-2026", "link": "https://www.salud.gob.ec/gacetas-vectoriales-2026/"},
+    {
+        "slug": "gacetas-vectoriales-2026",
+        "link": "https://www.salud.gob.ec/gacetas-vectoriales-2026/",
+    },
     {"slug": "gaceta-etas-se-2022", "link": "https://www.salud.gob.ec/gaceta-etas-se-2022/"},
     {"slug": "brotes", "link": "https://www.salud.gob.ec/brotes/"},
     {
         "slug": "gacetas-inmunoprevenibles-2025",
         "link": "https://www.salud.gob.ec/gacetas-inmunoprevenibles-2025/",
     },
-    {"slug": "gacetas-epidemiologicas-2", "link": "https://www.salud.gob.ec/gacetas-epidemiologicas-2/"},
-    {"slug": "ministerio-presenta-gaceta", "link": "https://www.salud.gob.ec/ministerio-presenta-gaceta/"},
+    {
+        "slug": "gacetas-epidemiologicas-2",
+        "link": "https://www.salud.gob.ec/gacetas-epidemiologicas-2/",
+    },
+    {
+        "slug": "ministerio-presenta-gaceta",
+        "link": "https://www.salud.gob.ec/ministerio-presenta-gaceta/",
+    },
 ]
 
 _VECTORIALES = """
@@ -79,7 +88,10 @@ def test_semana_handles_every_naming_convention(stem, semana, desde):
 
 
 def test_slugs_map_to_series():
-    assert client._serie_de_slug("gacetas-enfermedades-transmitidas-por-agua-o-alimentos-2019") == "etas"
+    assert (
+        client._serie_de_slug("gacetas-enfermedades-transmitidas-por-agua-o-alimentos-2019")
+        == "etas"
+    )
     assert client._serie_de_slug("gacetas-epidemiologicas-2023") == "irag"
     assert client._serie_de_slug("informacion-de-enfermedades-de-la-piel-reemergentes") == (
         "piel_reemergentes"
@@ -97,7 +109,9 @@ def test_series_candidatas_narrow_only_on_series_words():
 
 async def test_search_gacetas_parses_classifies_and_dedups(httpx_mock):
     httpx_mock.add_response(url=_WP_URL, json=_POSTS, headers={"X-WP-TotalPages": "1"})
-    httpx_mock.add_response(url="https://www.salud.gob.ec/gacetas-vectoriales-2026/", text=_VECTORIALES)
+    httpx_mock.add_response(
+        url="https://www.salud.gob.ec/gacetas-vectoriales-2026/", text=_VECTORIALES
+    )
     httpx_mock.add_response(url="https://www.salud.gob.ec/gaceta-etas-se-2022/", text=_ETAS)
     httpx_mock.add_response(url="https://www.salud.gob.ec/brotes/", text=_BROTES)
     httpx_mock.add_response(
@@ -133,12 +147,16 @@ async def test_failed_page_is_reported_not_fatal(httpx_mock, monkeypatch):
 
     monkeypatch.setattr(client.asyncio, "sleep", no_sleep)
     httpx_mock.add_response(url=_WP_URL, json=_POSTS, headers={"X-WP-TotalPages": "1"})
-    httpx_mock.add_response(url="https://www.salud.gob.ec/gacetas-vectoriales-2026/", text=_VECTORIALES)
+    httpx_mock.add_response(
+        url="https://www.salud.gob.ec/gacetas-vectoriales-2026/", text=_VECTORIALES
+    )
     httpx_mock.add_response(url="https://www.salud.gob.ec/gaceta-etas-se-2022/", text=_ETAS)
     httpx_mock.add_response(
         url="https://www.salud.gob.ec/gacetas-inmunoprevenibles-2025/", text=_INMUNO
     )
-    httpx_mock.add_response(url="https://www.salud.gob.ec/brotes/", status_code=503, is_reusable=True)
+    httpx_mock.add_response(
+        url="https://www.salud.gob.ec/brotes/", status_code=503, is_reusable=True
+    )
 
     result = await client.search_gacetas()
 

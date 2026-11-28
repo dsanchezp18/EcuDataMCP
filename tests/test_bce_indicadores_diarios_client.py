@@ -199,10 +199,26 @@ async def test_list_indicadores_dedupes_id_serie_rows_separately_per_indicator(h
         url=monetario_url,
         json={
             "view_ind_monetario": [
-                {"Grupo": "g", "id_serie": 805, "Indicador": "Reservas Internacionales",
-                 "Fecha": "2026-07-31", "Carga": "x", "Valor": 1.0, "Periodicidad": "M", "Medida": "USD"},
-                {"Grupo": "g", "id_serie": 798, "Indicador": "Liquidez Total M2",
-                 "Fecha": "2026-07-31", "Carga": "x", "Valor": 2.0, "Periodicidad": "M", "Medida": "USD"},
+                {
+                    "Grupo": "g",
+                    "id_serie": 805,
+                    "Indicador": "Reservas Internacionales",
+                    "Fecha": "2026-07-31",
+                    "Carga": "x",
+                    "Valor": 1.0,
+                    "Periodicidad": "M",
+                    "Medida": "USD",
+                },
+                {
+                    "Grupo": "g",
+                    "id_serie": 798,
+                    "Indicador": "Liquidez Total M2",
+                    "Fecha": "2026-07-31",
+                    "Carga": "x",
+                    "Valor": 2.0,
+                    "Periodicidad": "M",
+                    "Medida": "USD",
+                },
             ]
         },
     )
@@ -213,7 +229,9 @@ async def test_list_indicadores_dedupes_id_serie_rows_separately_per_indicator(h
 
     catalog = await bce.list_indicadores()
 
-    entries = {(c["archivo"], c["codigo"]): c["indicador"] for c in catalog if c["archivo"] == "datos.json"}
+    entries = {
+        (c["archivo"], c["codigo"]): c["indicador"] for c in catalog if c["archivo"] == "datos.json"
+    }
     assert entries == {
         ("datos.json", "805"): "Reservas Internacionales",
         ("datos.json", "798"): "Liquidez Total M2",
@@ -237,7 +255,9 @@ async def test_get_indicador_diario_caps_window_at_max(httpx_mock):
     ]
     httpx_mock.add_response(url=_FORMULARIO_URL, json={"view_ind_formulario": rows})
 
-    result = await bce.get_indicador_diario("datos_formulario.json", "val_ind_0003", ultimos_n=10000)
+    result = await bce.get_indicador_diario(
+        "datos_formulario.json", "val_ind_0003", ultimos_n=10000
+    )
 
     assert len(result["datos"]) == bce._MAX_VENTANA
 
@@ -309,9 +329,7 @@ def _daily_rows(n: int) -> list[dict]:
 
 @pytest.mark.asyncio
 async def test_get_indicador_diario_flags_truncated_date_range(httpx_mock):
-    httpx_mock.add_response(
-        url=_FORMULARIO_URL, json={"view_ind_formulario": _daily_rows(400)}
-    )
+    httpx_mock.add_response(url=_FORMULARIO_URL, json={"view_ind_formulario": _daily_rows(400)})
 
     result = await bce.get_indicador_diario(
         "datos_formulario.json", "val_ind_0003", desde="2020-01-01", hasta="2021-12-31"

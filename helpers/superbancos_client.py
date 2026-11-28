@@ -262,7 +262,9 @@ _LEGACY_SECCIONES = {
 
 # Section pages change a few times a year at most (a new archived year, a
 # new calendar). max_entries matches the fixed key space.
-_files_cache = TtlCache(ttl_seconds=21600.0, max_entries=len(_SECCIONES), persist="superbancos_secciones")
+_files_cache = TtlCache(
+    ttl_seconds=21600.0, max_entries=len(_SECCIONES), persist="superbancos_secciones"
+)
 _fetch_lock = asyncio.Lock()
 
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -474,7 +476,9 @@ def _extract_all_wpcp_widgets(html: str) -> list[dict[str, Any]]:
     return widgets
 
 
-async def _wpcp_get_filelist(params: dict[str, str], folder_id: str, page_url: str) -> dict[str, Any]:
+async def _wpcp_get_filelist(
+    params: dict[str, str], folder_id: str, page_url: str
+) -> dict[str, Any]:
     """POST the OneDrive widget's own AJAX action and return its parsed
     JSON ({"tree": [...], "html": "...", ...}). folder_id="" lists the
     widget's root (both its immediate subfolders, in "tree", and any files
@@ -528,8 +532,7 @@ def _parse_wpcp_files(html_fragment: str, seccion: str) -> list[dict[str, Any]]:
         url = link_m.group("url")
         if not _is_superbancos_url(url):
             logger.warning(
-                "Superbancos sección %s (OneDrive): descartado link con "
-                "dominio inesperado (%s).",
+                "Superbancos sección %s (OneDrive): descartado link con dominio inesperado (%s).",
                 seccion,
                 url,
             )
@@ -612,7 +615,9 @@ def _wpcp_node_path(by_id: dict[str, dict[str, Any]], node_id: str) -> str:
     return " / ".join(reversed(parts))
 
 
-async def _wpcp_crawl_tree(params: dict[str, str], page_url: str, seccion: str) -> list[dict[str, Any]]:
+async def _wpcp_crawl_tree(
+    params: dict[str, str], page_url: str, seccion: str
+) -> list[dict[str, Any]]:
     """Generic OneDrive-widget crawler for a tree of unknown depth --
     unlike _wpcp_boletines_recientes' flat "Año NNNN" special case, this
     queries every node the root call reveals (root call returns the
@@ -693,7 +698,9 @@ async def _wpcp_crawl_tree(params: dict[str, str], page_url: str, seccion: str) 
     return archivos
 
 
-async def _wpcp_servicios_financieros_recientes(html: str, page_url: str, seccion: str) -> list[dict[str, Any]]:
+async def _wpcp_servicios_financieros_recientes(
+    html: str, page_url: str, seccion: str
+) -> list[dict[str, Any]]:
     """servicios_financieros embeds three separate OneDrive widgets (one
     per heading), confirmed live 2026-08-31: "Estadísticas Generales" (the
     richest -- 9 numbered categories each with year-organized files, this
@@ -800,7 +807,7 @@ def _parse_tablepress_archivos(html: str, seccion: str) -> list[dict[str, Any]]:
                     )
                     continue
                 titulo = _clean(link_m.group("label")) or _clean(cell)
-                descripcion = _clean(cell[link_m.end():])
+                descripcion = _clean(cell[link_m.end() :])
                 archivos.append(
                     {
                         "grupo": current_grupo,
@@ -821,8 +828,7 @@ def _parse_calendario(html: str) -> list[dict[str, Any]]:
         url = m.group("url")
         if not _is_superbancos_url(url):
             logger.warning(
-                "Superbancos calendario_estadistico: descartado link con "
-                "dominio inesperado (%s).",
+                "Superbancos calendario_estadistico: descartado link con dominio inesperado (%s).",
                 url,
             )
             continue
@@ -911,7 +917,9 @@ async def _fetch_seccion_fresh(seccion: str, info: dict[str, Any]) -> dict[str, 
             if seccion == "boletines_financieros":
                 archivos = archivos + await _wpcp_boletines_recientes(html, info["url"], seccion)
             elif seccion == "servicios_financieros":
-                archivos = archivos + await _wpcp_servicios_financieros_recientes(html, info["url"], seccion)
+                archivos = archivos + await _wpcp_servicios_financieros_recientes(
+                    html, info["url"], seccion
+                )
 
         result = {
             "seccion": seccion,

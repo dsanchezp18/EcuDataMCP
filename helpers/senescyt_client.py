@@ -99,8 +99,8 @@ _WPDM_ENTRY_RE = re.compile(
     r'data-downloadurl="(?P<url>[^"]+)"',
     re.DOTALL,
 )
-_WPDM_SIZE_RE = re.compile(r'Size <span[^>]*>(?P<size>[^<]*)</span>')
-_WPDM_UPDATED_RE = re.compile(r'Last Updated <span[^>]*>(?P<updated>[^<]*)</span>')
+_WPDM_SIZE_RE = re.compile(r"Size <span[^>]*>(?P<size>[^<]*)</span>")
+_WPDM_UPDATED_RE = re.compile(r"Last Updated <span[^>]*>(?P<updated>[^<]*)</span>")
 _DIRECT_LINK_RE = re.compile(
     r'<a class="w-btn[^"]*"[^>]*href="(?P<url>[^"]+)"><span class="w-btn-label">'
     r"(?P<label>[^<]+)</span>"

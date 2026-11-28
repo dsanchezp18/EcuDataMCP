@@ -36,7 +36,7 @@ def load_index() -> dict[str, Any]:
 
 
 def _base_label(label: str) -> str:
-    """"Etnia – Excel" / "Etnia – CSV" -> "Etnia" (both formats share one workbook)."""
+    """ "Etnia – Excel" / "Etnia – CSV" -> "Etnia" (both formats share one workbook)."""
     return label.rsplit(" – ", 1)[0].strip()
 
 

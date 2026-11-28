@@ -20,17 +20,25 @@ _DIGIT_RE = re.compile(r"\d+")
 # textbook periodic series. Folding month names into the same placeholder
 # as digits fixes that without touching the digit logic.
 _MONTH_NUMBERS = {
-    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
-    "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
-    "noviembre": 11, "diciembre": 12,
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "setiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
 }
 # Lookaround on plain letters rather than \b: resource names are commonly
 # underscore-separated ("cacao_2023_agosto.csv"), and \b treats "_" as a
 # word character, so "_agosto" would never see a boundary and the month
 # would go unmatched right where it matters most.
-_MONTH_RE = re.compile(
-    r"(?<![a-z])(?:" + "|".join(_MONTH_NUMBERS) + r")(?![a-z])"
-)
+_MONTH_RE = re.compile(r"(?<![a-z])(?:" + "|".join(_MONTH_NUMBERS) + r")(?![a-z])")
 
 
 def _name_template(name: str) -> str:
@@ -45,9 +53,7 @@ _YMD_RE = re.compile(
 _DMY_RE = re.compile(
     rf"(?<!\d)(0?[1-9]|[12]\d|3[01]){_SEP}(0?[1-9]|1[0-2]){_SEP}((?:19|20)\d{{2}})(?!\d)"
 )
-_COMPACT_RE = re.compile(
-    r"(?<!\d)((?:19|20)\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?!\d)"
-)
+_COMPACT_RE = re.compile(r"(?<!\d)((?:19|20)\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?!\d)")
 
 
 def _explicit_date(lowered: str) -> tuple[int, int, int] | None:

@@ -182,15 +182,43 @@ _WFS_GETFEATURE_EXCEPTION_XML = """<?xml version="1.0" encoding="UTF-8"?>
 _BASE = sipa_geoportal_client._BASE_URL
 
 _URLS = {
-    ("registros", "E50k", "wms"): f"{_BASE}/registros/E50k/wms?service=WMS&version=1.3.0&request=GetCapabilities",
-    ("registros", "E50k", "wfs"): f"{_BASE}/registros/E50k/wfs?service=WFS&version=2.0.0&request=GetCapabilities",
-    ("tematicas", "Rraster", "wms"): f"{_BASE}/tematicas/Rraster/wms?service=WMS&version=1.3.0&request=GetCapabilities",
-    ("tematicas", "Rraster", "wfs"): f"{_BASE}/tematicas/Rraster/wfs?service=WFS&version=2.0.0&request=GetCapabilities",
-    ("sigtierras", "catastro_rural", "wms"): f"{_BASE}/sigtierras/catastro_rural/wms?service=WMS&version=1.3.0&request=GetCapabilities",
-    ("sigtierras", "catastro_rural", "wfs"): f"{_BASE}/sigtierras/catastro_rural/wfs?service=WFS&version=2.0.0&request=GetCapabilities",
+    (
+        "registros",
+        "E50k",
+        "wms",
+    ): f"{_BASE}/registros/E50k/wms?service=WMS&version=1.3.0&request=GetCapabilities",
+    (
+        "registros",
+        "E50k",
+        "wfs",
+    ): f"{_BASE}/registros/E50k/wfs?service=WFS&version=2.0.0&request=GetCapabilities",
+    (
+        "tematicas",
+        "Rraster",
+        "wms",
+    ): f"{_BASE}/tematicas/Rraster/wms?service=WMS&version=1.3.0&request=GetCapabilities",
+    (
+        "tematicas",
+        "Rraster",
+        "wfs",
+    ): f"{_BASE}/tematicas/Rraster/wfs?service=WFS&version=2.0.0&request=GetCapabilities",
+    (
+        "sigtierras",
+        "catastro_rural",
+        "wms",
+    ): f"{_BASE}/sigtierras/catastro_rural/wms?service=WMS&version=1.3.0&request=GetCapabilities",
+    (
+        "sigtierras",
+        "catastro_rural",
+        "wfs",
+    ): f"{_BASE}/sigtierras/catastro_rural/wfs?service=WFS&version=2.0.0&request=GetCapabilities",
 }
 
-_TEST_ENDPOINTS = [("registros", "E50k"), ("tematicas", "Rraster"), ("sigtierras", "catastro_rural")]
+_TEST_ENDPOINTS = [
+    ("registros", "E50k"),
+    ("tematicas", "Rraster"),
+    ("sigtierras", "catastro_rural"),
+]
 
 
 def _mock_all_endpoints(httpx_mock):
@@ -228,7 +256,9 @@ def test_parse_wms_layers_extracts_name_title_abstract_crs_bbox():
     assert palmicultor["title"] == "Censo palmicultor 1:50.000"
     assert "palma africana" in palmicultor["abstract"]
     assert "EPSG:32717" in palmicultor["crs"]
-    assert palmicultor["bbox_geografico"]["southBoundLatitude"] == pytest.approx(-2.8842089140410416)
+    assert palmicultor["bbox_geografico"]["southBoundLatitude"] == pytest.approx(
+        -2.8842089140410416
+    )
 
 
 def test_parse_wfs_type_names_maps_bare_name_to_qualified_name():

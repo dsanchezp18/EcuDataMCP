@@ -28,9 +28,7 @@ async def _with_deadline(coro: Coroutine[Any, Any, Any]) -> Any:
     try:
         return await asyncio.wait_for(coro, timeout=_SOURCE_TIMEOUT_SECONDS)
     except TimeoutError:
-        return TimeoutError(
-            f"la fuente no respondió en {_SOURCE_TIMEOUT_SECONDS} s"
-        )
+        return TimeoutError(f"la fuente no respondió en {_SOURCE_TIMEOUT_SECONDS} s")
 
 
 def register_search_ecuador_tool(mcp: MCPServer) -> None:
@@ -270,13 +268,9 @@ def register_search_ecuador_tool(mcp: MCPServer) -> None:
                 data = contratos_r.get("data") or []
                 total = contratos_r.get("total", len(data))
                 if not data:
-                    parts.append(
-                        "Sin resultados este año. Prueba search_contratos con otro year."
-                    )
+                    parts.append("Sin resultados este año. Prueba search_contratos con otro year.")
                 else:
-                    parts.append(
-                        f"Encontrados: {total} (mostrando {min(len(data), limit)})"
-                    )
+                    parts.append(f"Encontrados: {total} (mostrando {min(len(data), limit)})")
                     for i, item in enumerate(data[:limit], 1):
                         parts.append(f"{i}. {item.get('title') or item.get('ocid')}")
                         if item.get("ocid"):

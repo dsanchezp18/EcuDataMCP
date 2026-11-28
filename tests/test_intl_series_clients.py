@@ -116,11 +116,7 @@ async def test_comtrade_validates_before_calling():
 _IMF_DATA = {
     "header": {"id": "x"},
     "dataSets": [
-        {
-            "series": {
-                "0:0:0:0:0": {"observations": {"0": ["100.5", None], "1": ["101", None]}}
-            }
-        }
+        {"series": {"0:0:0:0:0": {"observations": {"0": ["100.5", None], "1": ["101", None]}}}}
     ],
     "structure": {
         "name": "Consumer Price Index (CPI)",
@@ -307,7 +303,10 @@ async def test_who_search_matches_name(httpx_mock):
         url="https://ghoapi.azureedge.net/api/Indicator",
         json={
             "value": [
-                {"IndicatorCode": "WHOSIS_000001", "IndicatorName": "Life expectancy at birth (years)"},
+                {
+                    "IndicatorCode": "WHOSIS_000001",
+                    "IndicatorName": "Life expectancy at birth (years)",
+                },
                 {"IndicatorCode": "MDG_0000000001", "IndicatorName": "Infant mortality rate"},
             ]
         },
@@ -324,8 +323,19 @@ async def test_who_series_filters_country_and_years(httpx_mock):
         url=re.compile(r"https://ghoapi\.azureedge\.net/api/WHOSIS_000001\?.*"),
         json={
             "value": [
-                {"TimeDim": 2022, "Dim1": "SEX_BTSX", "NumericValue": 77.3, "Low": 76.0, "High": 78.0},
-                {"TimeDim": 2017, "Dim1": "SEX_BTSX", "NumericValue": 78.6, "Value": "78.6 [78-79.1]"},
+                {
+                    "TimeDim": 2022,
+                    "Dim1": "SEX_BTSX",
+                    "NumericValue": 77.3,
+                    "Low": 76.0,
+                    "High": 78.0,
+                },
+                {
+                    "TimeDim": 2017,
+                    "Dim1": "SEX_BTSX",
+                    "NumericValue": 78.6,
+                    "Value": "78.6 [78-79.1]",
+                },
             ]
         },
     )
@@ -339,7 +349,9 @@ async def test_who_series_filters_country_and_years(httpx_mock):
 
 
 async def test_who_empty_result_is_a_clear_error(httpx_mock):
-    httpx_mock.add_response(url=re.compile(r"https://ghoapi\.azureedge\.net/api/NOPE.*"), json={"value": []})
+    httpx_mock.add_response(
+        url=re.compile(r"https://ghoapi\.azureedge\.net/api/NOPE.*"), json={"value": []}
+    )
 
     with pytest.raises(ValueError, match="no tiene datos"):
         await who_client.get_indicador("NOPE_1")
@@ -455,7 +467,9 @@ async def test_http_error_message_names_source(httpx_mock):
 
 
 async def test_5xx_retry_ignores_seconds_text_in_body(httpx_mock, isolate):
-    httpx_mock.add_response(url=re.compile(r".*ghoapi.*"), status_code=503, text="back in 9 seconds")
+    httpx_mock.add_response(
+        url=re.compile(r".*ghoapi.*"), status_code=503, text="back in 9 seconds"
+    )
     httpx_mock.add_response(url=re.compile(r".*ghoapi.*"), json={"value": []})
 
     await who_client.search_indicadores("x")
@@ -476,8 +490,12 @@ async def test_connect_error_is_retried_then_named(httpx_mock, isolate):
 
 
 async def test_imf_unknown_flow_and_bad_key_are_clear_errors(httpx_mock):
-    httpx_mock.add_response(url=re.compile(r".*/data/IMF\.STA,NOPE/.*"), status_code=404, text="No such dataflow")
-    httpx_mock.add_response(url=re.compile(r".*/data/IMF\.STA,CPI/XXX.*"), status_code=400, text="Jackson error")
+    httpx_mock.add_response(
+        url=re.compile(r".*/data/IMF\.STA,NOPE/.*"), status_code=404, text="No such dataflow"
+    )
+    httpx_mock.add_response(
+        url=re.compile(r".*/data/IMF\.STA,CPI/XXX.*"), status_code=400, text="Jackson error"
+    )
 
     with pytest.raises(ValueError, match="no tiene el flujo 'NOPE'"):
         await imf_client.get_serie("NOPE")

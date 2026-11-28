@@ -161,9 +161,7 @@ _PAGINAS = (
 _catalog_cache = TtlCache(ttl_seconds=21600.0, max_entries=1)
 _fetch_lock = asyncio.Lock()
 
-_A_TAG_RE = re.compile(
-    r"<a\b(?P<attrs>[^>]*)>(?P<inner>.*?)</a>", re.DOTALL | re.IGNORECASE
-)
+_A_TAG_RE = re.compile(r"<a\b(?P<attrs>[^>]*)>(?P<inner>.*?)</a>", re.DOTALL | re.IGNORECASE)
 _HREF_RE = re.compile(r'href="(?P<href>[^"]+)"', re.IGNORECASE)
 _FILE_HREF_RE = re.compile(
     r"/documentos/.+\.(?:xlsx|xls|pdf|csv|zip|docx?)(?:\?.*)?$", re.IGNORECASE
@@ -229,15 +227,11 @@ async def _fetch_pagina(pagina: dict[str, str]) -> dict[str, Any] | str:
     try:
         content, truncated = await download_bytes(url)
         if truncated:
-            logger.warning(
-                "La página de Cuentas Nacionales %s superó el límite de descarga", url
-            )
+            logger.warning("La página de Cuentas Nacionales %s superó el límite de descarga", url)
             return url
         html_text = content.decode("utf-8", errors="replace")
     except Exception as exc:
-        logger.warning(
-            "No se pudo leer la página de Cuentas Nacionales %s: %s", url, exc
-        )
+        logger.warning("No se pudo leer la página de Cuentas Nacionales %s: %s", url, exc)
         return url
 
     archivos = _extract_archivos(html_text)
@@ -340,9 +334,7 @@ _MAX_ARCHIVOS = 200
 _DEFAULT_MAX_ARCHIVOS = 50
 
 
-async def get_archivo(
-    pagina_id: str, max_archivos: int = _DEFAULT_MAX_ARCHIVOS
-) -> dict[str, Any]:
+async def get_archivo(pagina_id: str, max_archivos: int = _DEFAULT_MAX_ARCHIVOS) -> dict[str, Any]:
     """
     Read the file list for one BCE Cuentas Nacionales page (from
     search_bce_cuentas_nacionales).

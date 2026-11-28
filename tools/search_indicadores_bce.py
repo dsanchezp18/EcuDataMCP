@@ -62,9 +62,7 @@ def register_search_indicadores_bce_tool(mcp: MCPServer) -> None:
         offset = max(offset, 0)
 
         try:
-            result = await bce_client.search_indicadores(
-                query=query, limit=limit, offset=offset
-            )
+            result = await bce_client.search_indicadores(query=query, limit=limit, offset=offset)
         except Exception as e:
             logger.exception("search_indicadores_bce failed (query=%r)", query)
             raise ToolError(f"Error al consultar el catálogo del BCE: {e}") from e
@@ -85,21 +83,14 @@ def register_search_indicadores_bce_tool(mcp: MCPServer) -> None:
                 parts.append(f"{i}. {ind.get('descripcion')}")
                 parts.append(f"   id_grupo: {ind.get('id_grupo')}")
                 ubicacion = " > ".join(
-                    part
-                    for part in (ind.get("seccion"), ind.get("subseccion"))
-                    if part
+                    part for part in (ind.get("seccion"), ind.get("subseccion")) if part
                 )
                 if ubicacion:
                     parts.append(f"   {ubicacion}")
                 if ind.get("series_coincidentes"):
-                    parts.append(
-                        "   Coincide vía serie: "
-                        + ", ".join(ind["series_coincidentes"])
-                    )
+                    parts.append("   Coincide vía serie: " + ", ".join(ind["series_coincidentes"]))
                 parts.append("")
-            parts.append(
-                "Tip: usa get_indicador_bce(id_grupo=...) para la serie de tiempo."
-            )
+            parts.append("Tip: usa get_indicador_bce(id_grupo=...) para la serie de tiempo.")
             return "\n".join(parts)
 
         return render_structured(result, format, text_builder=to_text)

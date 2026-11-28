@@ -29,7 +29,9 @@ _DATA = {
     "dimension": {
         "Country/area": _cell({"ECU": "Ecuador"}),
         "Technology": _cell({"0": "Renewable hydropower", "1": "Solar photovoltaic"}),
-        "Data Type": _cell({"0": "Electricity Generation (GWh)", "1": "Electrical Installed Capacity (MW)"}),
+        "Data Type": _cell(
+            {"0": "Electricity Generation (GWh)", "1": "Electrical Installed Capacity (MW)"}
+        ),
         "Grid connection": _cell({"0": "All"}),
         "Year": _cell({"0": "2023", "1": "2024"}),
     },
@@ -88,9 +90,13 @@ async def test_irena_unknown_country_raises(httpx_mock):
 
 
 async def test_irena_dimension_names_are_case_insensitive(httpx_mock):
-    renamed = {**_DATA, "id": [d.replace("Grid connection", "Grid Connection") for d in _DATA["id"]]}
+    renamed = {
+        **_DATA,
+        "id": [d.replace("Grid connection", "Grid Connection") for d in _DATA["id"]],
+    }
     renamed["dimension"] = {
-        ("Grid Connection" if k == "Grid connection" else k): v for k, v in _DATA["dimension"].items()
+        ("Grid Connection" if k == "Grid connection" else k): v
+        for k, v in _DATA["dimension"].items()
     }
     httpx_mock.add_response(url=_FOLDER, json=_LISTING)
     httpx_mock.add_response(url=_TABLE_URL, method="GET", json=_META)
@@ -103,7 +109,9 @@ async def test_irena_dimension_names_are_case_insensitive(httpx_mock):
 
 async def test_irena_missing_dimension_names_what_changed(httpx_mock):
     broken = {**_DATA, "id": [d.replace("Year", "Period") for d in _DATA["id"]]}
-    broken["dimension"] = {("Period" if k == "Year" else k): v for k, v in _DATA["dimension"].items()}
+    broken["dimension"] = {
+        ("Period" if k == "Year" else k): v for k, v in _DATA["dimension"].items()
+    }
     httpx_mock.add_response(url=_FOLDER, json=_LISTING)
     httpx_mock.add_response(url=_TABLE_URL, method="GET", json=_META)
     httpx_mock.add_response(url=_TABLE_URL, method="POST", json=broken)
@@ -124,7 +132,9 @@ async def test_xm_daily_totals_skip_blank_hours_and_non_ecuador_links(httpx_mock
         _xm_item("2024-11-01", {"Hour01": "1000000", "Hour02": "", "Hour03": "500000"}),
         {
             "Date": "2024-11-01",
-            "HourlyEntities": [{"Id": "Enlace", "Values": {"code": "VENEZUELA 230", "Hour01": "9"}}],
+            "HourlyEntities": [
+                {"Id": "Enlace", "Values": {"code": "VENEZUELA 230", "Hour01": "9"}}
+            ],
         },
     ]
     httpx_mock.add_response(url=xm_client._URL, method="POST", json={"Items": items})

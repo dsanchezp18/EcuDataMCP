@@ -322,7 +322,9 @@ async def test_wpcp_boletines_recientes_merges_root_files_and_year_folders(httpx
     httpx_mock.add_response(method="POST", url=ajax_url, json=year_response)
 
     archivos = await sb._wpcp_boletines_recientes(
-        _WPCP_WIDGET_HTML, "https://www.superbancos.gob.ec/estadisticas/portalestudios/bancos/", "boletines_financieros"
+        _WPCP_WIDGET_HTML,
+        "https://www.superbancos.gob.ec/estadisticas/portalestudios/bancos/",
+        "boletines_financieros",
     )
 
     # One real file per year folder (the mistyped-domain entry is dropped
@@ -405,10 +407,20 @@ async def test_crawl_tree_follows_lazily_revealed_grandchildren(httpx_mock):
     # As capcol-bancos answers: the root lists year folders only; each year
     # folder's own response reveals its CAPTACIONES/COLOCACIONES children.
     responses = {
-        "": {"tree": [{"id": "R", "text": "Inicio", "parent": "#"},
-                      {"id": "Y14", "text": "Año 2014", "parent": "R"}], "html": ""},
-        "Y14": {"tree": [{"id": "C", "text": "CAPTACIONES", "parent": "Y14"},
-                         {"id": "Y14", "text": "Año 2014", "parent": "R"}], "html": ""},
+        "": {
+            "tree": [
+                {"id": "R", "text": "Inicio", "parent": "#"},
+                {"id": "Y14", "text": "Año 2014", "parent": "R"},
+            ],
+            "html": "",
+        },
+        "Y14": {
+            "tree": [
+                {"id": "C", "text": "CAPTACIONES", "parent": "Y14"},
+                {"id": "Y14", "text": "Año 2014", "parent": "R"},
+            ],
+            "html": "",
+        },
         "C": {"tree": [], "html": _file_html("F1", "captaciones dic 2014")},
     }
 
@@ -436,9 +448,7 @@ def test_widget_inside_a_tab_panel_takes_the_tab_title():
         '<span class="eael-tab-title title-after-icon" >Libros</span>'
         '<span class="eael-tab-title title-after-icon" >Boletín de Inclusión</span>'
         '<div class="clearfix eael-tab-content-item active">libros</div>'
-        '<div class="clearfix eael-tab-content-item inactive">'
-        + _WPCP_WIDGET_HTML
-        + "</div></div>"
+        '<div class="clearfix eael-tab-content-item inactive">' + _WPCP_WIDGET_HTML + "</div></div>"
     )
 
     widgets = sb._extract_all_wpcp_widgets(html)
@@ -453,8 +463,16 @@ async def test_generic_section_prefixes_page_label_and_dedups(httpx_mock, monkey
     async def fake_pagina(label, url, seccion):
         calls.append(url)
         return [
-            {"grupo": f"{label} / Año 2026", "titulo": "a.zip", "url": "https://www.superbancos.gob.ec/x/a"},
-            {"grupo": f"{label} / Año 2026", "titulo": "a.zip", "url": "https://www.superbancos.gob.ec/x/a"},
+            {
+                "grupo": f"{label} / Año 2026",
+                "titulo": "a.zip",
+                "url": "https://www.superbancos.gob.ec/x/a",
+            },
+            {
+                "grupo": f"{label} / Año 2026",
+                "titulo": "a.zip",
+                "url": "https://www.superbancos.gob.ec/x/a",
+            },
         ]
 
     monkeypatch.setattr(sb, "_pagina_generica", fake_pagina)

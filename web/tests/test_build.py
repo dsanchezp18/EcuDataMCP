@@ -73,7 +73,7 @@ def test_internal_links_resolve(site):
                 continue  # external, mailto:, or fragment-only
             path = unquote(parts.path)
             if path.startswith(PAGES_BASE):
-                target = site / path[len(PAGES_BASE):]
+                target = site / path[len(PAGES_BASE) :]
             elif path.startswith("/"):
                 target = site / path.lstrip("/")
             else:
@@ -89,9 +89,7 @@ def test_404_and_og_locale(site):
     page = (site / "404.html").read_text(encoding="utf-8")
     assert f'href="{PAGES_BASE}index.html"' in page
     assert f'href="{PAGES_BASE}en/index.html"' in page
-    assert 'og:locale" content="es_EC"' in (site / "index.html").read_text(
-        encoding="utf-8"
-    )
+    assert 'og:locale" content="es_EC"' in (site / "index.html").read_text(encoding="utf-8")
     en = (site / "en" / "index.html").read_text(encoding="utf-8")
     assert 'og:locale" content="en_US"' in en
     assert 'og:locale:alternate" content="es_EC"' in en
@@ -107,18 +105,14 @@ def test_home_counts_match_data(site, lang):
     tool_count = sum(len(cat["tools"]) for cat in tools)
     source_count = len(build.flatten_sources(build.load_json(lang, "sources.json")))
     home = site / ("index.html" if lang == "es" else "en/index.html")
-    nums = re.findall(
-        r'<span class="num">(\d+)</span>', home.read_text(encoding="utf-8")
-    )
+    nums = re.findall(r'<span class="num">(\d+)</span>', home.read_text(encoding="utf-8"))
     assert str(tool_count) in nums
     assert str(source_count) in nums
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_home_atlas_is_data_driven(site, lang):
-    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(
-        encoding="utf-8"
-    )
+    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(encoding="utf-8")
     source_count = len(build.flatten_sources(build.load_json(lang, "sources.json")))
     answers = build.load_json(lang, "stored_answers.json")
     assert home.count('class="dot"') == source_count
@@ -129,18 +123,14 @@ def test_home_atlas_is_data_driven(site, lang):
 
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_home_stored_answers_are_always_visible_cards(site, lang):
-    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(
-        encoding="utf-8"
-    )
+    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(encoding="utf-8")
     assert len(re.findall(r'<article class="qa-card"', home)) == 8
     assert '<details class="qa"' not in home
 
 
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_assets_are_cache_busted(site, lang):
-    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(
-        encoding="utf-8"
-    )
+    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(encoding="utf-8")
     assert re.search(r'site\.css\?v=[0-9a-f]{10}"', home)
     assert re.search(r'home\.css\?v=[0-9a-f]{10}"', home)
     assert re.search(r'home\.js\?v=[0-9a-f]{10}"', home)
@@ -148,9 +138,7 @@ def test_assets_are_cache_busted(site, lang):
 
 @pytest.mark.parametrize("lang", ["es", "en"])
 def test_home_has_no_hero_search(site, lang):
-    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(
-        encoding="utf-8"
-    )
+    home = (site / ("index.html" if lang == "es" else "en/index.html")).read_text(encoding="utf-8")
     assert 'id="sform"' not in home
     assert 'id="results"' not in home
     assert "lexicon" not in home

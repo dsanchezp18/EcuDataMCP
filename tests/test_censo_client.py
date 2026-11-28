@@ -138,9 +138,7 @@ async def test_a_404_is_an_error_not_a_page_of_results(httpx_mock, monkeypatch):
     # The retired /data-y-resultados/ URL answered 404 with the site chrome;
     # tolerating that status is what hid every tabulado.
     _fake_dns(monkeypatch)
-    httpx_mock.add_response(
-        url=censo_client.RESULTADOS_URL, status_code=404, html=_RESULTADOS_HTML
-    )
+    httpx_mock.add_response(url=censo_client.RESULTADOS_URL, status_code=404, html=_RESULTADOS_HTML)
 
     with pytest.raises(ValueError, match="HTTP 404"):
         await censo_client.search_censo_recursos()

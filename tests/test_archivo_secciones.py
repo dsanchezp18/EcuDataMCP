@@ -47,9 +47,7 @@ async def test_static_list_uses_the_source_key_as_id(monkeypatch):
 
     monkeypatch.setitem(archivo_secciones._STATIC_LISTS, "sipa", (fake_list, "modulo"))
     result = await archivo_secciones._list_secciones("sipa")
-    assert result["secciones"] == [
-        {"id": "economico", "nombre": "Económico", "url": "https://x"}
-    ]
+    assert result["secciones"] == [{"id": "economico", "nombre": "Económico", "url": "https://x"}]
 
 
 @pytest.mark.parametrize(

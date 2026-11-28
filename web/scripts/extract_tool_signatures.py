@@ -40,7 +40,11 @@ def unparse_type(node):
 
 def is_mcp_tool(func: ast.AsyncFunctionDef) -> bool:
     for dec in func.decorator_list:
-        if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Attribute) and dec.func.attr == "tool":
+        if (
+            isinstance(dec, ast.Call)
+            and isinstance(dec.func, ast.Attribute)
+            and dec.func.attr == "tool"
+        ):
             return True
         if isinstance(dec, ast.Attribute) and dec.attr == "tool":
             return True
@@ -123,18 +127,14 @@ def split_docstring(doc: str):
             match = entry_re.match(raw_line)
             if match and (base_indent is None or indent <= base_indent):
                 if current_name:
-                    args_doc[current_name] = re.sub(
-                        r"\s+", " ", " ".join(current_lines)
-                    ).strip()
+                    args_doc[current_name] = re.sub(r"\s+", " ", " ".join(current_lines)).strip()
                 base_indent = indent
                 current_name = match.group(2)
                 current_lines = [match.group(3)]
             elif current_name:
                 current_lines.append(raw_line.strip())
         if current_name:
-            args_doc[current_name] = re.sub(
-                r"\s+", " ", " ".join(current_lines)
-            ).strip()
+            args_doc[current_name] = re.sub(r"\s+", " ", " ".join(current_lines)).strip()
 
     return summary, args_doc
 
@@ -161,9 +161,7 @@ def main():
                 "args_doc": args_doc,
             }
 
-    OUT_PATH.write_text(
-        json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
+    OUT_PATH.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Extracted {len(result)} tools -> {OUT_PATH}")
 
 

@@ -47,7 +47,9 @@ def test_every_parameter_has_a_description():
 
 
 def test_every_description_is_a_short_summary():
-    long = {t.name: len(t.description) for t in _tools() if len(t.description) > DESCRIPTION_MAX_CHARS}
+    long = {
+        t.name: len(t.description) for t in _tools() if len(t.description) > DESCRIPTION_MAX_CHARS
+    }
     assert not long, f"descriptions over {DESCRIPTION_MAX_CHARS} chars: {long}"
 
 
@@ -60,9 +62,7 @@ def test_reference_resource_serves_the_full_docstring():
     contents = asyncio.run(main.mcp.read_resource("ecuador://herramientas/search_archivos"))
     text = contents[0].content
     assert text == TOOL_DOCS["search_archivos"]
-    assert len(text) > len(
-        next(t for t in _tools() if t.name == "search_archivos").description
-    )
+    assert len(text) > len(next(t for t in _tools() if t.name == "search_archivos").description)
 
 
 def test_strip_schema_titles_keeps_a_property_named_title():

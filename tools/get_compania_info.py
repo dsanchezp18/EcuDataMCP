@@ -39,9 +39,7 @@ def register_get_compania_info_tool(mcp: MCPServer) -> None:
         try:
             compania = await supercias_client.get_compania_by_ruc(ruc)
         except Exception as e:
-            raise ToolError(
-                f"Error al consultar el directorio de Supercías: {e}"
-            ) from e
+            raise ToolError(f"Error al consultar el directorio de Supercías: {e}") from e
 
         if compania is None:
             raise ToolError(

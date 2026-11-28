@@ -75,8 +75,7 @@ def _build_minimal_pdf(text: str) -> bytes:
     for off in offsets[1:]:
         out.append(f"{off:010d} 00000 n \n".encode())
     out.append(
-        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF"
-        .encode()
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF".encode()
     )
     return b"".join(out)
 

@@ -91,6 +91,8 @@ def _bulletin_lock(key: int) -> asyncio.Lock:
         lock = asyncio.Lock()
         _bulletin_fetch_locks[key] = lock
     return lock
+
+
 _LINK_RE = re.compile(
     r'<a\s+[^>]*href=["\'](?P<url>[^"\']+)["\'][^>]*>(?P<label>.*?)</a>',
     re.IGNORECASE | re.DOTALL,
@@ -99,9 +101,7 @@ _BULLETIN_RE = re.compile(
     r"m(?P<number>\d{4})(?P<month>\d{2})(?P<year>\d{4})\.html?(?:$|[?#])",
     re.IGNORECASE,
 )
-_TABLE_RE = re.compile(
-    r"(?P<name>IEM-(?P<number>\d+[\w-]*)-e)\.xlsx$", re.IGNORECASE
-)
+_TABLE_RE = re.compile(r"(?P<name>IEM-(?P<number>\d+[\w-]*)-e)\.xlsx$", re.IGNORECASE)
 _TAG_RE = re.compile(r"<[^>]+>")
 _WS_RE = re.compile(r"\s+")
 
@@ -292,41 +292,29 @@ async def _fetch_bulletins_fresh() -> list[dict[str, Any]]:
         raw_index, truncated = await download_bytes(IEM_INDEX_URL)
         if truncated:
             raise ValueError("El índice IEM del BCE superó el límite de descarga")
-        index_bulletins = _parse_bulletins(
-            raw_index.decode("utf-8", errors="replace")
-        )
+        index_bulletins = _parse_bulletins(raw_index.decode("utf-8", errors="replace"))
         latest_bulletins: list[dict[str, Any]] = []
         archive_bulletins: list[dict[str, Any]] = []
         failed_sources: list[str] = []
         try:
-            raw_latest, latest_truncated = await download_bytes(
-                IEM_LATEST_PUBLICATIONS_URL
-            )
+            raw_latest, latest_truncated = await download_bytes(IEM_LATEST_PUBLICATIONS_URL)
             if not latest_truncated:
-                latest_bulletins = _parse_bulletins(
-                    raw_latest.decode("utf-8", errors="replace")
-                )
+                latest_bulletins = _parse_bulletins(raw_latest.decode("utf-8", errors="replace"))
         except Exception as exc:
             # Keep the historical index as a safe fallback if the publications
             # page is temporarily unavailable or changes its markup.
             failed_sources.append("ultimas_publicaciones")
-            logger.warning(
-                "No se pudo reconciliar Últimas publicaciones del BCE: %s", exc
-            )
+            logger.warning("No se pudo reconciliar Últimas publicaciones del BCE: %s", exc)
         try:
             raw_archive, archive_truncated = await download_bytes(IEM_ARCHIVE_URL)
             if not archive_truncated:
-                archive_bulletins = _parse_bulletins(
-                    raw_archive.decode("utf-8", errors="replace")
-                )
+                archive_bulletins = _parse_bulletins(raw_archive.decode("utf-8", errors="replace"))
         except Exception as exc:
             # The older archive is supplementary: preserve the current index
             # when it is temporarily unavailable or its WordPress markup moves.
             failed_sources.append("archivo_historico")
             logger.warning("No se pudo cargar el archivo histórico IEM del BCE: %s", exc)
-        bulletins = _merge_bulletins(
-            latest_bulletins, index_bulletins, archive_bulletins
-        )
+        bulletins = _merge_bulletins(latest_bulletins, index_bulletins, archive_bulletins)
         if not bulletins:
             raise ValueError("No se encontraron boletines IEM en el índice del BCE")
         global _last_bulletin_failures
@@ -595,9 +583,7 @@ async def _fetch_tables_for_bulletin(bulletin: dict[str, Any]) -> list[dict[str,
         bulletin["archivos_completos"] = _parse_complete_files(html, bulletin)
         tables = _parse_tables(html, bulletin)
         if not tables:
-            zip_info = next(
-                (f for f in bulletin["archivos_completos"] if f["tipo"] == "zip"), None
-            )
+            zip_info = next((f for f in bulletin["archivos_completos"] if f["tipo"] == "zip"), None)
             if zip_info is not None:
                 tables = await _fetch_legacy_zip_tables(bulletin, zip_info)
         if not tables:
@@ -649,9 +635,7 @@ def persist_catalog(catalog: dict[str, Any]) -> dict[str, Any]:
         "persistido_en": now.isoformat(),
         "catalogo_id": stamp,
     }
-    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2).encode(
-        "utf-8"
-    )
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8")
     path = directory / f"catalog-{stamp}.json"
     temporary = directory / f".{path.name}.tmp"
     temporary.write_bytes(raw)
@@ -663,12 +647,9 @@ def persist_catalog(catalog: dict[str, Any]) -> dict[str, Any]:
     return {"directorio": str(directory), "archivo": str(path)}
 
 
-def _within_years(
-    bulletin: dict[str, Any], desde_anio: int, hasta_anio: int
-) -> bool:
-    return (
-        (not desde_anio or bulletin["anio"] >= desde_anio)
-        and (not hasta_anio or bulletin["anio"] <= hasta_anio)
+def _within_years(bulletin: dict[str, Any], desde_anio: int, hasta_anio: int) -> bool:
+    return (not desde_anio or bulletin["anio"] >= desde_anio) and (
+        not hasta_anio or bulletin["anio"] <= hasta_anio
     )
 
 
@@ -684,9 +665,7 @@ async def _fetch_historical_tables(
     is already newest-first, so capping keeps the most recent ones.
     """
     selected_bulletins = [
-        bulletin
-        for bulletin in bulletins
-        if _within_years(bulletin, desde_anio, hasta_anio)
+        bulletin for bulletin in bulletins if _within_years(bulletin, desde_anio, hasta_anio)
     ]
     if not selected_bulletins:
         raise ValueError("No hay boletines IEM en el rango solicitado")
@@ -699,9 +678,7 @@ async def _fetch_historical_tables(
         async with semaphore:
             return await _fetch_tables_for_bulletin(bulletin)
 
-    batches = await asyncio.gather(
-        *(fetch(b) for b in selected_bulletins), return_exceptions=True
-    )
+    batches = await asyncio.gather(*(fetch(b) for b in selected_bulletins), return_exceptions=True)
     tables: list[dict[str, Any]] = []
     loaded = 0
     for bulletin, batch in zip(selected_bulletins, batches, strict=True):
@@ -821,12 +798,30 @@ def _year(value: Any) -> int | None:
 
 
 _MONTHS = {
-    "ene": 1, "enero": 1, "feb": 2, "febrero": 2,
-    "mar": 3, "marzo": 3, "abr": 4, "abril": 4,
-    "may": 5, "mayo": 5, "jun": 6, "junio": 6,
-    "jul": 7, "julio": 7, "ago": 8, "agosto": 8,
-    "sep": 9, "sept": 9, "septiembre": 9, "oct": 10,
-    "octubre": 10, "nov": 11, "noviembre": 11, "dic": 12,
+    "ene": 1,
+    "enero": 1,
+    "feb": 2,
+    "febrero": 2,
+    "mar": 3,
+    "marzo": 3,
+    "abr": 4,
+    "abril": 4,
+    "may": 5,
+    "mayo": 5,
+    "jun": 6,
+    "junio": 6,
+    "jul": 7,
+    "julio": 7,
+    "ago": 8,
+    "agosto": 8,
+    "sep": 9,
+    "sept": 9,
+    "septiembre": 9,
+    "oct": 10,
+    "octubre": 10,
+    "nov": 11,
+    "noviembre": 11,
+    "dic": 12,
     "diciembre": 12,
 }
 
@@ -895,9 +890,7 @@ def _period_key_unbounded(value: Any) -> tuple[int, int] | None:
     return (year, int(numeric_month.group(1))) if numeric_month else (year, 0)
 
 
-def _period_bounds(
-    desde: str, hasta: str
-) -> tuple[tuple[int, int] | None, tuple[int, int] | None]:
+def _period_bounds(desde: str, hasta: str) -> tuple[tuple[int, int] | None, tuple[int, int] | None]:
     start = _period_key(desde) if desde else None
     end = _period_key(hasta) if hasta else None
     if desde and start is None:
@@ -920,15 +913,12 @@ def _period_in_bounds(
     year, month = period
     if month == 0:
         return (start is None or year >= start[0]) and (end is None or year <= end[0])
-    return (
-        (start is None or (year, month) >= (start[0], start[1] or 1))
-        and (end is None or (year, month) <= (end[0], end[1] or 12))
+    return (start is None or (year, month) >= (start[0], start[1] or 1)) and (
+        end is None or (year, month) <= (end[0], end[1] or 12)
     )
 
 
-def _selected_columns(
-    header: tuple[Any, ...], desde: str, hasta: str
-) -> list[tuple[int, str]]:
+def _selected_columns(header: tuple[Any, ...], desde: str, hasta: str) -> list[tuple[int, str]]:
     start, end = _period_bounds(desde, hasta)
 
     selected = []
@@ -961,8 +951,7 @@ def _extract_wide_series(
             for index, row in enumerate(all_rows)
             if row
             and any(
-                token in _strip(str(row[0] or ""))
-                for token in ("period", "ano", "fecha", "mes")
+                token in _strip(str(row[0] or "")) for token in ("period", "ano", "fecha", "mes")
             )
             and len(_selected_columns(row, "", "")) >= 2
         ),
@@ -1010,8 +999,7 @@ def _extract_wide_series(
             {
                 "nombre": label,
                 "valores": {
-                    period: row[index] if index < len(row) else None
-                    for index, period in selected
+                    period: row[index] if index < len(row) else None for index, period in selected
                 },
             }
         )
@@ -1027,9 +1015,7 @@ def _extract_wide_series(
 
 
 _FOOTNOTE_RE = re.compile(r"^\s*(\(\w{1,4}\)|fuente\b|nota\b|notas\b|elaboraci)", re.IGNORECASE)
-_HEADER_MARKER_RE = re.compile(
-    r"(?:\s*\(\s*(?:\d+|p|prel|sd|e)\s*\))+\s*$", re.IGNORECASE
-)
+_HEADER_MARKER_RE = re.compile(r"(?:\s*\(\s*(?:\d+|p|prel|sd|e)\s*\))+\s*$", re.IGNORECASE)
 _YEAR_ONLY_RE = re.compile(r"\s*(\d{4})(?:\s*\(\s*\w{1,5}\s*\))?\s*$")
 _MAX_HEADER_ROWS = 4
 _HEADER_JOINER = " — "
@@ -1113,8 +1099,9 @@ def _flatten_headers(levels: list[tuple[Any, ...]], width: int) -> list[str]:
     value in their first cell) over columns that have any header text of their
     own; the deepest level is never filled.
     """
-    grid = [[_clean_header_part(row[i]) if i < len(row) else "" for i in range(width)]
-            for row in levels]
+    grid = [
+        [_clean_header_part(row[i]) if i < len(row) else "" for i in range(width)] for row in levels
+    ]
     active = [any(level[i] for level in grid) for i in range(width)]
     for level in grid[:-1]:
         carry = ""
@@ -1157,9 +1144,7 @@ def _extract_long_table(
             (
                 position
                 for position, name in enumerate(names)
-                if any(
-                    token in name for token in ("period", "ano", "fecha", "mes")
-                )
+                if any(token in name for token in ("period", "ano", "fecha", "mes"))
             ),
             None,
         )
@@ -1204,12 +1189,7 @@ def _extract_long_table(
         names = _trim_trailing_blanks([_cell(value) for value in header])
     else:
         width = max(
-            (
-                i + 1
-                for row in levels
-                for i, value in enumerate(row)
-                if _cell(value).strip()
-            ),
+            (i + 1 for row in levels for i, value in enumerate(row) if _cell(value).strip()),
             default=0,
         )
         names = _flatten_headers(levels, width)
@@ -1239,17 +1219,14 @@ def _extract_long_table(
             if _FOOTNOTE_RE.match(_cell(row[period_index]) if period_index < len(row) else ""):
                 break
             if month_col < len(row) and (
-                _month_name(row[month_col]) is not None
-                or _month_range(row[month_col]) is not None
+                _month_name(row[month_col]) is not None or _month_range(row[month_col]) is not None
             ):
                 month_hits += 1
         composite = header_blank and month_hits >= 2
 
     period_header = "Período"
     first_data_col = month_col + 1 if composite else 0
-    out_headers = (
-        [period_header, *names[first_data_col:]] if composite else list(names)
-    )
+    out_headers = [period_header, *names[first_data_col:]] if composite else list(names)
 
     year: int | None = None
     month: int | None = None
@@ -1295,8 +1272,10 @@ def _extract_long_table(
                 continue
             period = (year, month or 0)
             label = (
-                f"{year} {month_text}" if month_text
-                else f"{year}-{month:02d}" if month
+                f"{year} {month_text}"
+                if month_text
+                else f"{year}-{month:02d}"
+                if month
                 else str(year)
             )
             cells = [_cell(value) for value in raw_row[first_data_col : len(names)]]
@@ -1403,8 +1382,7 @@ def _extract_matrix_series(
             continue
         label = " | ".join(descriptors)
         values = {
-            period: row[position] if position < len(row) else None
-            for position, period in selected
+            period: row[position] if position < len(row) else None for position, period in selected
         }
         if not any(value is not None for value in values.values()):
             current = {"unidad": label, "series": [], "truncada": False}
@@ -1425,8 +1403,7 @@ def _extract_matrix_series(
         "formato": "series_matriz",
         "periodos": [period for _, period in selected],
         "columnas_descriptivas": [
-            _cell(all_rows[header_index][position])
-            for position in descriptor_columns
+            _cell(all_rows[header_index][position]) for position in descriptor_columns
         ],
         "bloques": blocks,
     }
@@ -1479,9 +1456,7 @@ async def hash_catalog_tables(
             except Exception as exc:
                 return url, {"ok": False, "error": str(exc)}
 
-    async with httpx.AsyncClient(
-        headers={"User-Agent": USER_AGENT}, timeout=120.0
-    ) as session:
+    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=120.0) as session:
         hashed_by_url = dict(
             await asyncio.gather(*(hash_one(url, session) for url in selected_urls))
         )
@@ -1604,10 +1579,7 @@ def _read_zip_member_capped(zip_raw: bytes, member: str) -> bytes:
                     f"El miembro '{member}' ya no está en el ZIP del boletín IEM"
                 ) from exc
             total = sum(i.file_size for i in zf.infolist())
-            if (
-                info.file_size > _MAX_ZIP_MEMBER_BYTES
-                or total > _MAX_CONTAINER_UNCOMPRESSED_BYTES
-            ):
+            if info.file_size > _MAX_ZIP_MEMBER_BYTES or total > _MAX_CONTAINER_UNCOMPRESSED_BYTES:
                 raise ValueError(
                     "El ZIP del boletín IEM se expande por encima del límite "
                     f"seguro ({_MAX_ZIP_MEMBER_BYTES // 2**20} MB por archivo, "
@@ -1666,9 +1638,7 @@ def _inspect_legacy_xls(raw: bytes, max_rows: int) -> dict[str, Any]:
             sheets = [
                 {
                     "nombre": worksheet.title,
-                    **_inspect_worksheet_rows(
-                        worksheet.iter_rows(values_only=True), max_rows
-                    ),
+                    **_inspect_worksheet_rows(worksheet.iter_rows(values_only=True), max_rows),
                 }
                 for worksheet in workbook.worksheets
             ]
@@ -1678,9 +1648,7 @@ def _inspect_legacy_xls(raw: bytes, max_rows: int) -> dict[str, Any]:
     sheets = [
         {
             "nombre": sheet.name,
-            **_inspect_worksheet_rows(
-                _XlsSheetAdapter(sheet, workbook).iter_rows(), max_rows
-            ),
+            **_inspect_worksheet_rows(_XlsSheetAdapter(sheet, workbook).iter_rows(), max_rows),
         }
         for sheet in workbook.sheets()
     ]
@@ -1731,9 +1699,7 @@ async def get_table(
     """Download one IEM table version and return structured data when safe."""
     if boletin_numero:
         bulletins = await _fetch_bulletins()
-        bulletin = next(
-            (item for item in bulletins if item["numero"] == boletin_numero), None
-        )
+        bulletin = next((item for item in bulletins if item["numero"] == boletin_numero), None)
         if bulletin is None:
             raise ValueError(f"Boletín IEM '{boletin_numero}' no encontrado")
         tables = await _fetch_tables_for_bulletin(bulletin)

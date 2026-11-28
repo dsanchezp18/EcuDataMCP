@@ -69,8 +69,9 @@ async def test_search_publicaciones_detects_nuevo_flag(httpx_mock):
     result = await bce_publicaciones_client.search_publicaciones()
 
     nuevo_row = next(
-        p for p in result["publicaciones"] if "Reporte de Datos Monetarios" in p["titulo"]
-        and p["fecha"] == "2026-09-01"
+        p
+        for p in result["publicaciones"]
+        if "Reporte de Datos Monetarios" in p["titulo"] and p["fecha"] == "2026-09-01"
     )
     assert nuevo_row["nuevo"] is True
 

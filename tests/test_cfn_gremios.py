@@ -104,7 +104,9 @@ def test_parse_aeade_pairs_titles_with_links_and_skips_statutes():
 
 
 async def test_search_aeade_combines_both_pages_and_filters(httpx_mock):
-    httpx_mock.add_response(url=re.compile(r".*boletines-de-prensa-venta-de-vehiculos/"), text=_VENTAS)
+    httpx_mock.add_response(
+        url=re.compile(r".*boletines-de-prensa-venta-de-vehiculos/"), text=_VENTAS
+    )
     httpx_mock.add_response(url=re.compile(r".*aeade\.net/anuario/"), text=_ANUARIOS)
 
     everything = await gremios_client.search_aeade()

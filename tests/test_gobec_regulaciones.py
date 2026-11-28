@@ -89,7 +89,9 @@ async def test_find_institucion_flags_unread_pages_at_cap(httpx_mock):
 async def test_find_institucion_exhausted_listing_has_no_more(httpx_mock):
     httpx_mock.add_response(
         url="https://www.gob.ec/api/v1/instituciones?page=0",
-        json=[{"institucion_id": "8", "institucion": "Servicio de Rentas Internas", "siglas": "SRI"}],
+        json=[
+            {"institucion_id": "8", "institucion": "Servicio de Rentas Internas", "siglas": "SRI"}
+        ],
     )
     httpx_mock.add_response(url="https://www.gob.ec/api/v1/instituciones?page=1", json=[])
 
@@ -158,9 +160,7 @@ def _no_retry_sleep(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_tramites_retried_after_connection_dropped_mid_body(
-    httpx_mock, _no_retry_sleep
-):
+async def test_tramites_retried_after_connection_dropped_mid_body(httpx_mock, _no_retry_sleep):
     # Seen from Render 2026-10-07: gob.ec answered 200 for the ~1.8 MB SRI
     # page, then dropped the connection while the body was streaming.
     url = "https://www.gob.ec/api/v1/tramites?page=0&institution=8"
@@ -195,9 +195,7 @@ async def test_retry_backs_off_one_then_two_seconds(httpx_mock, _no_retry_sleep)
 
 
 @pytest.mark.asyncio
-async def test_slow_attempt_is_cut_off_and_retried(
-    httpx_mock, _no_retry_sleep, monkeypatch
-):
+async def test_slow_attempt_is_cut_off_and_retried(httpx_mock, _no_retry_sleep, monkeypatch):
     url = "https://www.gob.ec/api/v1/tramites?page=0&institution=8"
     monkeypatch.setattr(gobec_client, "_ATTEMPT_DEADLINE", 0.05)
 

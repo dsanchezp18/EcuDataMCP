@@ -1,4 +1,3 @@
-
 import pytest
 
 from helpers import sgr_publicaciones_client as client
@@ -126,7 +125,9 @@ async def test_list_eventos_sitrep_parses_all_events(httpx_mock):
     assert reciente["estado"] == "EN CURSO"
     assert "2026" in reciente["fecha_texto"]
     assert "Tungurahua" in reciente["descripcion"]
-    assert reciente["url"] == "https://www.gestionderiesgos.gob.ec/etapa-de-incendios-forestales-2026/"
+    assert (
+        reciente["url"] == "https://www.gestionderiesgos.gob.ec/etapa-de-incendios-forestales-2026/"
+    )
 
     antiguo = eventos["Terremoto 7.8 Mw Manabí, Pedernales"]
     assert antiguo["estado"] == "CERRADO"

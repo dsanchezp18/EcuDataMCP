@@ -58,15 +58,13 @@ _SECTOR_MAX_X = 1800.0
 # with helpers/centrosur_cortes_pdf.py.
 _MAX_PAGES = 200
 
-Chunk =tuple[float, float, float, str]  # x, y, font size, text
+Chunk = tuple[float, float, float, str]  # x, y, font size, text
 
 
 def _chunks(page: Any) -> list[Chunk]:
     out: list[Chunk] = []
 
-    def visit(
-        text: str, cm: list[float], tm: list[float], _font: Any, size: float
-    ) -> None:
+    def visit(text: str, cm: list[float], tm: list[float], _font: Any, size: float) -> None:
         text = text.strip()
         if text:
             out.append(
@@ -84,9 +82,7 @@ def _chunks(page: Any) -> list[Chunk]:
 
 def parse_horario(text: str) -> list[str]:
     """`"04:00 - 08:00 / 18:00 - 19:00"` → `["04:00-08:00", "18:00-19:00"]`."""
-    return [
-        f"{int(a):02d}:{b}-{int(c):02d}:{d}" for a, b, c, d in _TIME_RE.findall(text)
-    ]
+    return [f"{int(a):02d}:{b}-{int(c):02d}:{d}" for a, b, c, d in _TIME_RE.findall(text)]
 
 
 def _join(chunks: list[Chunk]) -> str:
@@ -179,9 +175,7 @@ def parse_page(page: Any) -> list[dict[str, Any]]:
         and bottom - 2 * pitch <= c[1] <= top + pitch
         and _TIME_TOKEN_RE.match(c[3])
     ]
-    label_chunks = [
-        c for c in left if not (c[0] < _TIME_COLUMN_X and _TIME_TOKEN_RE.match(c[3]))
-    ]
+    label_chunks = [c for c in left if not (c[0] < _TIME_COLUMN_X and _TIME_TOKEN_RE.match(c[3]))]
     labels = _merge_labels(label_chunks)
     time_labels = _time_labels(time_tokens)
 
@@ -193,9 +187,7 @@ def parse_page(page: Any) -> list[dict[str, Any]]:
 
     out: list[dict[str, Any]] = []
     for row in rows:
-        mine = [
-            lab for lab in labels if row[-1][1] - pitch <= lab[1] <= row[0][1] + pitch
-        ]
+        mine = [lab for lab in labels if row[-1][1] - pitch <= lab[1] <= row[0][1] + pitch]
         if len(mine) <= 1:
             parts = [(mine[0][0] if mine else None, row)]
         else:

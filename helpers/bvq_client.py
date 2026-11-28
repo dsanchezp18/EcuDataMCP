@@ -149,8 +149,7 @@ def _titulo_from_url(url: str) -> str:
 def list_secciones() -> list[dict[str, str]]:
     """The fixed BVQ statistics sections (see module docstring)."""
     return [
-        {"seccion": s["seccion"], "nombre": s["nombre"], "url": s["paginas"][0]}
-        for s in _SECCIONES
+        {"seccion": s["seccion"], "nombre": s["nombre"], "url": s["paginas"][0]} for s in _SECCIONES
     ]
 
 

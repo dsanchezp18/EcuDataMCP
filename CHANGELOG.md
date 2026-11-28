@@ -37,6 +37,9 @@
   on 2026-11-27 and 11-28, from the runners and from a home connection in
   Ecuador, while port 80 answered. Other `maate` errors and the IGM stay
   failures.
+- **CI checks formatting.** The repository is formatted with `ruff format` at
+  line length 100 in one mechanical commit, listed in `.git-blame-ignore-revs`,
+  and CI now runs `ruff format --check .` next to `ruff check .`.
 - **Docs.** `list_zip_contents` and `read_zip_member` no longer say the server
   must honor Range (since 0.15.2 a .zip from such a host is downloaded whole),
   in the tools and on the site in both languages; `aggregate_csv` says how a

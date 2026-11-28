@@ -47,7 +47,9 @@ _SERIES = [
     ],
 ]
 
-_ERROR = [{"message": [{"id": "175", "key": "Invalid format", "value": "The indicator was not found."}]}]
+_ERROR = [
+    {"message": [{"id": "175", "key": "Invalid format", "value": "The indicator was not found."}]}
+]
 
 _SERIES_URL = "https://api.worldbank.org/v2/country/ECU/indicator/EG.ELC.ACCS.ZS"
 
@@ -152,9 +154,7 @@ async def test_get_indicador_reads_every_page(httpx_mock):
         ],
     ]
     httpx_mock.add_response(url=f"{_SERIES_URL}?format=json&per_page=1000", json=page_one)
-    httpx_mock.add_response(
-        url=f"{_SERIES_URL}?format=json&per_page=1000&page=2", json=page_two
-    )
+    httpx_mock.add_response(url=f"{_SERIES_URL}?format=json&per_page=1000&page=2", json=page_two)
 
     result = await client.get_indicador("EG.ELC.ACCS.ZS")
 

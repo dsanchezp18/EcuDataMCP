@@ -188,9 +188,7 @@ def _categoria_archivos(html: str, categoria: dict[str, Any]) -> list[dict[str, 
         seen.add(entry_id)
         url = data.group("url")
         if not _is_edusuperior_url(url):
-            logger.warning(
-                "SENESCYT Biblioteca: descartado link con dominio inesperado (%s).", url
-            )
+            logger.warning("SENESCYT Biblioteca: descartado link con dominio inesperado (%s).", url)
             continue
         archivos.append(
             {

@@ -111,9 +111,7 @@ async def search_archivos(query: str = "") -> dict[str, Any]:
     """
     files = await _fetch_files()
     q = _strip(query)
-    matched = [
-        f for f in files if not q or q in _strip(f["label"]) or q in _strip(f["url"])
-    ]
+    matched = [f for f in files if not q or q in _strip(f["label"]) or q in _strip(f["url"])]
     return {
         "total": len(matched),
         "total_en_pagina": len(files),

@@ -38,9 +38,7 @@ def register_get_auditor_info_tool(mcp: MCPServer) -> None:
         try:
             auditor = await supercias_client.get_auditor_info(identificacion)
         except Exception as e:
-            raise ToolError(
-                f"Error al consultar el listado de auditores externos: {e}"
-            ) from e
+            raise ToolError(f"Error al consultar el listado de auditores externos: {e}") from e
 
         if auditor is None:
             raise ToolError(
@@ -58,9 +56,7 @@ def register_get_auditor_info_tool(mcp: MCPServer) -> None:
                 f"Nacionalidad: {a.get('nacionalidad')}",
                 f"Resolución: {a.get('numero_de_resolucion')} ({a.get('fecha_de_resolucion')})",
             ]
-            ubicacion = "  ·  ".join(
-                part for part in (a.get("provincia"), a.get("canton")) if part
-            )
+            ubicacion = "  ·  ".join(part for part in (a.get("provincia"), a.get("canton")) if part)
             if ubicacion:
                 parts.append("")
                 parts.append(f"Ubicación: {ubicacion}")

@@ -6,9 +6,7 @@ import pytest
 from helpers import ant_client, ckan_client, inec_client
 
 _WP_POSTS = re.compile(r"https://www\.ecuadorencifras\.gob\.ec/wp-json/wp/v2/posts.*")
-_WP_CATS = re.compile(
-    r"https://www\.ecuadorencifras\.gob\.ec/wp-json/wp/v2/categories.*"
-)
+_WP_CATS = re.compile(r"https://www\.ecuadorencifras\.gob\.ec/wp-json/wp/v2/categories.*")
 _CKAN_ORG = re.compile(r".*/api/3/action/package_search.*fq=organization.*")
 _CKAN_SEARCH = re.compile(r".*/api/3/action/package_search.*")
 
@@ -68,9 +66,7 @@ async def test_search_combines_inec_and_ckan(httpx_mock):
         url=_CKAN_ORG,
         json={
             "success": True,
-            "result": {
-                "results": [_pkg("excesos-velocidad", "Excesos de velocidad", "antec")]
-            },
+            "result": {"results": [_pkg("excesos-velocidad", "Excesos de velocidad", "antec")]},
         },
         is_reusable=True,
     )
@@ -126,9 +122,7 @@ async def test_ckan_failure_keeps_inec_results(httpx_mock):
 
 
 @pytest.mark.asyncio
-async def test_failed_attached_files_lookup_is_reported_but_others_survive(
-    httpx_mock, monkeypatch
-):
+async def test_failed_attached_files_lookup_is_reported_but_others_survive(httpx_mock, monkeypatch):
     _mock_inec(httpx_mock)
     httpx_mock.add_response(
         url=_CKAN_SEARCH,

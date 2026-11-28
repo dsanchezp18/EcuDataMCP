@@ -73,9 +73,7 @@ def make_xlsb(sheets: dict[str, list[list]]) -> bytes:
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("[Content_Types].xml", "<Types/>")
         zf.writestr("xl/workbook.bin", b"".join(workbook))
-        zf.writestr(
-            "xl/_rels/workbook.bin.rels", f"<Relationships>{''.join(rels)}</Relationships>"
-        )
+        zf.writestr("xl/_rels/workbook.bin.rels", f"<Relationships>{''.join(rels)}</Relationships>")
         zf.writestr("xl/sharedStrings.bin", b"".join(table))
         for i, part in enumerate(sheet_parts, start=1):
             zf.writestr(f"xl/worksheets/sheet{i}.bin", part)

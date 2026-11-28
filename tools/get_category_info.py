@@ -86,8 +86,7 @@ def register_get_category_info_tool(mcp: MCPServer) -> None:
                     parts.append(f"   ID: {pkg.get('id', '')}")
             parts.append("")
             parts.append(
-                f"Tip: Usa search_datasets(query='', category='{data['name']}') "
-                "para explorar más."
+                f"Tip: Usa search_datasets(query='', category='{data['name']}') para explorar más."
             )
             return "\n".join(parts)
 

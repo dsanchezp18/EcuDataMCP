@@ -17,9 +17,7 @@ def _make_tool():
     return mcp._tool_manager.get_tool("download_resource").fn
 
 
-def _mock_resource(
-    monkeypatch, *, url="https://x/archivo.rar", fmt="RAR", name="Archivo"
-):
+def _mock_resource(monkeypatch, *, url="https://x/archivo.rar", fmt="RAR", name="Archivo"):
     async def fake_get_resource(resource_id, source="nacional", session=None):
         return {"url": url, "format": fmt, "name": name}
 

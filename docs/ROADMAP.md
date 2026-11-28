@@ -402,7 +402,7 @@ Capacidades transversales, no atadas a una sola fuente de datos.
 | Búsqueda semántica | No iniciado | `search_datasets` sigue siendo keyword puro de CKAN, sin comprensión semántica sobre el catálogo completo |
 | Capa HTTP compartida y caché persistente (fase 7 de la arquitectura MCP) | Parcial — base hecha 2026-11-04, falta migrar clientes | `helpers/http_client.py` (timeout por perfil, `get_with_retry`) ya lo usa SERCOP, y `TtlCache(persist=...)` guarda en `data/cache/` y sobrevive reinicios (`ECUADOR_MCP_DISK_CACHE=0` lo desactiva). Falta migrar los demás clientes con `httpx` directo (26 archivos de `helpers/` al 2026-11-28), fuente por fuente → MCP_ARCHITECTURE.md § Fase 7 |
 | Manejo geoespacial | Parcial | `get_capa_geo_datos` ya agrupa y suma atributos de una capa (`agrupar`, `sumar`). Falta: WKT/GeoJSON más allá del stripping actual (geometrías, filtros espaciales) |
-| Type-checking y formato en CI | No iniciado | CI corre `ruff check`, no `ruff format --check` (271 de 394 archivos cambiarían, 2026-11-28): activarlo pide un commit mecánico único con `.git-blame-ignore-revs`. ruff cubre estilo/imports pero no errores de tipo; riesgo de destapar errores preexistentes en 40+ archivos — evaluar alcance antes de activar el gate |
+| Type-checking en CI | No iniciado | El formato ya se exige (`ruff format --check` en CI desde 2026-11-28, ancho 100, con el commit mecánico en `.git-blame-ignore-revs`). ruff cubre estilo/imports pero no errores de tipo; riesgo de destapar errores preexistentes en 40+ archivos — evaluar alcance antes de activar el gate |
 
 ---
 

@@ -15,12 +15,8 @@ from helpers.user_agent import USER_AGENT
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 _TIMEOUT = 35.0
-_COE2_SERVICE = (
-    "https://sgrportal.gestionderiesgos.gob.ec/server/rest/services/COE2/MapServer"
-)
-_SAT_LAYER = (
-    "https://sgrportal.gestionderiesgos.gob.ec/server/rest/services/SAT/MapServer/0"
-)
+_COE2_SERVICE = "https://sgrportal.gestionderiesgos.gob.ec/server/rest/services/COE2/MapServer"
+_SAT_LAYER = "https://sgrportal.gestionderiesgos.gob.ec/server/rest/services/SAT/MapServer/0"
 
 _events_cache = TtlCache(ttl_seconds=300.0, max_entries=8)
 
@@ -131,10 +127,10 @@ async def list_risk_events(
 
     # Newest first (OBJECTID numeric, not string-sorted), then stable-sort
     # active/follow-up events to the front.
+    matched.sort(key=lambda a: (str(a.get("FechaDelEvento", "")), _object_id(a)), reverse=True)
     matched.sort(
-        key=lambda a: (str(a.get("FechaDelEvento", "")), _object_id(a)), reverse=True
+        key=lambda a: 0 if "seguimiento" in _strip(str(a.get("EstadoDelEvento", ""))) else 1
     )
-    matched.sort(key=lambda a: 0 if "seguimiento" in _strip(str(a.get("EstadoDelEvento", ""))) else 1)
     limit = min(max(limit, 1), 100)
     return {
         "total": len(matched),

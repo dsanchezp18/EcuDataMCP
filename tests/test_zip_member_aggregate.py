@@ -67,9 +67,7 @@ def _make_zip(members: dict[str, bytes], method: int = zipfile.ZIP_DEFLATED) -> 
     return buf.getvalue()
 
 
-def _serve(
-    httpx_mock, blob: bytes, *, ranges: bool = True, identity_only: bool = False
-) -> None:
+def _serve(httpx_mock, blob: bytes, *, ranges: bool = True, identity_only: bool = False) -> None:
     """Answer Range requests from `blob`, or 200 with the whole file every time.
 
     `identity_only` mimics descargas.sri.gob.ec, which ignores Range unless the
@@ -471,9 +469,7 @@ async def test_two_calls_for_the_same_member_share_one_range_fetch(httpx_mock, m
 
     calls = [
         asyncio.ensure_future(
-            csv_reader.locate_zip_member(
-                URL, MEMBER, max_compressed=10**9, max_uncompressed=10**9
-            )
+            csv_reader.locate_zip_member(URL, MEMBER, max_compressed=10**9, max_uncompressed=10**9)
         )
         for _ in range(2)
     ]

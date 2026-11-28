@@ -191,9 +191,7 @@ async def list_earthquakes(
     events = await _fetch_events()
 
     q = _strip(query)
-    cutoff = (
-        (datetime.now(UTC) - timedelta(days=dias)).isoformat() if dias > 0 else ""
-    )
+    cutoff = (datetime.now(UTC) - timedelta(days=dias)).isoformat() if dias > 0 else ""
 
     matched = []
     for ev in events:

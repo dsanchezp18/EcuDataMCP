@@ -71,9 +71,9 @@ def register_get_tramite_info_tool(mcp: MCPServer) -> None:
             "regulaciones": [
                 {
                     "regulacion_id": r.get("regulacion_id"),
-                    "regulacion": _clean_html(
-                        r.get("regulacion") or r.get("nombre") or ""
-                    ).strip('"'),
+                    "regulacion": _clean_html(r.get("regulacion") or r.get("nombre") or "").strip(
+                        '"'
+                    ),
                     "registro_oficial_numero": r.get("registro_oficial_numero"),
                 }
                 for r in regs[:8]
@@ -102,7 +102,9 @@ def register_get_tramite_info_tool(mcp: MCPServer) -> None:
                 val = data.get(key) or ""
                 if val:
                     parts.append("")
-                    parts.append(f"{label}:\n{val}" if "\n" in val or len(val) > 80 else f"{label}: {val}")
+                    parts.append(
+                        f"{label}:\n{val}" if "\n" in val or len(val) > 80 else f"{label}: {val}"
+                    )
             regs_list = data.get("regulaciones") or []
             if regs_list:
                 parts.append("")

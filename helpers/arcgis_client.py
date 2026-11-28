@@ -275,8 +275,7 @@ _CATALOGO: dict[str, list[dict[str, str]]] = {
 
 _SOURCES = {
     "arconel": (
-        "ARCONEL — servicios ArcGIS del SISDAT (services3.arcgis.com y "
-        "geoportal.arconel.gob.ec)"
+        "ARCONEL — servicios ArcGIS del SISDAT (services3.arcgis.com y geoportal.arconel.gob.ec)"
     ),
     "celec": "CELEC EP — portal ArcGIS (portalarcgis.celec.gob.ec)",
     "msp": "Ministerio de Salud Pública — ArcGIS Online (services7.arcgis.com)",

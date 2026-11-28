@@ -113,9 +113,7 @@ def with_http_security(
                 ]
                 if len(hits) >= rate_limit_requests:
                     rate_hits[client_key] = hits
-                    retry_after = max(
-                        1, math.ceil(rate_limit_window_seconds - (now - hits[0]))
-                    )
+                    retry_after = max(1, math.ceil(rate_limit_window_seconds - (now - hits[0])))
                     await _json_response(
                         send,
                         429,

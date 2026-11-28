@@ -59,9 +59,7 @@ async def _fetch_json(
 ) -> dict[str, Any]:
     own = session is None
     if own:
-        session = httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url)
-        )
+        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url))
     assert session is not None
     try:
         logger.debug("CKAN GET %s params=%s", url, params)
@@ -144,8 +142,7 @@ def _resolve_source(source: str) -> tuple[str, str]:
         return _SOURCES[source]
     except KeyError:
         raise ValueError(
-            f"source inválido: {source!r}. Usa 'nacional', 'cuenca', "
-            "'latacunga' o 'iadb'."
+            f"source inválido: {source!r}. Usa 'nacional', 'cuenca', 'latacunga' o 'iadb'."
         ) from None
 
 
@@ -221,9 +218,7 @@ async def search_datasets(
         params["fq"] = f"groups:{_solr_quote(category)}"
     if sort:
         params["sort"] = sort
-    return await _fetch_json(
-        _ckan_url("package_search", source), params=params, session=session
-    )
+    return await _fetch_json(_ckan_url("package_search", source), params=params, session=session)
 
 
 async def search_datasets_by_filter(
@@ -288,9 +283,7 @@ async def list_organizations(
     }
     if query:
         params["q"] = query
-    return await _fetch_json(
-        _ckan_url("organization_list", source), params=params, session=session
-    )
+    return await _fetch_json(_ckan_url("organization_list", source), params=params, session=session)
 
 
 async def _list_organization_packages(
@@ -353,9 +346,7 @@ async def get_group(
     params: dict[str, Any] = {"id": group_id}
     if include_datasets:
         params["include_datasets"] = "true"
-    return await _fetch_json(
-        _ckan_url("group_show", source), params=params, session=session
-    )
+    return await _fetch_json(_ckan_url("group_show", source), params=params, session=session)
 
 
 async def datastore_search(
@@ -383,6 +374,4 @@ async def datastore_search(
         params["fields"] = ",".join(fields)
     if sort:
         params["sort"] = sort
-    return await _fetch_json(
-        _ckan_url("datastore_search", source), params=params, session=session
-    )
+    return await _fetch_json(_ckan_url("datastore_search", source), params=params, session=session)

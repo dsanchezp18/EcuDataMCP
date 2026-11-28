@@ -157,6 +157,7 @@ def _datapoint(row: dict[str, Any]) -> dict[str, Any]:
         return {"fecha": row["Fecha"], "valor": valores["Valor"]}
     return {"fecha": row["Fecha"], "valores": valores}
 
+
 # Files change at most once a day (some less often); cache accordingly.
 _files_cache = TtlCache(ttl_seconds=21600.0, max_entries=len(_ARCHIVOS))
 _fetch_lock = asyncio.Lock()
@@ -267,7 +268,11 @@ async def get_indicador_diario(
     truncado = False
     observaciones_en_rango: int | None = None
     if desde or hasta:
-        ventana = [r for r in matching if (not desde or r["Fecha"] >= desde) and (not hasta or r["Fecha"] <= hasta)]
+        ventana = [
+            r
+            for r in matching
+            if (not desde or r["Fecha"] >= desde) and (not hasta or r["Fecha"] <= hasta)
+        ]
         observaciones_en_rango = len(ventana)
         # The range is cut to its most recent _MAX_VENTANA rows; say so, or a
         # 3-year window silently comes back as one year.
@@ -285,7 +290,11 @@ async def get_indicador_diario(
         "indicador": first.get("Indicador"),
         "periodicidad": first.get("Periodicidad"),
         "unidad": first.get("Medida"),
-        "rango_completo": {"desde": first["Fecha"], "hasta": last["Fecha"], "n_datos": len(matching)},
+        "rango_completo": {
+            "desde": first["Fecha"],
+            "hasta": last["Fecha"],
+            "n_datos": len(matching),
+        },
         "observaciones_en_rango": observaciones_en_rango,
         "truncado": truncado,
         "datos": [_datapoint(r) for r in ventana],

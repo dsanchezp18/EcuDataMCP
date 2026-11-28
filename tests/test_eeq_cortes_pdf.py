@@ -93,12 +93,8 @@ def test_parse_pdf_2024_layout():
         "SAN ROQUE",
         "MIRAFLORES",
     ]
-    assert filas[0]["sectores"] == (
-        "PASTEURIZADORA Y ALREDEDORES, CHIMBACALLE, CALLES RÍO CHAMBO"
-    )
-    assert (
-        filas[2]["sectores"] == "MERCADO DE SAN ROQUE, TEMPLO DE LA PATRIA, LA RECOLETA"
-    )
+    assert filas[0]["sectores"] == ("PASTEURIZADORA Y ALREDEDORES, CHIMBACALLE, CALLES RÍO CHAMBO")
+    assert filas[2]["sectores"] == "MERCADO DE SAN ROQUE, TEMPLO DE LA PATRIA, LA RECOLETA"
     assert filas[3]["sectores"] == "CALLES BOLIVIA Y RITTER, LA GASCA"
     assert all(f["horario"] == ["07:30-10:30", "18:00-19:00"] for f in filas)
     assert filas[0]["fecha_texto"] == "Lunes 29 de abril de 2024"
@@ -138,9 +134,7 @@ async def test_get_eeq_cortes_horarios_filters_by_query(httpx_mock):
         headers={"Content-Type": "application/pdf"},
     )
 
-    result = await eeq_cortes_client.get_eeq_cortes_horarios(
-        "29_04_2024", query="templo"
-    )
+    result = await eeq_cortes_client.get_eeq_cortes_horarios("29_04_2024", query="templo")
 
     assert result["total"] == 1
     assert result["total_en_archivo"] == 4

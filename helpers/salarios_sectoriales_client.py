@@ -143,14 +143,11 @@ async def _fetch_entries() -> list[dict[str, Any]]:
             return cached
 
         logger.info(
-            "Descargando la Biblioteca del Ministerio del Trabajo para "
-            "salarios sectoriales"
+            "Descargando la Biblioteca del Ministerio del Trabajo para salarios sectoriales"
         )
         content, truncated = await download_bytes(_PAGE_URL)
         if truncated:
-            raise ValueError(
-                f"La página de {_PAGE_URL} superó el límite de descarga."
-            )
+            raise ValueError(f"La página de {_PAGE_URL} superó el límite de descarga.")
         page_html = content.decode("utf-8", errors="replace")
 
         entries = _parse_entries(page_html)
