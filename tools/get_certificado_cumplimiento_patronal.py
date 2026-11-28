@@ -77,7 +77,9 @@ def register_get_certificado_cumplimiento_patronal_tool(mcp: MCPServer) -> None:
                 parts.append(f"Empresa: {data.get('empresa')}")
             parts.append(f"Dirección: {data.get('direccion')}")
             parts.append(f"Estado: {estado}")
-            parts.append(f"Emitido: {data.get('fecha_emision')} (válido {data.get('validez_dias')} días)")
+            parts.append(
+                f"Emitido: {data.get('fecha_emision')} (válido {data.get('validez_dias')} días)"
+            )
             parts.append("")
             parts.append(data.get("nota_alcance", ""))
             parts.append(f"Fuente: {data.get('url_fuente')}")

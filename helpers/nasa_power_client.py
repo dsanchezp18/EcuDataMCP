@@ -51,19 +51,20 @@ _NOTA = (
     "punto exacto. Los días recientes pueden faltar: NASA publica con unos días de rezago."
 )
 
-# Seen 2026-11-24 to 11-27. On the 24th the Guayaquil cell's October rain averaged
-# 21 mm/day and Quito showed tens of mm a day from October; by the 27th a range
-# ending 31 October named only MERRA2 and the same October averaged 8 mm/day in
-# Guayaquil and 2.75 in Quito. November, still GEOS-IT, kept 29 and 23 mm/day
-# (Open-Meteo: 10 at Quito, with no step on 1 November).
+# Seen 2026-11-24 to 11-28; the figures stay here and in docs/RESEARCH.md, not in
+# the note, because NASA revises them. On the 24th the Guayaquil cell's October
+# rain averaged 21 mm/day and Quito showed tens of mm a day from October; by the
+# 27th a range ending 31 October named only MERRA2 and the same October averaged
+# 8 mm/day in Guayaquil and 2.75 in Quito. At the Quito point the daily rain went
+# from 4.9 mm on 31 October to 40.6 mm on 1 November, the first GEOS-IT day
+# (Open-Meteo: no step, and 10 mm/day for November against 23). On the 28th
+# November was still GEOS-IT only.
 _GEOSIT_NOTE = (
     "Los días más recientes (`fuentes_datos` incluye GEOSIT) son provisionales: NASA los "
-    "calcula con GEOS-IT hasta que llega MERRA-2 y entonces los reemplaza. En Ecuador "
-    "GEOS-IT da mucha más lluvia: el 1 de noviembre de 2026 la lluvia diaria de la celda de "
-    "Quito pasó de 4,9 a 40,6 mm sin que Open-Meteo registrara salto alguno, y la de octubre "
-    "en la celda de Guayaquil figuraba con 21 mm/día el 24 de noviembre y con 8 mm/día el 27, "
-    "ya con MERRA-2. No compares esos días con los anteriores ni los tomes como un episodio "
-    "sin otra fuente."
+    "calcula con GEOS-IT hasta que llega MERRA-2, semanas después, y entonces los reemplaza. "
+    "En Ecuador GEOS-IT da varias veces más lluvia que MERRA-2, así que la serie salta en el "
+    "primer día GEOS-IT sin que haya llovido más. No compares esos días con los anteriores "
+    "ni los tomes como un episodio de lluvia sin otra fuente."
 )
 
 # clave -> (POWER parameter, unit, name). The units are the ones the API
@@ -102,9 +103,7 @@ def parse_date(value: str, *, end: bool) -> date:
             raise ValueError(value)
         return date(year, month, day)
     except ValueError as exc:
-        raise ValueError(
-            f"Fecha '{value}' no válida; usa AAAA, AAAA-MM o AAAA-MM-DD."
-        ) from exc
+        raise ValueError(f"Fecha '{value}' no válida; usa AAAA, AAAA-MM o AAAA-MM-DD.") from exc
 
 
 def resolve_period(desde: str, hasta: str, frecuencia: str) -> tuple[date, date]:
@@ -169,12 +168,18 @@ def build_rows(
         year, month = int(key[:4]), int(key[4:6])
         day = int(key[6:8]) if frecuencia == "diaria" else 1
         period_start = date(year, month, day)
-        period_end = date(year, month, day) if frecuencia == "diaria" else date(
-            year, month, calendar.monthrange(year, month)[1]
+        period_end = (
+            date(year, month, day)
+            if frecuencia == "diaria"
+            else date(year, month, calendar.monthrange(year, month)[1])
         )
         if period_end < start or period_start > stop:
             continue
-        label = f"{key[:4]}-{key[4:6]}-{key[6:8]}" if frecuencia == "diaria" else f"{key[:4]}-{key[4:6]}"
+        label = (
+            f"{key[:4]}-{key[4:6]}-{key[6:8]}"
+            if frecuencia == "diaria"
+            else f"{key[:4]}-{key[4:6]}"
+        )
         row: dict[str, Any] = {"periodo": label}
         for clave in claves:
             row[clave] = _value(parameter.get(VARIABLES[clave][0], {}).get(key))
@@ -207,7 +212,9 @@ def summarize(rows: list[dict[str, Any]], claves: list[str], frecuencia: str) ->
                     for r in rows
                     if r["lluvia"] is not None
                 ]
-                item["acumulado_mm"] = round(sum(v * d for v, d in zip(values, days, strict=True)), 1)
+                item["acumulado_mm"] = round(
+                    sum(v * d for v, d in zip(values, days, strict=True)), 1
+                )
         summary[clave] = item
     return summary
 
@@ -228,7 +235,9 @@ async def _fetch_fresh(url: str) -> dict[str, Any]:
         return cached
     raw, truncated = await download_bytes(url, raise_for_status=frozenset({422}))
     if truncated:
-        raise ValueError("La respuesta de NASA POWER superó el límite de descarga; acota el período.")
+        raise ValueError(
+            "La respuesta de NASA POWER superó el límite de descarga; acota el período."
+        )
     try:
         payload = json.loads(raw.decode("utf-8", errors="replace"))
     except json.JSONDecodeError as exc:
@@ -280,7 +289,14 @@ async def get_clima(
         "format": "JSON",
     }
     url = f"{_API}/{'daily' if daily else 'monthly'}/point?" + urlencode(query)
-    logger.info("Consultando NASA POWER %s en %.3f,%.3f (%s a %s)", frecuencia, latitud, longitud, start, stop)
+    logger.info(
+        "Consultando NASA POWER %s en %.3f,%.3f (%s a %s)",
+        frecuencia,
+        latitud,
+        longitud,
+        start,
+        stop,
+    )
     payload = await _fetch(url)
 
     parameter = (payload.get("properties") or {}).get("parameter") or {}
@@ -304,7 +320,12 @@ async def get_clima(
         "hasta": stop.isoformat(),
         "ultimo_periodo_con_dato": last,
         "variables": [
-            {"clave": c, "parametro": VARIABLES[c][0], "nombre": VARIABLES[c][2], "unidad": VARIABLES[c][1]}
+            {
+                "clave": c,
+                "parametro": VARIABLES[c][0],
+                "nombre": VARIABLES[c][2],
+                "unidad": VARIABLES[c][1],
+            }
             for c in claves
         ],
         "total_registros": len(rows),

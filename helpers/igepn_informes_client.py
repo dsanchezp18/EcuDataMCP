@@ -59,9 +59,7 @@ _ROWS_PER_PAGE = 30  # the widget's own max option; one page only (see module do
 
 _GRUPOS: dict[str, str] = {"sismico": "78", "volcanico": "79"}
 
-_VIEWSTATE_UPDATE_RE = re.compile(
-    r"javax\.faces\.ViewState[^>]*>\s*<!\[CDATA\[(?P<vs>[^\]]+)\]\]>"
-)
+_VIEWSTATE_UPDATE_RE = re.compile(r"javax\.faces\.ViewState[^>]*>\s*<!\[CDATA\[(?P<vs>[^\]]+)\]\]>")
 _VIEWSTATE_INITIAL_RE = re.compile(r'javax\.faces\.ViewState:0" value="(?P<vs>[^"]+)"')
 _ROW_RE = re.compile(r'<li class="ui-dataview-row">(?P<row>.*?)</li>', re.DOTALL)
 _BUTTON_RE = re.compile(r'<button id="(?P<id>form:j_idt42:\d+:[^"]+)"')
@@ -119,9 +117,7 @@ async def _get_viewstate(client: httpx.AsyncClient) -> str:
     return vs
 
 
-async def _search_page(
-    client: httpx.AsyncClient, viewstate: str, grupo_id: str, anio: int
-) -> str:
+async def _search_page(client: httpx.AsyncClient, viewstate: str, grupo_id: str, anio: int) -> str:
     data = {
         "javax.faces.partial.ajax": "true",
         "javax.faces.source": "form:nuevoBotonId",
@@ -183,9 +179,7 @@ async def search_informes(
 
     q = _strip(query)
     matched = [
-        row
-        for row in rows
-        if not q or q in _strip(f"{row['nombre']} {row.get('volcan') or ''}")
+        row for row in rows if not q or q in _strip(f"{row['nombre']} {row.get('volcan') or ''}")
     ]
 
     limit = min(max(limit, 1), _ROWS_PER_PAGE)
@@ -194,7 +188,9 @@ async def search_informes(
         "anio": anio,
         "total_en_pagina": len(rows),
         "coincidencias": len(matched),
-        "informes": [{k: v for k, v in row.items() if not k.startswith("_")} for row in matched[:limit]],
+        "informes": [
+            {k: v for k, v in row.items() if not k.startswith("_")} for row in matched[:limit]
+        ],
         "nota": (
             "Solo se consulta la página más reciente del archivo (hasta 30 "
             "informes, orden descendente por fecha de publicación) para el "
@@ -237,9 +233,10 @@ async def download_informe(
                 row for row in candidates if row.get("volcan") and _strip(row["volcan"]) == v
             ]
         if not candidates:
-            valid = ", ".join(
-                f"{row['nombre']} ({row.get('volcan') or 'sin volcán'})" for row in rows
-            ) or "(ninguno en esta página)"
+            valid = (
+                ", ".join(f"{row['nombre']} ({row.get('volcan') or 'sin volcán'})" for row in rows)
+                or "(ninguno en esta página)"
+            )
             raise ValueError(
                 f"No se encontró el informe '{nombre}'"
                 + (f" (volcán: {volcan})" if volcan else "")

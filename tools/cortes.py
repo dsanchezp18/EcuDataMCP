@@ -62,7 +62,9 @@ async def _get_horarios(distribuidora: str, archivo: str, query: str) -> dict[st
     elif distribuidora == "eeq":
         result = await eeq_cortes_client.get_eeq_cortes_horarios(slug=archivo, query=query)
     else:
-        result = await centrosur_cortes_client.get_centrosur_cortes_horarios(url=archivo, query=query)
+        result = await centrosur_cortes_client.get_centrosur_cortes_horarios(
+            url=archivo, query=query
+        )
     return {**result, "distribuidora": distribuidora}
 
 
@@ -122,7 +124,9 @@ def register_cortes_tools(mcp: MCPServer) -> None:
         try:
             result = await _search(distribuidora, query)
         except Exception as e:
-            raise ToolError(f"Error al consultar el archivo de cortes de {distribuidora}: {e}") from e
+            raise ToolError(
+                f"Error al consultar el archivo de cortes de {distribuidora}: {e}"
+            ) from e
 
         def to_text(data: dict) -> str:
             archivos = data["archivos"]
@@ -144,7 +148,9 @@ def register_cortes_tools(mcp: MCPServer) -> None:
                 if a["archivo"] != a.get("url"):
                     parts.append(f"   {a['url']}")
             if len(archivos) > 100:
-                parts.append(f"... y {len(archivos) - 100} más (usa query para acotar, o format=json)")
+                parts.append(
+                    f"... y {len(archivos) - 100} más (usa query para acotar, o format=json)"
+                )
             parts += ["", f"Fuente: {data.get('url_fuente')}"]
             return "\n".join(parts)
 
@@ -204,7 +210,9 @@ def register_cortes_tools(mcp: MCPServer) -> None:
         except ValueError as e:
             raise ToolError(str(e)) from e
         except Exception as e:
-            raise ToolError(f"Error al procesar el horario de cortes de {distribuidora}: {e}") from e
+            raise ToolError(
+                f"Error al procesar el horario de cortes de {distribuidora}: {e}"
+            ) from e
 
         def to_text(data: dict) -> str:
             filas = data["filas"]

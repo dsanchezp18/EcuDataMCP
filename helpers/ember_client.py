@@ -31,16 +31,31 @@ _BASE = "https://ourworldindata.org/grapher/electricity-mix.csv"
 _PAGE = "https://ourworldindata.org/electricity-mix"
 
 _ALL_SOURCES = (
-    "total", "coal", "gas", "oil", "fossil", "hydro", "solar", "wind",
-    "solar_and_wind", "bioenergy", "other_renewables", "renewables",
-    "nuclear", "low_carbon",
+    "total",
+    "coal",
+    "gas",
+    "oil",
+    "fossil",
+    "hydro",
+    "solar",
+    "wind",
+    "solar_and_wind",
+    "bioenergy",
+    "other_renewables",
+    "renewables",
+    "nuclear",
+    "low_carbon",
 )
 _GROUPS = ("total", "fossil", "low_carbon", "renewables", "solar_and_wind")
 
 # metric -> (allowed sources, unit, description)
 _VIEWS: dict[str, tuple[tuple[str, ...], str, str]] = {
     "generation": (_ALL_SOURCES, "TWh", "Electricity generation"),
-    "share_of_generation": (tuple(s for s in _ALL_SOURCES if s != "total"), "%", "Share of generation"),
+    "share_of_generation": (
+        tuple(s for s in _ALL_SOURCES if s != "total"),
+        "%",
+        "Share of generation",
+    ),
     "per_capita": (_ALL_SOURCES, "kWh per person", "Generation per person"),
     "by_source": (_GROUPS, "TWh", "Generation by source (one column per source)"),
     "by_source_per_capita": (_GROUPS, "kWh per person", "Generation per person by source"),
@@ -56,7 +71,17 @@ _FREQUENCIES = {"A": "annual", "M": "monthly"}
 # checked 2026-11-07) while every single-source monthly view has data, so
 # the monthly breakdown is assembled from those.
 _GROUP_MEMBERS = {
-    "total": ("coal", "gas", "oil", "hydro", "solar", "wind", "bioenergy", "other_renewables", "nuclear"),
+    "total": (
+        "coal",
+        "gas",
+        "oil",
+        "hydro",
+        "solar",
+        "wind",
+        "bioenergy",
+        "other_renewables",
+        "nuclear",
+    ),
     "fossil": ("coal", "gas", "oil"),
     "renewables": ("hydro", "solar", "wind", "bioenergy", "other_renewables"),
     "low_carbon": ("hydro", "solar", "wind", "bioenergy", "other_renewables", "nuclear"),
@@ -166,7 +191,9 @@ def _url(metric: str, source: str, freq: str, iso3: str) -> str:
     )
 
 
-async def _monthly_by_source(metric: str, source: str, iso3: str) -> tuple[list[str], list[dict[str, Any]], str]:
+async def _monthly_by_source(
+    metric: str, source: str, iso3: str
+) -> tuple[list[str], list[dict[str, Any]], str]:
     """Join the single-source monthly series into one row per month."""
     single = "per_capita" if metric == "by_source_per_capita" else "generation"
     members = _GROUP_MEMBERS[source]
@@ -178,7 +205,9 @@ async def _monthly_by_source(metric: str, source: str, iso3: str) -> tuple[list[
         _period, cols, rows = parse_csv(text)
         columns += [c for c in cols if c not in columns]
         for r in rows:
-            entry = merged.setdefault(r["periodo"], {"periodo": r["periodo"], "entidad": r["entidad"], "valores": {}})
+            entry = merged.setdefault(
+                r["periodo"], {"periodo": r["periodo"], "entidad": r["entidad"], "valores": {}}
+            )
             entry["valores"].update(r["valores"])
     return columns, [merged[k] for k in sorted(merged)], urls[0]
 

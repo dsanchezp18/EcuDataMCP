@@ -154,9 +154,7 @@ async def search_files(query: str = "", limit: int = 30, offset: int = 0) -> dic
     files = await _fetch_files()
     q = _strip(query)
 
-    matched = [
-        f for f in files if not q or q in _strip(f["label"]) or q in _strip(f["url"])
-    ]
+    matched = [f for f in files if not q or q in _strip(f["label"]) or q in _strip(f["url"])]
     page = matched[offset : offset + limit]
     return {
         "total": len(matched),
@@ -243,9 +241,7 @@ async def search_estadisticas_recaudacion(
     files = await _fetch_estadisticas_files()
     q = _strip(query)
 
-    matched = [
-        f for f in files if not q or q in _strip(f["label"]) or q in _strip(f["url"])
-    ]
+    matched = [f for f in files if not q or q in _strip(f["label"]) or q in _strip(f["url"])]
     page = matched[offset : offset + limit]
     return {
         "total": len(matched),

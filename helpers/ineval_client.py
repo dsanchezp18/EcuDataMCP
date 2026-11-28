@@ -257,7 +257,11 @@ def _parse_familia_archivos(html: str, familia: str) -> list[dict[str, Any]]:
                         url,
                     )
                     continue
-                formato = header_cells[idx] if idx < len(header_cells) and header_cells[idx] else "DESCONOCIDO"
+                formato = (
+                    header_cells[idx]
+                    if idx < len(header_cells) and header_cells[idx]
+                    else "DESCONOCIDO"
+                )
                 archivos.append(
                     {
                         "grupo": grupo,

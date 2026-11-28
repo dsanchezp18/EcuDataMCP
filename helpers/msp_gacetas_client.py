@@ -214,9 +214,7 @@ _PDF_LINK_RE = re.compile(r'href="([^"]+\.pdf)"', re.IGNORECASE)
 _UPLOAD_PATH_RE = re.compile(r"/wp-content/uploads/(?:downloads/)?(\d{4})/(\d{2})/")
 _LIST_PREFIX_RE = re.compile(r"^\d+\.-?")
 # "N" covers the 2019 vectoriales "Gaceta N35".
-_SE_RE = re.compile(
-    r"(?<![A-Za-z])(?:SEMANA|SEM|SE|S|N)[\s_.\-]*(\d{1,3})(?!\d)", re.IGNORECASE
-)
+_SE_RE = re.compile(r"(?<![A-Za-z])(?:SEMANA|SEM|SE|S|N)[\s_.\-]*(\d{1,3})(?!\d)", re.IGNORECASE)
 # "gaceta_brotesSE31": an uppercase SE glued to a lowercase word.
 _SE_GLUED_RE = re.compile(r"(?<=[a-z])SE(\d{1,3})(?!\d)")
 _RANGE_TAIL_RE = re.compile(
@@ -284,7 +282,12 @@ async def _fetch_paginas() -> list[dict[str, str]]:
             while True:
                 resp = await session.get(
                     _WP_API_URL,
-                    params={"search": "gaceta", "per_page": 100, "page": page, "_fields": "slug,link"},
+                    params={
+                        "search": "gaceta",
+                        "per_page": 100,
+                        "page": page,
+                        "_fields": "slug,link",
+                    },
                     timeout=_WP_TIMEOUT,
                 )
                 resp.raise_for_status()
@@ -350,7 +353,9 @@ async def _fetch_pagina(pagina: dict[str, str], sem: asyncio.Semaphore) -> list[
             content, truncated = await download_bytes(pagina["url"])
     if truncated:
         raise ValueError(f"La página {pagina['url']} superó el límite de descarga.")
-    archivos = _parse_archivos(content.decode("utf-8", errors="replace"), pagina["url"], pagina["serie"])
+    archivos = _parse_archivos(
+        content.decode("utf-8", errors="replace"), pagina["url"], pagina["serie"]
+    )
     _pagina_cache.set(pagina["url"], archivos)
     return archivos
 
@@ -425,10 +430,17 @@ async def search_gacetas(query: str = "") -> dict[str, Any]:
 
     matched = [a for a in archivos if all(t in texto(a) for t in tokens)]
     matched.sort(
-        key=lambda a: (a["serie"], a.get("anio") or "", a.get("mes") or "", int(a.get("semana") or 0)),
+        key=lambda a: (
+            a["serie"],
+            a.get("anio") or "",
+            a.get("mes") or "",
+            int(a.get("semana") or 0),
+        ),
     )
     if paginas and len(fallidas) == len(paginas):
-        raise ValueError("salud.gob.ec no respondió para ninguna página de gacetas; reintenta luego.")
+        raise ValueError(
+            "salud.gob.ec no respondió para ninguna página de gacetas; reintenta luego."
+        )
     por_serie: dict[str, int] = {}
     for a in matched:
         por_serie[a["serie"]] = por_serie.get(a["serie"], 0) + 1

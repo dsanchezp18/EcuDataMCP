@@ -57,11 +57,15 @@ def _locate(
             f"El cantón {found['nombre']} ({found['codigo']}) no tiene centroide en la tabla "
             "local; pasa `latitud` y `longitud`."
         )
-    return centroid["latitud"], centroid["longitud"], {
-        "codigo": found["codigo"],
-        "nombre": found["nombre"],
-        "provincia": found["provincia"],
-    }
+    return (
+        centroid["latitud"],
+        centroid["longitud"],
+        {
+            "codigo": found["codigo"],
+            "nombre": found["nombre"],
+            "provincia": found["provincia"],
+        },
+    )
 
 
 def _text(data: dict[str, Any]) -> str:

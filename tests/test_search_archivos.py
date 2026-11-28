@@ -32,7 +32,9 @@ async def test_unpaginated_sources_are_sliced_here(monkeypatch):
         return {
             "source": "CNIG",
             "url_fuente": "https://cnig",
-            "archivos": [{"label": f"t{i}", "url": f"https://f/{i}", "format": "PDF"} for i in range(5)],
+            "archivos": [
+                {"label": f"t{i}", "url": f"https://f/{i}", "format": "PDF"} for i in range(5)
+            ],
         }
 
     monkeypatch.setitem(sa._UNPAGINATED, "cnig", fake)
@@ -65,7 +67,11 @@ async def test_sri_csv_files_point_to_aggregate_csv(monkeypatch):
             "source": "SRI",
             "archivos": [
                 {"title": "Diccionario", "url": "https://sri/d.xlsx", "format": "XLSX"},
-                {"title": "SRI_Ventas_2025", "url": "https://sri/sri_ventas_2025.csv", "format": "CSV"},
+                {
+                    "title": "SRI_Ventas_2025",
+                    "url": "https://sri/sri_ventas_2025.csv",
+                    "format": "CSV",
+                },
             ],
         }
 

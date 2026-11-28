@@ -14,10 +14,7 @@ from helpers.tool_meta import READ_ONLY
 def register_list_instituciones_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Listar instituciones públicas de gob.ec",
-        description=(
-            "List or search public institutions registered on gob.ec, with their "
-            "IDs."
-        ),
+        description=("List or search public institutions registered on gob.ec, with their IDs."),
         annotations=READ_ONLY,
     )
     @log_tool
@@ -91,9 +88,7 @@ def register_list_instituciones_tool(mcp: MCPServer) -> None:
             if data.get("query"):
                 parts.append(f"Instituciones que coinciden con '{data['query']}':")
             else:
-                parts.append(
-                    f"Instituciones públicas del Ecuador (página {data['page']}):"
-                )
+                parts.append(f"Instituciones públicas del Ecuador (página {data['page']}):")
             parts.append(f"Mostrando {data['showing']} resultados\n")
             if data.get("hay_mas"):
                 parts.append(

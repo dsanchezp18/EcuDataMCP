@@ -43,9 +43,7 @@ def test_host_allowlist_can_be_disabled(monkeypatch):
 def test_host_allowlist_includes_supercias(monkeypatch):
     monkeypatch.setenv("CKAN_INSECURE_TLS", "1")
     assert (
-        host_allows_insecure_tls(
-            "https://mercadodevalores.supercias.gob.ec/reportes/excel/x.xlsx"
-        )
+        host_allows_insecure_tls("https://mercadodevalores.supercias.gob.ec/reportes/excel/x.xlsx")
         is True
     )
 
@@ -53,10 +51,7 @@ def test_host_allowlist_includes_supercias(monkeypatch):
 def test_should_retry_insecure(monkeypatch):
     monkeypatch.setenv("CKAN_INSECURE_TLS", "1")
     exc = ssl.SSLCertVerificationError("bad")
-    assert (
-        should_retry_insecure(exc, "https://www.datosabiertos.gob.ec/resource.csv")
-        is True
-    )
+    assert should_retry_insecure(exc, "https://www.datosabiertos.gob.ec/resource.csv") is True
     assert should_retry_insecure(exc, "https://cdn.other.org/x.csv") is False
 
 
@@ -68,9 +63,7 @@ def test_host_needs_legacy_ciphers():
         is True
     )
     assert (
-        host_needs_legacy_ciphers(
-            "https://info.desarrollohumano.gob.ec/index.php/zona-1-bz"
-        )
+        host_needs_legacy_ciphers("https://info.desarrollohumano.gob.ec/index.php/zona-1-bz")
         is True
     )
     assert host_needs_legacy_ciphers("https://cdn.other.org/x.csv") is False
@@ -95,10 +88,7 @@ def test_should_retry_with_os_trust_not_gated_by_insecure_flag(monkeypatch):
     # must work even with CKAN_INSECURE_TLS unset/off.
     monkeypatch.delenv("CKAN_INSECURE_TLS", raising=False)
     exc = ssl.SSLCertVerificationError("unable to get local issuer certificate")
-    assert (
-        should_retry_with_os_trust(exc, "https://www.censoecuador.gob.ec/foo/")
-        is True
-    )
+    assert should_retry_with_os_trust(exc, "https://www.censoecuador.gob.ec/foo/") is True
     assert should_retry_with_os_trust(exc, "https://cdn.other.org/x.csv") is False
 
 

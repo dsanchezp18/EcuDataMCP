@@ -127,9 +127,7 @@ def test_index_tree_reconstructs_sections_and_subsections():
 
 
 async def test_search_indicadores_matches_description_and_section(httpx_mock):
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
 
     by_desc = await bce_client.search_indicadores(query="grupo uno")
@@ -142,9 +140,7 @@ async def test_search_indicadores_matches_description_and_section(httpx_mock):
 
 
 async def test_search_indicadores_matches_series_label_inside_a_group(httpx_mock):
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
 
     result = await bce_client.search_indicadores(query="desempleo")
@@ -164,9 +160,7 @@ async def test_search_indicadores_matches_series_label_inside_a_group(httpx_mock
 async def test_search_indicadores_omits_series_coincidentes_when_title_matched(
     httpx_mock,
 ):
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
 
     result = await bce_client.search_indicadores(query="mercado laboral")
@@ -176,9 +170,7 @@ async def test_search_indicadores_omits_series_coincidentes_when_title_matched(
 
 
 async def test_search_indicadores_uses_cache_across_calls(httpx_mock):
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
 
     await bce_client.search_indicadores(query="grupo")
@@ -270,9 +262,7 @@ async def test_get_indicador_frecuencia_and_unidad_are_case_insensitive(httpx_mo
 
 
 async def test_audit_catalog_reports_all_groups_and_series(httpx_mock):
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
 
     result = await bce_client.audit_catalog(incluir_grupos=True)
@@ -290,13 +280,9 @@ async def test_audit_catalog_reports_all_groups_and_series(httpx_mock):
     }
 
 
-async def test_audit_catalog_probes_every_frequency_unit_pair(
-    httpx_mock, tmp_path, monkeypatch
-):
+async def test_audit_catalog_probes_every_frequency_unit_pair(httpx_mock, tmp_path, monkeypatch):
     monkeypatch.setenv("BCE_CATALOG_SNAPSHOT_DIR", str(tmp_path))
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
     grid_url = "https://contenido.bce.fin.ec/wp-json/bcedata/v1/grid"
     combinations = [
@@ -328,9 +314,7 @@ async def test_audit_catalog_probes_every_frequency_unit_pair(
             },
         )
 
-    result = await bce_client.audit_catalog(
-        auditar_grid=True, guardar_snapshot=True
-    )
+    result = await bce_client.audit_catalog(auditar_grid=True, guardar_snapshot=True)
 
     audit = result["auditoria_grid"]
     assert audit["total_combinaciones"] == 5
@@ -344,20 +328,14 @@ async def test_audit_catalog_persists_and_compares_previous_snapshot(
     httpx_mock, tmp_path, monkeypatch
 ):
     monkeypatch.setenv("BCE_CATALOG_SNAPSHOT_DIR", str(tmp_path))
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
 
     first = await bce_client.audit_catalog(guardar_snapshot=True)
     bce_client.clear_caches()
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
-    second = await bce_client.audit_catalog(
-        guardar_snapshot=True, comparar_anterior=True
-    )
+    second = await bce_client.audit_catalog(guardar_snapshot=True, comparar_anterior=True)
 
     assert first["snapshot"]["completo"] is True
     assert second["comparacion"]["disponible"] is True
@@ -366,9 +344,7 @@ async def test_audit_catalog_persists_and_compares_previous_snapshot(
 
 
 async def test_audit_catalog_records_bundle_failures(httpx_mock):
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     httpx_mock.add_response(
         url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/bundle/10",
         json=_BUNDLE_10,
@@ -391,9 +367,7 @@ async def test_audit_catalog_records_bundle_failures(httpx_mock):
 
 
 async def test_audit_catalog_reports_unavailable_source_revision(httpx_mock):
-    httpx_mock.add_response(
-        url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE
-    )
+    httpx_mock.add_response(url="https://contenido.bce.fin.ec/wp-json/bcedata/v1/tree", json=_TREE)
     _mock_all_bundles(httpx_mock)
 
     result = await bce_client.audit_catalog()

@@ -185,5 +185,7 @@ async def test_unreachable_server_names_the_host(httpx_mock):
 
     httpx_mock.add_exception(httpx.ConnectTimeout(""), url=f"{_PRODUCCION}?f=json")
 
-    with pytest.raises(ValueError, match=r"geoportal\.arconel\.gob\.ec:6443 no respondió \(ConnectTimeout\)"):
+    with pytest.raises(
+        ValueError, match=r"geoportal\.arconel\.gob\.ec:6443 no respondió \(ConnectTimeout\)"
+    ):
         await client.get_layer_features("arconel", "produccion_centrales")

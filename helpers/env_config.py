@@ -50,8 +50,7 @@ def get_base_url(api_name: str) -> str:
     """
     if api_name not in _API_URLS:
         raise KeyError(
-            f"Invalid api_name: {api_name}. "
-            f"Valid values are: {', '.join(_API_URLS.keys())}"
+            f"Invalid api_name: {api_name}. Valid values are: {', '.join(_API_URLS.keys())}"
         )
     env_key = _ENV_OVERRIDES[api_name]
     # `or`, not a getenv default: a present-but-empty override (e.g. an
@@ -122,9 +121,7 @@ def get_mcp_rate_limit_window_seconds() -> float:
 
 
 def get_mcp_require_auth() -> bool:
-    return os.getenv("MCP_REQUIRE_AUTH", "0").strip().lower() in {
-        "1", "true", "yes", "on"
-    }
+    return os.getenv("MCP_REQUIRE_AUTH", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def get_mcp_ssl_certfile() -> str | None:

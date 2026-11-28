@@ -141,10 +141,7 @@ def register_search_bce_iem_tool(mcp: MCPServer) -> None:
             else:
                 parts.append("Usa get_bce_iem_table(table_id=...) para leer una tabla.")
             if data.get("catalogo_guardado"):
-                parts.append(
-                    "Catálogo completo guardado: "
-                    + data["catalogo_guardado"]["archivo"]
-                )
+                parts.append("Catálogo completo guardado: " + data["catalogo_guardado"]["archivo"])
             if data.get("hash_archivos"):
                 audit = data["hash_archivos"]
                 parts.append(
@@ -164,6 +161,7 @@ def register_search_bce_iem_tool(mcp: MCPServer) -> None:
             schema_fields=["boletin", "total", "tablas", "historico"],
             consulted_at=result["catalogado_en"],
             published_at=f"{bulletin.get('anio')}-{bulletin.get('mes'):02d}"
-            if bulletin.get("anio") and bulletin.get("mes") else None,
+            if bulletin.get("anio") and bulletin.get("mes")
+            else None,
         )
         return render_structured(result, format, text_builder=to_text)

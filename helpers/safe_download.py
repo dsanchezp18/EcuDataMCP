@@ -85,8 +85,7 @@ def assert_public_url(url: str) -> None:
         ip = ipaddress.ip_address(info[4][0])
         if not _is_public_ip(ip):
             raise UnsafeUrlError(
-                f"El host '{host}' resuelve a una IP no pública ({ip}); "
-                "descarga rechazada"
+                f"El host '{host}' resuelve a una IP no pública ({ip}); descarga rechazada"
             )
 
 
@@ -110,14 +109,10 @@ async def safe_stream(
     for hop in range(max_redirects + 1):
         # getaddrinfo blocks; a slow resolver must not freeze other requests.
         await asyncio.to_thread(assert_public_url, current)
-        async with session.stream(
-            "GET", current, follow_redirects=False, **kwargs
-        ) as resp:
+        async with session.stream("GET", current, follow_redirects=False, **kwargs) as resp:
             if resp.is_redirect:
                 if hop == max_redirects:
-                    raise UnsafeUrlError(
-                        f"Demasiadas redirecciones (más de {max_redirects})"
-                    )
+                    raise UnsafeUrlError(f"Demasiadas redirecciones (más de {max_redirects})")
                 location = resp.headers.get("location")
                 if not location:
                     raise UnsafeUrlError("Redirect sin header Location")

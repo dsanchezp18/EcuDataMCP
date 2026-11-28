@@ -101,8 +101,7 @@ def register_get_indicador_bce_tool(mcp: MCPServer) -> None:
                 if valores and periodos:
                     primero, ultimo = periodos[0], periodos[-1]
                     parts.append(
-                        f"   {primero}: {valores.get(primero)}  →  "
-                        f"{ultimo}: {valores.get(ultimo)}"
+                        f"   {primero}: {valores.get(primero)}  →  {ultimo}: {valores.get(ultimo)}"
                     )
                 parts.append("")
             return "\n".join(parts)

@@ -72,9 +72,7 @@ from helpers.user_agent import USER_AGENT
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
-_EXCEL_URL = (
-    "https://mercadodevalores.supercias.gob.ec/reportes/excel/directorio_companias.xlsx"
-)
+_EXCEL_URL = "https://mercadodevalores.supercias.gob.ec/reportes/excel/directorio_companias.xlsx"
 # Connecting takes well under a second when the host is reachable; from a
 # network it drops (Render, 2026-10-07) only a timeout ends the attempt, so
 # keep that short instead of letting it run to the 90 s read timeout.
@@ -104,14 +102,13 @@ _download_task: asyncio.Task | None = None
 class DirectorioEnDescarga(Exception):
     """The directory export is still downloading in the background."""
 
+
 # Lazily-built RUC -> row index, invalidated whenever the cached row list is
 # replaced (compared by identity, not equality, so a cache refresh always
 # rebuilds it). Only get_compania_by_ruc needs this; search_companias doesn't,
 # so it isn't computed on every cache refresh regardless of which tool is used.
 _ruc_index_state: tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None = None
-_expediente_index_state: (
-    tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None
-) = None
+_expediente_index_state: tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None = None
 
 
 def _normalize_header(header: str) -> str:
@@ -251,8 +248,7 @@ def _parse_xlsx(
                 rows.append(tuple(cells.get(i, "") for i in range(width)))
         if fields is None:
             raise ValueError(
-                f"No se encontró la fila de encabezado ({header_label}) en el "
-                "reporte de Supercías"
+                f"No se encontró la fila de encabezado ({header_label}) en el reporte de Supercías"
             )
         if max_seen_col >= len(fields):
             # A data row has a cell past the last column the header row
@@ -327,9 +323,9 @@ def _directory_path() -> Path:
     return data_dir() / "supercias_directorio.xlsx"
 
 
-async def _load_directory(raw: bytes) -> tuple[
-    tuple[str, ...], list[tuple[str, ...]], list[str], list[str], list[str]
-]:
+async def _load_directory(
+    raw: bytes,
+) -> tuple[tuple[str, ...], list[tuple[str, ...]], list[str], list[str], list[str]]:
     """Parse the export, build the search columns and cache the bundle."""
     # _parse_xlsx is CPU-bound (streaming XML parse over ~35 MB) and takes
     # seconds; running it inline would block the event loop for every other
@@ -369,9 +365,7 @@ def _log_download_outcome(task: asyncio.Task) -> None:
     # Retrieving the exception here also keeps asyncio from warning that it
     # was never retrieved when no caller is waiting any more.
     if not task.cancelled() and task.exception() is not None:
-        logger.error(
-            "Fallo la descarga del directorio de Supercías: %s", task.exception()
-        )
+        logger.error("Fallo la descarga del directorio de Supercías: %s", task.exception())
 
 
 def _start_download() -> asyncio.Task:
@@ -408,9 +402,7 @@ async def _fetch_companias() -> tuple[
                 raw = await asyncio.to_thread(path.read_bytes)
                 return await _load_directory(raw)
             except (OSError, ValueError, zipfile.BadZipFile, ET.ParseError):
-                logger.exception(
-                    "Copia guardada del directorio de Supercías ilegible; se descarta"
-                )
+                logger.exception("Copia guardada del directorio de Supercías ilegible; se descarta")
                 path.unlink(missing_ok=True)
 
         task = _start_download()
@@ -504,9 +496,13 @@ async def search_companias(
         limit: Max results returned.
         offset: Pagination offset over the matched set.
     """
-    fields, rows, normalized_names, normalized_provincias, normalized_situaciones = (
-        await _fetch_companias()
-    )
+    (
+        fields,
+        rows,
+        normalized_names,
+        normalized_provincias,
+        normalized_situaciones,
+    ) = await _fetch_companias()
     ruc_pos = fields.index("ruc")
 
     q = _strip(query)
@@ -570,14 +566,10 @@ _AUDITORES_EXCEL_URL = (
 _auditores_cache = TtlCache(ttl_seconds=21600.0, max_entries=1)
 _auditores_fetch_lock = asyncio.Lock()
 
-_identificacion_index_state: (
-    tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None
-) = None
+_identificacion_index_state: tuple[list[tuple[str, ...]], dict[str, tuple[str, ...]]] | None = None
 
 
-async def _fetch_auditores() -> tuple[
-    tuple[str, ...], list[tuple[str, ...]], list[str], list[str]
-]:
+async def _fetch_auditores() -> tuple[tuple[str, ...], list[tuple[str, ...]], list[str], list[str]]:
     """Return (fields, rows, normalized_names, normalized_provincias), from cache or fresh."""
     cached = _auditores_cache.get("auditores")
     if cached is not None:
@@ -660,8 +652,7 @@ async def search_auditores(
         "total": len(matched),
         "offset": offset,
         "source": (
-            "Superintendencia de Compañías, Valores y Seguros — "
-            "Listado de Auditores Externos"
+            "Superintendencia de Compañías, Valores y Seguros — Listado de Auditores Externos"
         ),
         "url_fuente": _AUDITORES_EXCEL_URL,
         "auditores": [_row_to_dict(fields, rows[i]) for i in page],

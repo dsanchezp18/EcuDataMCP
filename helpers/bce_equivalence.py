@@ -8,13 +8,45 @@ from typing import Any
 from helpers.text_utils import strip_accents
 
 _STOPWORDS = {
-    "al", "de", "del", "el", "en", "la", "las", "los", "por", "para",
-    "y", "e", "un", "una", "uno", "con", "sin", "segun", "desde", "hasta",
+    "al",
+    "de",
+    "del",
+    "el",
+    "en",
+    "la",
+    "las",
+    "los",
+    "por",
+    "para",
+    "y",
+    "e",
+    "un",
+    "una",
+    "uno",
+    "con",
+    "sin",
+    "segun",
+    "desde",
+    "hasta",
 }
 _GENERIC = {
-    "indicador", "indicadores", "indice", "indices", "estadistica", "estadisticas",
-    "mensual", "trimestral", "anual", "nacional", "ecuador", "ecuatoriano",
-    "ecuatoriana", "serie", "cuadro", "tabla", "total",
+    "indicador",
+    "indicadores",
+    "indice",
+    "indices",
+    "estadistica",
+    "estadisticas",
+    "mensual",
+    "trimestral",
+    "anual",
+    "nacional",
+    "ecuador",
+    "ecuatoriano",
+    "ecuatoriana",
+    "serie",
+    "cuadro",
+    "tabla",
+    "total",
 }
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 
@@ -22,9 +54,7 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+")
 def _tokens(value: Any) -> set[str]:
     text = strip_accents(str(value or "")).lower()
     return {
-        token
-        for token in _TOKEN_RE.findall(text)
-        if token not in _STOPWORDS and len(token) > 1
+        token for token in _TOKEN_RE.findall(text) if token not in _STOPWORDS and len(token) > 1
     }
 
 
@@ -118,9 +148,7 @@ def build_equivalence_map(
             continue
         key = (str(candidate.get("id_grupo")), candidate["etiqueta"])
         matched_bce.add(key)
-        if _normalized_label(table.get("titulo")) == _normalized_label(
-            candidate.get("etiqueta")
-        ):
+        if _normalized_label(table.get("titulo")) == _normalized_label(candidate.get("etiqueta")):
             relation = "posible_equivalencia_directa"
             confidence = "media"
         elif candidate["tipo"] == "grupo":
@@ -138,7 +166,13 @@ def build_equivalence_map(
                 "bcedata": {
                     key: candidate.get(key)
                     for key in (
-                        "id_grupo", "tipo", "etiqueta", "grupo", "frecuencias", "unidades", "rango"
+                        "id_grupo",
+                        "tipo",
+                        "etiqueta",
+                        "grupo",
+                        "frecuencias",
+                        "unidades",
+                        "rango",
                     )
                 },
                 "puntuacion_etiquetas": round(score, 3),
@@ -151,8 +185,13 @@ def build_equivalence_map(
                     if alternative_score >= 0.25
                 ],
                 "campos_por_confirmar": [
-                    "definicion", "unidad", "frecuencia", "cobertura",
-                    "fecha_corte", "revision", "valores",
+                    "definicion",
+                    "unidad",
+                    "frecuencia",
+                    "cobertura",
+                    "fecha_corte",
+                    "revision",
+                    "valores",
                 ],
                 "advertencia": (
                     "Candidato generado por etiquetas; confirmar definición, "
@@ -163,10 +202,7 @@ def build_equivalence_map(
 
     matched_iem_ids = {str(item["iem"].get("table_id")) for item in matches}
     iem_only = [
-        {
-            key: table.get(key)
-            for key in ("table_id", "titulo", "seccion", "url", "boletin_numero")
-        }
+        {key: table.get(key) for key in ("table_id", "titulo", "seccion", "url", "boletin_numero")}
         for table in iem
         if str(table.get("table_id")) not in matched_iem_ids
     ]

@@ -144,7 +144,9 @@ async def test_get_survey_scans_the_whole_catalog_when_the_search_misses(httpx_m
     )
     httpx_mock.add_response(
         url=f"{base}?ps=100",
-        json={"result": {"found": "2", "rows": [{"id": "1", "idno": "C"}, {"id": "9", "idno": "a b"}]}},
+        json={
+            "result": {"found": "2", "rows": [{"id": "1", "idno": "C"}, {"id": "9", "idno": "a b"}]}
+        },
     )
     httpx_mock.add_response(
         url=f"{base}/9?id_format=id", json={"status": "success", "dataset": {"id": "9"}}

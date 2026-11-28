@@ -220,9 +220,7 @@ async def test_fetch_bulletins_adds_official_historical_archive(httpx_mock):
 async def test_search_tables_can_persist_the_complete_catalog(httpx_mock, tmp_path, monkeypatch):
     monkeypatch.setenv("IEM_CATALOG_DIR", str(tmp_path))
     httpx_mock.add_response(url=bce_iem_client.IEM_INDEX_URL, html=_INDEX_HTML)
-    httpx_mock.add_response(
-        url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html=""
-    )
+    httpx_mock.add_response(url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html="")
     httpx_mock.add_response(url=bce_iem_client.IEM_ARCHIVE_URL, html="")
     httpx_mock.add_response(url=_NEW_BULLETIN_URL, html=_BULLETIN_HTML)
 
@@ -290,8 +288,7 @@ async def test_fetch_historical_tables_caps_unbounded_fanout(monkeypatch):
 async def test_fetch_historical_tables_respects_explicit_range_beyond_cap(monkeypatch):
     total = bce_iem_client._MAX_HISTORICAL_BULLETINS + 20
     bulletins = [
-        {"numero": n, "mes": 1, "anio": 2000 + n, "url": f"http://x/{n}"}
-        for n in range(total)
+        {"numero": n, "mes": 1, "anio": 2000 + n, "url": f"http://x/{n}"} for n in range(total)
     ]
 
     async def fake_fetch(bulletin: dict) -> list[dict]:
@@ -322,19 +319,13 @@ def test_extract_long_table_filters_rows_by_year():
 
 
 def test_extract_monthly_wide_series_accepts_spanish_month_labels():
-    workbook = openpyxl.load_workbook(
-        io.BytesIO(_monthly_xlsx()), read_only=True, data_only=True
-    )
-    result = bce_iem_client._extract_wide_series(
-        workbook.active, "2025-02", "2025-02", 20
-    )
+    workbook = openpyxl.load_workbook(io.BytesIO(_monthly_xlsx()), read_only=True, data_only=True)
+    result = bce_iem_client._extract_wide_series(workbook.active, "2025-02", "2025-02", 20)
     workbook.close()
 
     assert result is not None
     assert result["periodos"] == ["Febrero 2025"]
-    assert result["bloques"][0]["series"] == [
-        {"nombre": "PIB", "valores": {"Febrero 2025": 102}}
-    ]
+    assert result["bloques"][0]["series"] == [{"nombre": "PIB", "valores": {"Febrero 2025": 102}}]
 
 
 def test_period_key_accepts_numeric_month_year_and_spanish_month():
@@ -353,17 +344,13 @@ def test_extract_matrix_series_preserves_descriptor_columns():
 
     assert result["formato"] == "series_matriz"
     assert result["columnas_descriptivas"] == ["Código", "Descripción"]
-    assert result["bloques"][0]["series"] == [
-        {"nombre": "A | PIB", "valores": {"2025": 110}}
-    ]
+    assert result["bloques"][0]["series"] == [{"nombre": "A | PIB", "valores": {"2025": 110}}]
 
 
 @pytest.mark.asyncio
 async def test_search_tables_indexes_latest_bulletin_and_filters(httpx_mock):
     httpx_mock.add_response(url=bce_iem_client.IEM_INDEX_URL, html=_INDEX_HTML)
-    httpx_mock.add_response(
-        url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html=""
-    )
+    httpx_mock.add_response(url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html="")
     httpx_mock.add_response(url=bce_iem_client.IEM_ARCHIVE_URL, html="")
     httpx_mock.add_response(url=_NEW_BULLETIN_URL, html=_BULLETIN_HTML)
 
@@ -377,9 +364,7 @@ async def test_search_tables_indexes_latest_bulletin_and_filters(httpx_mock):
 @pytest.mark.asyncio
 async def test_search_tables_historical_merges_versions(httpx_mock):
     httpx_mock.add_response(url=bce_iem_client.IEM_INDEX_URL, html=_INDEX_HTML)
-    httpx_mock.add_response(
-        url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html=""
-    )
+    httpx_mock.add_response(url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html="")
     httpx_mock.add_response(url=bce_iem_client.IEM_ARCHIVE_URL, html="")
     httpx_mock.add_response(url=_NEW_BULLETIN_URL, html=_BULLETIN_HTML)
     httpx_mock.add_response(url=_OLD_BULLETIN_URL, html=_BULLETIN_HTML)
@@ -396,9 +381,7 @@ async def test_search_tables_historical_merges_versions(httpx_mock):
 async def test_get_table_returns_layout_preview(httpx_mock):
     xlsx = _xlsx()
     httpx_mock.add_response(url=bce_iem_client.IEM_INDEX_URL, html=_INDEX_HTML)
-    httpx_mock.add_response(
-        url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html=""
-    )
+    httpx_mock.add_response(url=bce_iem_client.IEM_LATEST_PUBLICATIONS_URL, html="")
     httpx_mock.add_response(url=bce_iem_client.IEM_ARCHIVE_URL, html="")
     httpx_mock.add_response(url=_NEW_BULLETIN_URL, html=_BULLETIN_HTML)
     httpx_mock.add_response(url=_PIB_TABLE_URL, content=xlsx)
@@ -409,9 +392,7 @@ async def test_get_table_returns_layout_preview(httpx_mock):
     assert result["formato"] == "series_ancho"
     assert result["periodos"] == ["2025"]
     assert result["bloques"][0]["unidad"] == "Millones USD"
-    assert result["bloques"][0]["series"] == [
-        {"nombre": "PIB", "valores": {"2025": 130.2}}
-    ]
+    assert result["bloques"][0]["series"] == [{"nombre": "PIB", "valores": {"2025": 130.2}}]
     assert result["tabla"]["sha256"] == hashlib.sha256(xlsx).hexdigest()
 
 
@@ -482,9 +463,7 @@ async def test_get_table_reads_legacy_xls_from_zip_member(httpx_mock, monkeypatc
     httpx_mock.add_response(url=bulletin["url"], html=_LEGACY_BULLETIN_HTML)
     zip_url = _LEGACY_ZIP_URL
     member_bytes = b"not a real xls -- xlrd.open_workbook is mocked below"
-    httpx_mock.add_response(
-        url=zip_url, content=_zip_bytes({"IEM-315.xls": member_bytes})
-    )
+    httpx_mock.add_response(url=zip_url, content=_zip_bytes({"IEM-315.xls": member_bytes}))
 
     fake_sheet = _FakeXlrdSheet(
         "Cuadro",
@@ -515,18 +494,14 @@ async def test_get_table_reads_legacy_xls_from_zip_member(httpx_mock, monkeypatc
 
     monkeypatch.setattr(xlrd, "open_workbook", fake_open_workbook)
 
-    result = await bce_iem_client.get_table(
-        "iem-legado-iem-315", desde="2025", boletin_numero=1975
-    )
+    result = await bce_iem_client.get_table("iem-legado-iem-315", desde="2025", boletin_numero=1975)
 
     assert seen_bytes == [member_bytes]
     assert result["tabla"]["formato_origen"] == "xls_legado_zip"
     assert result["tabla"]["sha256"] == hashlib.sha256(member_bytes).hexdigest()
     assert result["formato"] == "series_ancho"
     assert result["bloques"][0]["unidad"] == "Millones USD"
-    assert result["bloques"][0]["series"] == [
-        {"nombre": "PIB", "valores": {"2025": 130.2}}
-    ]
+    assert result["bloques"][0]["series"] == [{"nombre": "PIB", "valores": {"2025": 130.2}}]
 
 
 @pytest.mark.asyncio
@@ -542,9 +517,7 @@ async def test_get_table_reads_xlsx_mislabeled_as_legacy_xls_from_zip_member(
     httpx_mock.add_response(url=bulletin["url"], html=_LEGACY_BULLETIN_HTML)
     zip_url = _LEGACY_ZIP_URL
     member_bytes = _xlsx()
-    httpx_mock.add_response(
-        url=zip_url, content=_zip_bytes({"IEM-316b.xls": member_bytes})
-    )
+    httpx_mock.add_response(url=zip_url, content=_zip_bytes({"IEM-316b.xls": member_bytes}))
 
     def fail_open_workbook(file_contents: bytes):
         raise AssertionError("xlrd should not be invoked for a PK-prefixed member")
@@ -557,17 +530,13 @@ async def test_get_table_reads_xlsx_mislabeled_as_legacy_xls_from_zip_member(
 
     assert result["tabla"]["sha256"] == hashlib.sha256(member_bytes).hexdigest()
     assert result["formato"] == "series_ancho"
-    assert result["bloques"][0]["series"] == [
-        {"nombre": "PIB", "valores": {"2025": 130.2}}
-    ]
+    assert result["bloques"][0]["series"] == [{"nombre": "PIB", "valores": {"2025": 130.2}}]
 
 
 @pytest.mark.asyncio
 async def test_download_zip_cached_only_fetches_once(httpx_mock):
     zip_url = _LEGACY_ZIP_URL
-    httpx_mock.add_response(
-        url=zip_url, content=_zip_bytes({"IEM-315.xls": b"fake"})
-    )
+    httpx_mock.add_response(url=zip_url, content=_zip_bytes({"IEM-315.xls": b"fake"}))
 
     first = await bce_iem_client._download_zip_cached(zip_url)
     second = await bce_iem_client._download_zip_cached(zip_url)
@@ -642,7 +611,10 @@ def test_table_grid_parser_resolves_rowspan_and_colspan():
 @pytest.mark.parametrize(
     ("title", "expected"),
     [
-        ("1.1 Principales Indicadores Monetarios", "iem-legado-frameset-1-1-principales-indicadores-monetarios"),
+        (
+            "1.1 Principales Indicadores Monetarios",
+            "iem-legado-frameset-1-1-principales-indicadores-monetarios",
+        ),
         ("", "iem-legado-frameset-seccion-3"),
     ],
 )
@@ -660,9 +632,7 @@ async def test_fetch_legacy_frameset_tables_discovers_sections(httpx_mock):
         url=section2, content="<H3>1.2 Otra Seccion</H3><TABLE><TR><TD>x</TABLE>".encode("cp1252")
     )
 
-    tables = await bce_iem_client._fetch_legacy_frameset_tables(
-        bulletin, _FRAMESET_BULLETIN_HTML
-    )
+    tables = await bce_iem_client._fetch_legacy_frameset_tables(bulletin, _FRAMESET_BULLETIN_HTML)
 
     assert [t["table_id"] for t in tables] == [
         "iem-legado-frameset-1-1-principales-indicadores-monetarios",
@@ -850,6 +820,8 @@ def test_selected_columns_ignores_float_cells_even_in_year_range():
         (1, "2024"),
         (2, "2025"),
     ]
+
+
 def test_read_zip_member_capped_rejects_oversized_member(monkeypatch):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -905,8 +877,16 @@ def _icc_rows() -> list[list]:
         ["Índice"],
         [],
         ["Período (5)(6)\\Variable", None, "TOTAL NACIONAL", None, None, "URBANO", None, None],
-        [None, None, "Situación Presente (3)", "Situación Futura (4)", "Confianza del Consumidor ",
-         "Situación Presente (3)", "Situación Futura (4)", "Confianza del Consumidor "],
+        [
+            None,
+            None,
+            "Situación Presente (3)",
+            "Situación Futura (4)",
+            "Confianza del Consumidor ",
+            "Situación Presente (3)",
+            "Situación Futura (4)",
+            "Confianza del Consumidor ",
+        ],
         [2024, "Enero", 35.1, 38.2, 36.5, 35.4, 38.1, 36.3],
         [None, "Febrero ", 37.1, 39.6, 37.9, 36.9, 39.8, 37.9],
         [None, "Marzo", 36.7, 37.9, 37.1, 36.6, 38.2, 37.1],
@@ -932,7 +912,11 @@ def test_extract_long_table_flattens_multirow_headers_and_fills_years():
         "URBANO — Confianza del Consumidor",
     ]
     assert [row[0] for row in result["filas"]] == [
-        "2024-01", "2024-02", "2024-03", "2025-01", "2025-02",
+        "2024-01",
+        "2024-02",
+        "2024-03",
+        "2025-01",
+        "2025-02",
     ]
     # Footnote row excluded, values untouched.
     assert result["filas_totales"] == 5
@@ -973,7 +957,10 @@ def test_extract_long_table_keeps_annual_rows_blocks_and_unit_banners():
     result = bce_iem_client._extract_long_table(_sheet(rows), "", "", 50)
 
     assert result["encabezados"] == [
-        "Período", "Bloque", "TOTAL EXPORTACIONES", "PRIMARIOS — Petróleo Crudo",
+        "Período",
+        "Bloque",
+        "TOTAL EXPORTACIONES",
+        "PRIMARIOS — Petróleo Crudo",
         "PRIMARIOS — Banano y plátano",
     ]
     assert [(r[0], r[1]) for r in result["filas"]] == [
@@ -998,7 +985,8 @@ def test_extract_long_table_carries_year_from_combined_month_label():
     result = bce_iem_client._extract_long_table(_sheet(rows), "2026-02", "", 50)
 
     assert result["encabezados"][1:] == [
-        "EXPORTACIONES FOB — Total", "EXPORTACIONES FOB — Petroleras",
+        "EXPORTACIONES FOB — Total",
+        "EXPORTACIONES FOB — Petroleras",
     ]
     assert [row[0] for row in result["filas"]] == ["2026 Febrero", "2026 Marzo"]
 
@@ -1014,7 +1002,8 @@ def test_extract_long_table_carries_year_over_quarter_ranges():
     result = bce_iem_client._extract_long_table(_sheet(rows), "2022-04", "2022-12", 50)
 
     assert result["encabezados"][1:] == [
-        "TOTAL NACIONAL — Situación Presente", "TOTAL NACIONAL — Situación Futura",
+        "TOTAL NACIONAL — Situación Presente",
+        "TOTAL NACIONAL — Situación Futura",
     ]
     assert [row[0] for row in result["filas"]] == ["2022 Abril - Junio"]
 

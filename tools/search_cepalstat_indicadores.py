@@ -69,7 +69,9 @@ def register_search_cepalstat_indicadores_tool(mcp: MCPServer) -> None:
                 parts.append(f"{i}. {ind['nombre']} (indicator_id={ind['indicator_id']})")
                 parts.append(f"   Área: {ind['area']}")
             if len(indicadores) > 50:
-                parts.append(f"... y {len(indicadores) - 50} más (usa format=json para verlos todos)")
+                parts.append(
+                    f"... y {len(indicadores) - 50} más (usa format=json para verlos todos)"
+                )
             return "\n".join(parts)
 
         return render_structured(result, format, text_builder=to_text)

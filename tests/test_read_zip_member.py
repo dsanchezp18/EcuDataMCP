@@ -294,9 +294,7 @@ async def test_a_range_less_host_still_rejects_an_encrypted_member(httpx_mock):
         await read_zip_member(URL, "a.csv")
 
 
-async def test_a_range_less_host_reads_a_text_member_from_its_head(
-    httpx_mock, monkeypatch
-):
+async def test_a_range_less_host_reads_a_text_member_from_its_head(httpx_mock, monkeypatch):
     monkeypatch.setattr(csv_reader, "MAX_DOWNLOAD_BYTES", 2048)
     body = _noise_csv(2000)
     _serve(httpx_mock, _make_zip({"big.csv": body}), full_body=True)
@@ -324,9 +322,7 @@ async def test_a_range_less_host_reads_zip64_extra_fields(httpx_mock, monkeypatc
     assert result["rows"][0] == ["7"]
 
 
-async def test_a_range_less_host_reads_the_zip64_end_of_central_directory(
-    httpx_mock, monkeypatch
-):
+async def test_a_range_less_host_reads_the_zip64_end_of_central_directory(httpx_mock, monkeypatch):
     # The 56-byte ZIP64 record sits outside the tail, so it is a range of its own.
     monkeypatch.setattr(csv_reader, "_EOCD_TAIL_BYTES", 42)
     _serve(httpx_mock, _zip64_eocd_zip("datos.csv", b"a,b\n1,2\n"), full_body=True)
@@ -336,9 +332,7 @@ async def test_a_range_less_host_reads_the_zip64_end_of_central_directory(
     assert result["rows"] == [["1", "2"]]
 
 
-async def test_a_range_less_host_with_a_zip_over_the_cap_says_so(
-    httpx_mock, monkeypatch
-):
+async def test_a_range_less_host_with_a_zip_over_the_cap_says_so(httpx_mock, monkeypatch):
     monkeypatch.setattr(csv_reader, "_MAX_NO_RANGE_ZIP_BYTES", 1024 * 1024)
     blob = _make_zip({"a.csv": b"x" * (1024 * 1024 + 10)}, method=zipfile.ZIP_STORED)
     _serve(httpx_mock, blob, full_body=True)
@@ -602,13 +596,9 @@ def _zip64_eocd_zip(name: str, data: bytes) -> bytes:
     )
     cd_offset = len(local)
     record_offset = cd_offset + len(cd)
-    record = struct.pack(
-        "<4sQHHIIQQQQ", b"PK\x06\x06", 44, 45, 45, 0, 0, 1, 1, len(cd), cd_offset
-    )
+    record = struct.pack("<4sQHHIIQQQQ", b"PK\x06\x06", 44, 45, 45, 0, 0, 1, 1, len(cd), cd_offset)
     locator = struct.pack("<4sIQI", b"PK\x06\x07", 0, record_offset, 1)
-    eocd = struct.pack(
-        "<4sHHHHIIH", b"PK\x05\x06", 0, 0, 0xFFFF, 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0
-    )
+    eocd = struct.pack("<4sHHHHIIH", b"PK\x05\x06", 0, 0, 0xFFFF, 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0)
     return local + cd + record + locator + eocd
 
 
@@ -823,7 +813,11 @@ async def test_an_ods_sheet_is_selected_by_name_and_by_number(httpx_mock):
     by_name = await read_zip_member(URL, "libro.ods", sheet="Dos")
     by_number = await read_zip_member(URL, "libro.ods", sheet="1")
 
-    assert (by_name["sheet"], by_name["sheets"], by_name["rows"]) == ("Dos", ["Uno", "Dos"], [["b1"]])
+    assert (by_name["sheet"], by_name["sheets"], by_name["rows"]) == (
+        "Dos",
+        ["Uno", "Dos"],
+        [["b1"]],
+    )
     assert (by_number["sheet"], by_number["rows"]) == ("Uno", [["a1"]])
 
 
@@ -887,9 +881,7 @@ def _range_lengths(httpx_mock) -> list[int]:
 
 
 @pytest.mark.parametrize("method", [zipfile.ZIP_DEFLATED, zipfile.ZIP_STORED])
-async def test_a_text_member_over_the_cap_is_read_from_its_head(
-    httpx_mock, monkeypatch, method
-):
+async def test_a_text_member_over_the_cap_is_read_from_its_head(httpx_mock, monkeypatch, method):
     monkeypatch.setattr(csv_reader, "MAX_DOWNLOAD_BYTES", 2048)
     body = _noise_csv(2000)
     blob = _make_zip({"big.csv": body}, method=method)
@@ -906,9 +898,7 @@ async def test_a_text_member_over_the_cap_is_read_from_its_head(
     assert max(_range_lengths(httpx_mock)) < 2048 + 1024 + 100
 
 
-async def test_a_member_just_under_the_cap_is_still_read_whole_and_checked(
-    httpx_mock, monkeypatch
-):
+async def test_a_member_just_under_the_cap_is_still_read_whole_and_checked(httpx_mock, monkeypatch):
     body = _noise_csv(300)
     blob = _make_zip({"a.csv": body}, method=zipfile.ZIP_STORED)
     monkeypatch.setattr(csv_reader, "MAX_DOWNLOAD_BYTES", len(body) + 10)
@@ -1026,9 +1016,7 @@ async def test_legacy_spreadsheets_list_their_sheets_and_pick_one(httpx_mock, me
         ("libro.xlsb", make_xlsb(_LEGACY_BOOK)),
     ],
 )
-async def test_an_unknown_sheet_in_a_legacy_spreadsheet_lists_the_sheets(
-    httpx_mock, member, blob
-):
+async def test_an_unknown_sheet_in_a_legacy_spreadsheet_lists_the_sheets(httpx_mock, member, blob):
     _serve(httpx_mock, _make_zip({member: blob}))
 
     with pytest.raises(ValueError, match="2. Precios 2024"):

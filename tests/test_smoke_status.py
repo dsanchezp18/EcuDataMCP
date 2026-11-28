@@ -6,8 +6,7 @@ from scripts.smoke_e2e import DegradedChain, chain_step
 
 def test_classifies_ckan_regional_block_as_degraded():
     text = (
-        '{"error": "El portal de Datos Abiertos (datosabiertos.gob.ec) '
-        'rechazó la conexión (403)."}'
+        '{"error": "El portal de Datos Abiertos (datosabiertos.gob.ec) rechazó la conexión (403)."}'
     )
 
     assessment = assess_response(text, ['"results"'])
@@ -38,7 +37,7 @@ def test_classifies_cenace_certificate_problem_as_degraded():
 def test_classifies_sercop_regional_block_as_degraded():
     text = (
         '{"error": "No se pudo conectar al portal de Datos Abiertos de '
-        'Compras Públicas (compraspublicas.gob.ec). Esto suele pasar '
+        "Compras Públicas (compraspublicas.gob.ec). Esto suele pasar "
         'cuando el servidor se conecta desde fuera de Latinoamérica."}'
     )
 
@@ -174,8 +173,7 @@ def test_is_error_flag_fails_unknown_plain_text_tool_error():
 
 def test_chain_step_degrades_on_known_source_block():
     text = (
-        '{"error": "El portal de Datos Abiertos (datosabiertos.gob.ec) '
-        'rechazó la conexión (403)."}'
+        '{"error": "El portal de Datos Abiertos (datosabiertos.gob.ec) rechazó la conexión (403)."}'
     )
 
     with pytest.raises(DegradedChain) as excinfo:
@@ -309,8 +307,7 @@ def test_classifies_sgr_arcgis_site_not_initialized_as_degraded():
 
 def test_sgr_connect_error_stays_a_failure():
     text = (
-        "Error executing tool search_eventos_riesgo: "
-        "Error al consultar eventos SGR: ConnectError"
+        "Error executing tool search_eventos_riesgo: Error al consultar eventos SGR: ConnectError"
     )
 
     assert degraded_source(text) is None
@@ -343,8 +340,7 @@ def test_classifies_intermittent_sri_datasets_network_errors_as_degraded(error):
     # Seen from the runner (ConnectError, 2026-11-18) and the Oracle VM
     # (ReadError, 2026-11-20 and 11-21); the same call loaded 130 files later.
     text = (
-        "Error executing tool search_archivos: "
-        f"Error al buscar archivos de sri_datasets: {error}"
+        f"Error executing tool search_archivos: Error al buscar archivos de sri_datasets: {error}"
     )
 
     assessment = assess_response(text, [], is_error=True)
@@ -380,3 +376,38 @@ def test_classifies_elecgalapagos_503_as_degraded():
     )
 
     assert assess_response(text, [], is_error=True).status == "degraded"
+
+
+def test_classifies_the_maate_geoserver_port_outage_as_degraded_not_geoblocked():
+    from helpers.smoke_status import GEOBLOCKED_SOURCES
+
+    for text in (
+        (
+            "Error executing tool search_capas_geo: Error al consultar el catálogo de "
+            "capas de maate: ConnectTimeout (la fuente no respondió a tiempo; reintenta "
+            "en unos minutos)"
+        ),
+        (
+            "Error executing tool get_capa_geo_datos: Error al consultar la capa "
+            "'mae_ide:v_fa210_snap_a' de maate: ConnectTimeout (la fuente no respondió "
+            "a tiempo; reintenta en unos minutos)"
+        ),
+    ):
+        assert degraded_source(text) == "maate_geoserver_down"
+    assert "maate_geoserver_down" not in GEOBLOCKED_SOURCES
+
+
+def test_other_maate_and_igm_errors_stay_failures():
+    assert (
+        degraded_source(
+            "Error al consultar la capa 'mae_ide:x' de maate: Client error '404 Not Found'"
+        )
+        is None
+    )
+    assert (
+        degraded_source(
+            "Error al consultar el catálogo de capas de igm: ConnectTimeout (la fuente "
+            "no respondió a tiempo; reintenta en unos minutos)"
+        )
+        is None
+    )

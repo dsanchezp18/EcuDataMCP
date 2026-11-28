@@ -141,9 +141,7 @@ async def _fetch_archivos() -> list[dict[str, Any]]:
         seen: set[int] = set()
         async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}) as session:
             for term in _SEARCH_TERMS:
-                logger.info(
-                    "Descargando archivo de cortes de Centrosur (búsqueda: %s)", term
-                )
+                logger.info("Descargando archivo de cortes de Centrosur (búsqueda: %s)", term)
                 for item in await _fetch_term(term, session):
                     if item.get("mime_type") != "application/pdf":
                         continue
@@ -200,9 +198,7 @@ async def _load_horarios(url: str) -> dict[str, Any]:
         async with lock:
             parsed = _horarios_cache.get(url)
             if parsed is None:
-                logger.info(
-                    "Descargando y procesando horario de cortes de Centrosur: %s", url
-                )
+                logger.info("Descargando y procesando horario de cortes de Centrosur: %s", url)
                 raw, truncated = await download_bytes(url, max_bytes=_MAX_PDF_BYTES)
                 if truncated:
                     raise ValueError(f"el PDF supera {_MAX_PDF_BYTES // 2**20} MB")
@@ -239,11 +235,7 @@ async def get_centrosur_cortes_horarios(url: str, query: str = "") -> dict[str, 
 
     q = _strip(query)
     fields = ("canton", "zona", "subestacion", "sectores")
-    filas = [
-        f
-        for f in parsed["filas"]
-        if not q or any(q in _strip(f.get(k)) for k in fields)
-    ]
+    filas = [f for f in parsed["filas"] if not q or any(q in _strip(f.get(k)) for k in fields)]
     return {
         "url": url,
         "formato": parsed["formato"],
@@ -252,8 +244,6 @@ async def get_centrosur_cortes_horarios(url: str, query: str = "") -> dict[str, 
         "total": len(filas),
         "total_en_archivo": len(parsed["filas"]),
         "filas_sin_horario": parsed["filas_sin_horario"],
-        "filas_canton_inferido": sum(
-            1 for f in parsed["filas"] if f.get("canton_inferido")
-        ),
+        "filas_canton_inferido": sum(1 for f in parsed["filas"] if f.get("canton_inferido")),
         "filas": filas,
     }

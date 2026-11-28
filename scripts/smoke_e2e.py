@@ -136,9 +136,7 @@ async def call_tool(client: httpx.AsyncClient, name: str, args: dict) -> tuple[s
     for pause in TRANSIENT_RETRY_PAUSES:
         # A source already named in smoke_status is retried by check_tool, not
         # here, so its known outage is not retried a second time over.
-        if not (
-            is_error and is_transient_network_error(text) and degraded_source(text) is None
-        ):
+        if not (is_error and is_transient_network_error(text) and degraded_source(text) is None):
             break
         print(f"  RETRY    {name}: transient network error, trying again in {pause}s")
         await asyncio.sleep(pause)
@@ -146,9 +144,7 @@ async def call_tool(client: httpx.AsyncClient, name: str, args: dict) -> tuple[s
     return text, is_error
 
 
-async def _post_tool_call(
-    client: httpx.AsyncClient, name: str, args: dict
-) -> tuple[str, bool]:
+async def _post_tool_call(client: httpx.AsyncClient, name: str, args: dict) -> tuple[str, bool]:
     data = await mcp_post(
         client,
         {
@@ -212,9 +208,7 @@ class DegradedChain(Exception):
         self.source = source
 
 
-def chain_step(
-    text: str, required: list[str] | None = None, is_error: bool = False
-) -> str:
+def chain_step(text: str, required: list[str] | None = None, is_error: bool = False) -> str:
     """Assert one chain step through the same classifier the flat checks use.
 
     Each chain used to hand-roll a Traceback/`Error:` check, so a known
@@ -366,7 +360,9 @@ async def main() -> int:
         HIDDEN_TOOLS.clear()
         HIDDEN_TOOLS.update(h.json().get("hidden_tools") or [])
         if HIDDEN_TOOLS:
-            print(f"  this host hides {len(HIDDEN_TOOLS)} tool(s): {', '.join(sorted(HIDDEN_TOOLS))}")
+            print(
+                f"  this host hides {len(HIDDEN_TOOLS)} tool(s): {', '.join(sorted(HIDDEN_TOOLS))}"
+            )
 
         print("== initialize ==")
         client._session_id = ""
@@ -389,10 +385,18 @@ async def main() -> int:
             ("list_categories", {"format": "json"}, ['"categories"', "salud"]),
             ("list_instituciones", {"query": "SRI", "format": "json"}, ['"institucion_id"', "SRI"]),
             ("search_datasets", {"query": "salud", "page_size": 2}, ["dataset"]),
-            ("search_tramites", {"query": "pasaporte", "format": "json"}, ["tramite_id", "pasaporte"]),
+            (
+                "search_tramites",
+                {"query": "pasaporte", "format": "json"},
+                ["tramite_id", "pasaporte"],
+            ),
             ("search_regulaciones", {"query": "datos", "format": "json"}, ["regulacion_id"]),
             ("get_regulacion_info", {"regulacion_id": "2990", "format": "json"}, ["regulacion"]),
-            ("search_eventos_riesgo", {"provincia": "Pichincha", "limit": 3}, ["SGR", "Evento", "riesgo"]),
+            (
+                "search_eventos_riesgo",
+                {"provincia": "Pichincha", "limit": 3},
+                ["SGR", "Evento", "riesgo"],
+            ),
             ("list_sat_tsunami", {"limit": 3, "format": "json"}, ["stations"]),
             (
                 "search_contratos",
@@ -488,7 +492,11 @@ async def main() -> int:
             ("search_bce_calendario", {"limit": 3}, []),
             ("search_capas_geo", {"fuente": "inamhi", "format": "json"}, []),
             ("search_capas_geo", {"fuente": "mag", "format": "json"}, []),
-            ("search_capas_geo", {"fuente": "igm", "query": "poblado"}, ["nacional_2024:poblado_p_2024"]),
+            (
+                "search_capas_geo",
+                {"fuente": "igm", "query": "poblado"},
+                ["nacional_2024:poblado_p_2024"],
+            ),
             (
                 "get_capa_geo_datos",
                 {"fuente": "igm", "capa": "nacional_2024:poblado_p_2024", "count": 2},
@@ -510,11 +518,20 @@ async def main() -> int:
                 {"fuente": "sni_evaluaciones", "query": "agropecuaria", "limit": 3},
                 ["Banco de evaluaciones"],
             ),
-            ("search_archivos", {"fuente": "minedec_bases", "query": "csv 2024-2025"}, ["2024-2025"]),
+            (
+                "search_archivos",
+                {"fuente": "minedec_bases", "query": "csv 2024-2025"},
+                ["2024-2025"],
+            ),
             ("search_capas_geo", {"fuente": "msp"}, ["indicadores_ssr"]),
             (
                 "get_capa_geo_datos",
-                {"fuente": "msp", "capa": "egresos_hospitalarios", "sumar": "EGRESOS", "agrupar": "AÑO"},
+                {
+                    "fuente": "msp",
+                    "capa": "egresos_hospitalarios",
+                    "sumar": "EGRESOS",
+                    "agrupar": "AÑO",
+                },
                 ["suma_EGRESOS"],
             ),
             ("search_archivos", {"fuente": "aeade", "query": "ventas", "limit": 3}, ["ventas"]),
@@ -524,7 +541,10 @@ async def main() -> int:
                 {
                     "fuente": "cfn",
                     "indicador": "estadisticas",
-                    "campos": ["Garantias FNG.nombre_provincia", "Medidas FNG.Monto Garantizado (USD) [medida]"],
+                    "campos": [
+                        "Garantias FNG.nombre_provincia",
+                        "Medidas FNG.Monto Garantizado (USD) [medida]",
+                    ],
                     "limite": 5,
                     "format": "json",
                 },
@@ -571,7 +591,11 @@ async def main() -> int:
                 [],
             ),
             ("get_compania_info", {"ruc": FIXED_RUC, "format": "json"}, []),
-            ("get_financials", {"expediente_or_ruc": FIXED_RUC, "desde": 2023, "format": "json"}, []),
+            (
+                "get_financials",
+                {"expediente_or_ruc": FIXED_RUC, "desde": 2023, "format": "json"},
+                [],
+            ),
         ]
 
         print("== tools ==")
@@ -740,9 +764,7 @@ async def chain_ckan_preview(client: httpx.AsyncClient) -> None:
     )
 
 
-async def first_result(
-    client: httpx.AsyncClient, name: str, args: dict, key: str
-) -> str:
+async def first_result(client: httpx.AsyncClient, name: str, args: dict, key: str) -> str:
     """Call a search tool and return the first row's ``key``, failing if none."""
     search = json.loads(await call_chain_step(client, name, {**args, "format": "json"}))
     rows = search.get("results") or []
@@ -756,7 +778,11 @@ async def chain_ckan_info(client: httpx.AsyncClient) -> None:
         client, "search_datasets", {"query": "SRI recaudacion", "page_size": 3}, "name"
     )
     await call_chain_step(client, "get_dataset_info", {"dataset_id": dataset_id, "format": "json"})
-    await call_chain_step(client, "investigate_dataset", {"query": "SRI recaudacion", "preview_rows": 3, "format": "json"})
+    await call_chain_step(
+        client,
+        "investigate_dataset",
+        {"query": "SRI recaudacion", "preview_rows": 3, "format": "json"},
+    )
     listing = json.loads(
         await call_chain_step(
             client, "list_dataset_resources", {"dataset_id": dataset_id, "format": "json"}
@@ -766,7 +792,9 @@ async def chain_ckan_info(client: httpx.AsyncClient) -> None:
     if not resources:
         raise AssertionError(f"dataset {dataset_id} has no resources")
     resource_id = resources[0]["id"]
-    await call_chain_step(client, "get_resource_info", {"resource_id": resource_id, "format": "json"})
+    await call_chain_step(
+        client, "get_resource_info", {"resource_id": resource_id, "format": "json"}
+    )
 
     # Most CKAN uploads are never loaded into the DataStore. The resource was
     # just confirmed to exist, so the tool's "sin DataStore" refusal (pointing
@@ -781,22 +809,30 @@ async def chain_ckan_info(client: httpx.AsyncClient) -> None:
 async def chain_tramites(client: httpx.AsyncClient) -> None:
     tramite_id = await first_result(client, "search_tramites", {"query": "pasaporte"}, "tramite_id")
     await call_chain_step(client, "get_tramite_info", {"tramite_id": tramite_id, "format": "json"})
-    await call_chain_step(client, "get_tramite_estadisticas", {"tramite_id": tramite_id, "format": "json"})
+    await call_chain_step(
+        client, "get_tramite_estadisticas", {"tramite_id": tramite_id, "format": "json"}
+    )
 
 
 async def chain_instituciones(client: httpx.AsyncClient) -> None:
-    institucion_id = await first_result(client, "list_instituciones", {"query": "SRI"}, "institucion_id")
-    await call_chain_step(client, "get_institucion_info", {"institucion_id": institucion_id, "format": "json"})
+    institucion_id = await first_result(
+        client, "list_instituciones", {"query": "SRI"}, "institucion_id"
+    )
+    await call_chain_step(
+        client, "get_institucion_info", {"institucion_id": institucion_id, "format": "json"}
+    )
 
 
 async def chain_organizations(client: httpx.AsyncClient) -> None:
-    organization_id = await first_result(client, "search_organizations", {"query": "sri", "page_size": 3}, "name")
-    await call_chain_step(client, "get_organization_info", {"organization_id": organization_id, "format": "json"})
+    organization_id = await first_result(
+        client, "search_organizations", {"query": "sri", "page_size": 3}, "name"
+    )
+    await call_chain_step(
+        client, "get_organization_info", {"organization_id": organization_id, "format": "json"}
+    )
 
 
-async def first_item(
-    client: httpx.AsyncClient, name: str, args: dict, list_key: str
-) -> dict:
+async def first_item(client: httpx.AsyncClient, name: str, args: dict, list_key: str) -> dict:
     """Call a tool and return the first element of ``list_key``, failing if empty."""
     data = json.loads(await call_chain_step(client, name, {**args, "format": "json"}))
     rows = data.get(list_key) or []
@@ -845,9 +881,7 @@ async def chain_bce_indicador(client: httpx.AsyncClient) -> None:
 
 
 async def chain_bce_iem(client: httpx.AsyncClient) -> None:
-    tabla = await first_item(
-        client, "search_bce_iem", {"query": "inflacion", "limit": 1}, "tablas"
-    )
+    tabla = await first_item(client, "search_bce_iem", {"query": "inflacion", "limit": 1}, "tablas")
     await call_chain_step(
         client, "get_bce_iem_table", {"table_id": tabla["table_id"], "rows": 3, "format": "json"}
     )
@@ -869,7 +903,12 @@ async def chain_bce_paginas(client: httpx.AsyncClient) -> None:
     await call_chain_step(
         client,
         "get_bce_pagina_archivos",
-        {"catalogo": "indices", "pagina_id": pagina["pagina_id"], "max_archivos": 3, "format": "json"},
+        {
+            "catalogo": "indices",
+            "pagina_id": pagina["pagina_id"],
+            "max_archivos": 3,
+            "format": "json",
+        },
     )
 
 
@@ -921,15 +960,15 @@ async def chain_sri_ventas(client: httpx.AsyncClient) -> None:
 async def chain_contraloria(client: httpx.AsyncClient) -> None:
     informe = await first_item(client, "list_catalogo", {"fuente": "contraloria"}, "informes")
     await call_chain_step(
-        client, "get_contraloria_informe", {"informe_id": informe["id"], "rows": 3, "format": "json"}
+        client,
+        "get_contraloria_informe",
+        {"informe_id": informe["id"], "rows": 3, "format": "json"},
     )
 
 
 async def chain_arconel(client: httpx.AsyncClient) -> None:
     listing = json.loads(
-        await call_chain_step(
-            client, "list_catalogo", {"fuente": "arconel", "format": "json"}
-        )
+        await call_chain_step(client, "list_catalogo", {"fuente": "arconel", "format": "json"})
     )
     tipos = listing.get("tipos") or []
     if not tipos:
@@ -1003,12 +1042,18 @@ async def chain_sgr_pdf(client: httpx.AsyncClient) -> None:
 
 async def chain_anda(client: httpx.AsyncClient) -> None:
     encuesta = await first_item(client, "search_anda", {"query": "empleo", "limit": 1}, "results")
-    await call_chain_step(client, "get_anda_survey_info", {"idno": encuesta["idno"], "format": "json"})
-    await call_chain_step(client, "download_anda_microdata", {"idno": encuesta["idno"], "format": "json"})
+    await call_chain_step(
+        client, "get_anda_survey_info", {"idno": encuesta["idno"], "format": "json"}
+    )
+    await call_chain_step(
+        client, "download_anda_microdata", {"idno": encuesta["idno"], "format": "json"}
+    )
 
 
 async def chain_auditor(client: httpx.AsyncClient) -> None:
-    auditor = await first_item(client, "search_auditores", {"query": "AUDIT", "limit": 1}, "auditores")
+    auditor = await first_item(
+        client, "search_auditores", {"query": "AUDIT", "limit": 1}, "auditores"
+    )
     await call_chain_step(
         client, "get_auditor_info", {"identificacion": auditor["identificacion"], "format": "json"}
     )

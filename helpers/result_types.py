@@ -25,8 +25,13 @@ from typing_extensions import TypedDict
 
 @with_config(ConfigDict(extra="allow"))
 class Esquema(TypedDict, total=False):
-    nombre: Annotated[str | None, Field(description="Nombre estable del esquema, p. ej. ecudatamcp.search_ranking")]
-    campos_principales: Annotated[list[str], Field(description="Claves de primer nivel de la respuesta")]
+    nombre: Annotated[
+        str | None,
+        Field(description="Nombre estable del esquema, p. ej. ecudatamcp.search_ranking"),
+    ]
+    campos_principales: Annotated[
+        list[str], Field(description="Claves de primer nivel de la respuesta")
+    ]
 
 
 @with_config(ConfigDict(extra="allow"))
@@ -35,13 +40,27 @@ class Metadatos(TypedDict, total=False):
     fuente: Annotated[str | None, Field(description="Institución o sistema de origen")]
     url_fuente: Annotated[str | None, Field(description="URL oficial consultada")]
     consultado_en: Annotated[str | None, Field(description="Momento de la consulta, ISO 8601 UTC")]
-    fecha_publicacion: Annotated[str | None, Field(description="Fecha de publicación del dato, si la fuente la da")]
-    fecha_corte: Annotated[str | None, Field(description="Fecha de corte del dato, si la fuente la da")]
-    frescura: Annotated[str | None, Field(description="Cadencia de actualización, p. ej. daily_bulk o boletin_mensual")]
+    fecha_publicacion: Annotated[
+        str | None, Field(description="Fecha de publicación del dato, si la fuente la da")
+    ]
+    fecha_corte: Annotated[
+        str | None, Field(description="Fecha de corte del dato, si la fuente la da")
+    ]
+    frescura: Annotated[
+        str | None,
+        Field(description="Cadencia de actualización, p. ej. daily_bulk o boletin_mensual"),
+    ]
     esquema: Esquema
-    truncado: Annotated[dict[str, Any], Field(description="Presente si se omitieron filas por tamaño")]
-    paginacion: Annotated[dict[str, Any], Field(description="Dónde está la página siguiente, si la respuesta pagina")]
-    respuesta_obsoleta: Annotated[dict[str, Any], Field(description="Presente si la fuente falló y se usó la última copia buena")]
+    truncado: Annotated[
+        dict[str, Any], Field(description="Presente si se omitieron filas por tamaño")
+    ]
+    paginacion: Annotated[
+        dict[str, Any], Field(description="Dónde está la página siguiente, si la respuesta pagina")
+    ]
+    respuesta_obsoleta: Annotated[
+        dict[str, Any],
+        Field(description="Presente si la fuente falló y se usó la última copia buena"),
+    ]
 
 
 @with_config(ConfigDict(extra="allow"))

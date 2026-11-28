@@ -91,7 +91,9 @@ async def get_poblacion(
         {
             "anio": r.get("year"),
             "origen": r.get("coo") if r.get("coo") not in (None, "-") else "Total",
-            "origen_nombre": r.get("coo_name") if r.get("coo_name") not in (None, "-") else "Todos los orígenes",
+            "origen_nombre": r.get("coo_name")
+            if r.get("coo_name") not in (None, "-")
+            else "Todos los orígenes",
             **{es: _count(r.get(en)) for en, es in _FIELDS.items()},
         }
         for r in items

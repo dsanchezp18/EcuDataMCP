@@ -20,7 +20,7 @@ def _clean_modificado(value: str) -> str:
 
 
 def _periodo(anio, mes) -> str:
-    """"YYYY-MM", zero-padding mes only when it actually parsed as an int --
+    """ "YYYY-MM", zero-padding mes only when it actually parsed as an int --
     an unexpected non-numeric value from the API should show as-is rather
     than crash the whole response on a format-spec error."""
     if isinstance(mes, int):
@@ -80,11 +80,14 @@ def register_get_tramite_estadisticas_tool(mcp: MCPServer) -> None:
                 "atenciones": int(r["atenciones"])
                 if str(r.get("atenciones", "")).isdigit()
                 else r.get("atenciones"),
-                "quejas": int(r["quejas"]) if str(r.get("quejas", "")).isdigit() else r.get("quejas"),
+                "quejas": int(r["quejas"])
+                if str(r.get("quejas", "")).isdigit()
+                else r.get("quejas"),
                 "modificado": _clean_modificado(r.get("modificado", "")),
             }
             for r in rows
         ]
+
         # gob.ec returns newest-first; a monthly series reads more naturally
         # oldest-first, and this also makes the "most recent" row obvious
         # without depending on the API never changing its order. Sort key

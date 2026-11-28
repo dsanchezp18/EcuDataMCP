@@ -47,9 +47,7 @@ def register_list_categories_tool(mcp: MCPServer) -> None:
         except Exception as e:
             raise ToolError(f"Error: {e}") from e
 
-        groups_sorted = sorted(
-            groups, key=lambda g: g.get("package_count", 0), reverse=True
-        )
+        groups_sorted = sorted(groups, key=lambda g: g.get("package_count", 0), reverse=True)
         payload = {
             "total": len(groups_sorted),
             "total_datasets": sum(g.get("package_count", 0) for g in groups_sorted),

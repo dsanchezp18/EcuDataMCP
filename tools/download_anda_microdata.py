@@ -18,7 +18,7 @@ def _next_step(links: list[dict[str, str]]) -> str | None:
         return (
             'search_archivos(fuente="censo", query="...") lista las bases de datos '
             "del Censo 2022 (CSV/SPSS/REDATAM por cantón, sector y manzana), los "
-            "diccionarios y los tabulados (p. ej. query=\"tecnolog\" para TIC)."
+            'diccionarios y los tabulados (p. ej. query="tecnolog" para TIC).'
         )
     if "ecuadorencifras.gob.ec" in hosts:
         return (

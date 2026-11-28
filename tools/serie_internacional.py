@@ -84,7 +84,10 @@ async def _run(fuente: str, p: dict[str, Any]) -> dict[str, Any]:
         }
     if fuente == "ember":
         if not p["indicador"]:
-            return {"fuente": "ember", **await ember_client.search_indicadores(p["query"], p["limit"])}
+            return {
+                "fuente": "ember",
+                **await ember_client.search_indicadores(p["query"], p["limit"]),
+            }
         return {
             "fuente": "ember",
             **await ember_client.get_serie(
@@ -193,7 +196,9 @@ def _to_text(data: dict) -> str:
             vals = ", ".join(f"{k}: {v}" for k, v in r["valores"].items() if v is not None)
             parts.append(f"- {r['periodo']}: {vals}")
         if data["total_registros"] > 120:
-            parts.append(f"(últimos 120 de {data['total_registros']}; acota con desde/hasta o usa format=json)")
+            parts.append(
+                f"(últimos 120 de {data['total_registros']}; acota con desde/hasta o usa format=json)"
+            )
         parts.append("Licencia: CC BY 4.0 (Ember, vía Our World in Data)")
     elif src == "comtrade":
         parts = [
@@ -263,7 +268,9 @@ def _to_text(data: dict) -> str:
             ),
         ]
         if data["truncado"]:
-            parts.append("Aviso: resultado truncado al tope de páginas; acota con desde/hasta o socio.")
+            parts.append(
+                "Aviso: resultado truncado al tope de páginas; acota con desde/hasta o socio."
+            )
         parts.append("")
         parts += [
             f"- {r['anio']} | {r['origen']}: refugiados {r['refugiados']}, "

@@ -60,9 +60,7 @@ def register_search_organizations_tool(mcp: MCPServer) -> None:
             "results": [
                 {
                     "name": org.get("name"),
-                    "title": org.get("title")
-                    or org.get("display_name")
-                    or "Sin nombre",
+                    "title": org.get("title") or org.get("display_name") or "Sin nombre",
                     "package_count": org.get("package_count", 0),
                     "description": org.get("description"),
                 }

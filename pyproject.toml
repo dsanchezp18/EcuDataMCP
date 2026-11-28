@@ -62,6 +62,10 @@ dev = [
     "fpdf2>=2.8.8",
 ]
 
+[tool.ruff]
+# The width most of the code already used: the fewest lines change at 100.
+line-length = 100
+
 [tool.ruff.lint]
 extend-select = ["I"]
 ignore = ["BLE001"]

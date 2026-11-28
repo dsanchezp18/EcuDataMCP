@@ -111,7 +111,9 @@ def test_clean_formato_known_and_unknown_extensions():
     assert seps._clean_formato("https://estadisticas.seps.gob.ec/a/b.zip") == "ZIP"
     # Download-monitor redirect links carry no extension in the URL itself.
     assert (
-        seps._clean_formato("https://estadisticas.seps.gob.ec/?sdm_process_download=1&download_id=1")
+        seps._clean_formato(
+            "https://estadisticas.seps.gob.ec/?sdm_process_download=1&download_id=1"
+        )
         == "DESCONOCIDO"
     )
 
@@ -128,7 +130,9 @@ def test_parse_panel_body_calificacion_de_riesgos_handles_strong_wrapped_link_an
     assert "collapse_3" in bodies
 
     with caplog.at_level("WARNING"):
-        parsed = seps._parse_panel_body(bodies["collapse_3"], "sfps_reportes_calificacion_de_riesgos")
+        parsed = seps._parse_panel_body(
+            bodies["collapse_3"], "sfps_reportes_calificacion_de_riesgos"
+        )
 
     # 4 links in the fixture, one on a foreign domain that must be dropped.
     assert len(parsed["archivos"]) == 3
@@ -198,7 +202,9 @@ async def test_one_page_fetch_covers_every_seccion_on_it(httpx_mock):
 
 @pytest.mark.asyncio
 async def test_empty_parse_result_is_not_cached(httpx_mock):
-    httpx_mock.add_response(url=seps._SFPS_URL, html="<html><body>Sitio en mantenimiento.</body></html>")
+    httpx_mock.add_response(
+        url=seps._SFPS_URL, html="<html><body>Sitio en mantenimiento.</body></html>"
+    )
     httpx_mock.add_response(url=seps._SFPS_URL, html=_SFPS_HTML)
 
     first = await seps.get_seccion_archivos("sfps_reportes_calificacion_de_riesgos")

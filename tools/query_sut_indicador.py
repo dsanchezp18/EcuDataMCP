@@ -81,14 +81,17 @@ def register_query_sut_indicador_tool(mcp: MCPServer) -> None:
             # without this a Power BI ReadTimeout reached the client as a bare
             # "Error executing tool query_sut_indicador".
             raise ToolError(
-                "Error al consultar el indicador en Power BI: "
-                f"{type(e).__name__} {e}".strip()
+                f"Error al consultar el indicador en Power BI: {type(e).__name__} {e}".strip()
                 + " (reintenta en unos minutos)"
             ) from e
 
         def to_text(data: dict) -> str:
             filas = data.get("filas") or []
-            parts = [f"Indicador {data.get('fuente', 'sut')}: {data.get('nombre')}", f"{len(filas)} fila(s)", ""]
+            parts = [
+                f"Indicador {data.get('fuente', 'sut')}: {data.get('nombre')}",
+                f"{len(filas)} fila(s)",
+                "",
+            ]
             if not filas:
                 parts.append("Sin resultados para esta combinación de campos/filtros.")
                 if data.get("aviso"):
@@ -99,7 +102,7 @@ def register_query_sut_indicador_tool(mcp: MCPServer) -> None:
                 parts.append(" | ".join(f"{k}={v}" for k, v in row.items()))
             if len(filas) > _TEXT_ROW_CAP:
                 parts.append(
-                    f"... ({len(filas) - _TEXT_ROW_CAP} fila(s) más — usa format=\"json\" "
+                    f'... ({len(filas) - _TEXT_ROW_CAP} fila(s) más — usa format="json" '
                     "o acota con filtros/campos para verlas todas)"
                 )
             if data.get("truncado"):

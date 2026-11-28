@@ -181,17 +181,13 @@ def _parse_wms_layers(xml_bytes: bytes) -> list[dict[str, Any]]:
             abstract_el.text.strip() if abstract_el is not None and abstract_el.text else None
         )
 
-        crs_list = sorted(
-            {c.text.strip() for c in layer_el.findall("wms:CRS", _WMS_NS) if c.text}
-        )
+        crs_list = sorted({c.text.strip() for c in layer_el.findall("wms:CRS", _WMS_NS) if c.text})
 
         bbox_el = layer_el.find("wms:EX_GeographicBoundingBox", _WMS_NS)
         bbox = None
         if bbox_el is not None:
             bbox = {
-                _local(child.tag): float(child.text)
-                for child in bbox_el
-                if child.text is not None
+                _local(child.tag): float(child.text) for child in bbox_el if child.text is not None
             }
 
         layers.append(
@@ -268,7 +264,12 @@ async def _fetch_endpoint(
             wfs_bytes, wfs_truncated = await download_bytes(wfs_url, session=session)
         wfs_by_bare = {} if wfs_truncated else _parse_wfs_type_names(wfs_bytes)
     except Exception:
-        logger.warning("No se pudo consultar el endpoint %s/%s del geoportal MAG", categoria, store, exc_info=True)
+        logger.warning(
+            "No se pudo consultar el endpoint %s/%s del geoportal MAG",
+            categoria,
+            store,
+            exc_info=True,
+        )
         return [], False
 
     entries = []
@@ -327,7 +328,9 @@ async def _fetch_catalog() -> list[dict[str, Any]]:
         return catalog
 
 
-async def search_capas(query: str = "", solo_wfs: bool = False, categoria: str = "") -> dict[str, Any]:
+async def search_capas(
+    query: str = "", solo_wfs: bool = False, categoria: str = ""
+) -> dict[str, Any]:
     """
     List (optionally filtered) layers from the Ministry of Agriculture's
     geoportal (geoportal.agricultura.gob.ec, GeoServer WMS/WFS).
@@ -408,7 +411,9 @@ async def get_layer_features(layer_id: str, count: int = _DEFAULT_FEATURE_COUNT)
             "outputFormat": "application/json",
         }
     )
-    logger.info("Consultando GetFeature del geoportal MAG para %s (count=%d)", layer_id, capped_count)
+    logger.info(
+        "Consultando GetFeature del geoportal MAG para %s (count=%d)", layer_id, capped_count
+    )
     raw, truncated = await download_bytes(wfs_url)
     if truncated:
         raise ValueError(

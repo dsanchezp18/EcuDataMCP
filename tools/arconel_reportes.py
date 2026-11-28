@@ -66,9 +66,7 @@ def register_get_arconel_reporte_tool(mcp: MCPServer) -> None:
             raise ToolError(f"Error al consultar el reporte de ARCONEL: {e}") from e
 
         def to_text(data: dict) -> str:
-            periodo = f"{data['anio']}" + (
-                f"-{data['mes']:02d}" if data.get("mes") else ""
-            )
+            periodo = f"{data['anio']}" + (f"-{data['mes']:02d}" if data.get("mes") else "")
             estado = "completo" if data["completo"] else "INCOMPLETO (sube max_paginas)"
             parts = [
                 (
@@ -81,9 +79,7 @@ def register_get_arconel_reporte_tool(mcp: MCPServer) -> None:
                 "",
             ]
             for fila in data["filas"][:_TEXT_ROWS]:
-                parts.append(
-                    " | ".join("" if v is None else str(v) for v in fila.values())
-                )
+                parts.append(" | ".join("" if v is None else str(v) for v in fila.values()))
             if data["total_filas"] > _TEXT_ROWS:
                 parts.append(
                     f"... y {data['total_filas'] - _TEXT_ROWS} filas más (usa format=json)"

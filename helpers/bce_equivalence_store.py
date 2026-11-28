@@ -23,9 +23,7 @@ def persist_review_map(review: dict[str, Any]) -> dict[str, str]:
     """Atomically save a candidate map and promote it as the latest review."""
     directory = review_dir()
     directory.mkdir(parents=True, exist_ok=True)
-    stamp = re.sub(
-        r"[^0-9A-Za-z_.-]+", "-", datetime.now(UTC).isoformat()
-    ).strip("-")
+    stamp = re.sub(r"[^0-9A-Za-z_.-]+", "-", datetime.now(UTC).isoformat()).strip("-")
     payload = {**review, "revision_generada_en": datetime.now(UTC).isoformat()}
     raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8")
     path = directory / f"equivalencias-{stamp}.json"

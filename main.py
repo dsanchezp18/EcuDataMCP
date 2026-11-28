@@ -6,6 +6,7 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
 from helpers import usage
+from helpers.build_info import get_commit
 from helpers.env_config import (
     get_mcp_auth_token,
     get_mcp_host,
@@ -38,6 +39,7 @@ setup_logging()
 
 SERVER_START_TIME = datetime.now(UTC)
 VERSION = get_version()
+COMMIT = get_commit()
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
@@ -106,9 +108,7 @@ register_resources(mcp)
 def with_health_endpoint(
     inner_app: Callable[[dict, Callable, Callable], Awaitable[None]],
 ) -> Callable[[dict, Callable, Callable], Awaitable[None]]:
-    async def app(
-        scope: dict, receive: Callable, send: Callable
-    ) -> None:
+    async def app(scope: dict, receive: Callable, send: Callable) -> None:
         if scope["type"] == "http":
             path: str = scope.get("path", "")
 
@@ -118,6 +118,9 @@ def with_health_endpoint(
                         "status": "ok",
                         "uptime_since": SERVER_START_TIME.isoformat(),
                         "version": VERSION,
+                        # Two hosts can serve the same version from different
+                        # commits; null on an install without a checkout.
+                        "commit": COMMIT,
                         # Tools this host hides on purpose (HIDE_TOOLS /
                         # HIDE_GEOBLOCKED): the smoke test skips them instead
                         # of reporting "Unknown tool" as a regression.
@@ -129,9 +132,7 @@ def with_health_endpoint(
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("utf-8")),
                 ]
-                await send(
-                    {"type": "http.response.start", "status": 200, "headers": headers}
-                )
+                await send({"type": "http.response.start", "status": 200, "headers": headers})
                 await send({"type": "http.response.body", "body": body})
                 return
 
@@ -143,9 +144,7 @@ def with_health_endpoint(
                     (b"content-type", b"application/json"),
                     (b"content-length", str(len(body)).encode("utf-8")),
                 ]
-                await send(
-                    {"type": "http.response.start", "status": 200, "headers": headers}
-                )
+                await send({"type": "http.response.start", "status": 200, "headers": headers})
                 await send({"type": "http.response.body", "body": body})
                 return
 
@@ -188,9 +187,7 @@ def main(argv: list[str] | None = None) -> None:
     transport = args.transport or get_transport()
 
     if transport == "stdio":
-        logger.info(
-            "Starting Ecuador MCP server v%s (stdio, profile=%s)", VERSION, MCP_PROFILE
-        )
+        logger.info("Starting Ecuador MCP server v%s (stdio, profile=%s)", VERSION, MCP_PROFILE)
         mcp.run(transport="stdio")
         return
 
@@ -221,13 +218,14 @@ def main(argv: list[str] | None = None) -> None:
             "set a token before exposing it beyond a trusted network"
         )
     if bool(certfile) != bool(keyfile):
-        raise RuntimeError(
-            "MCP_SSL_CERTFILE y MCP_SSL_KEYFILE deben configurarse juntos"
-        )
+        raise RuntimeError("MCP_SSL_CERTFILE y MCP_SSL_KEYFILE deben configurarse juntos")
 
     logger.info(
         "Starting Ecuador MCP server v%s on %s:%d (profile=%s)",
-        VERSION, host, port, MCP_PROFILE,
+        VERSION,
+        host,
+        port,
+        MCP_PROFILE,
     )
     if auth_token:
         logger.info("MCP HTTP authentication: Bearer token enabled")

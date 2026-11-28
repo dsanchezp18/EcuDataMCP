@@ -145,9 +145,7 @@ async def test_empty_csv_result_is_not_cached(httpx_mock):
 async def test_solo_proximas_is_not_widened_by_earlier_desde(httpx_mock):
     httpx_mock.add_response(url=bce_calendario_client._CSV_URL, content=_CSV_BYTES)
 
-    result = await bce_calendario_client.search_calendario(
-        solo_proximas=True, desde="2000-01-01"
-    )
+    result = await bce_calendario_client.search_calendario(solo_proximas=True, desde="2000-01-01")
 
     assert result["total"] == 2
     assert all(p["fecha"] >= _TODAY.isoformat() for p in result["publicaciones"])
@@ -157,9 +155,7 @@ async def test_solo_proximas_is_not_widened_by_earlier_desde(httpx_mock):
 async def test_solo_proximas_respects_later_desde(httpx_mock):
     httpx_mock.add_response(url=bce_calendario_client._CSV_URL, content=_CSV_BYTES)
 
-    result = await bce_calendario_client.search_calendario(
-        solo_proximas=True, desde="2026-12-01"
-    )
+    result = await bce_calendario_client.search_calendario(solo_proximas=True, desde="2026-12-01")
 
     assert [p["fecha"] for p in result["publicaciones"]] == ["2026-12-31"]
 

@@ -88,7 +88,9 @@ def test_the_allowed_host_and_path_follow_the_configured_site_base():
     )
 
     result = parse_material_links(
-        html, "https://mirror.example/anda9/index.php/catalog/809/related-materials", "809",
+        html,
+        "https://mirror.example/anda9/index.php/catalog/809/related-materials",
+        "809",
         site_base="https://mirror.example/anda9/",
     )
 
@@ -136,12 +138,18 @@ async def test_other_http_errors_are_not_reported_as_a_missing_id(httpx_mock):
 def _server_with_stubbed_helper(monkeypatch) -> MCPServer:
     async def fake(survey_id, session=None):
         return {
-            "fuente": "INEC ANDA", "url_fuente": PAGE, "id": survey_id, "total": 1,
-            "archivos": [{
-                "nombre": "1. Serie Historica del IPC.zip", "formato": "ZIP",
-                "tamano": "117.14 KB",
-                "url": "https://anda.inec.gob.ec/anda5/index.php/catalog/809/download/16414",
-            }],
+            "fuente": "INEC ANDA",
+            "url_fuente": PAGE,
+            "id": survey_id,
+            "total": 1,
+            "archivos": [
+                {
+                    "nombre": "1. Serie Historica del IPC.zip",
+                    "formato": "ZIP",
+                    "tamano": "117.14 KB",
+                    "url": "https://anda.inec.gob.ec/anda5/index.php/catalog/809/download/16414",
+                }
+            ],
             "nota": "nota",
         }
 

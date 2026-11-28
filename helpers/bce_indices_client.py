@@ -101,7 +101,9 @@ _EXTRA_SLUGS = (
 )
 
 _GI_ROOT_RE = re.compile(r'<section class="(?P<classes>bce-gi(?:\s[\w-]+)?)"', re.IGNORECASE)
-_GI_WEEKLY_ROOT_RE = re.compile(r'<section class="bce-gi-weekly"[^>]*aria-label="(?P<titulo>[^"]*)"')
+_GI_WEEKLY_ROOT_RE = re.compile(
+    r'<section class="bce-gi-weekly"[^>]*aria-label="(?P<titulo>[^"]*)"'
+)
 _GI_TITLE_RE = re.compile(r'<div class="bce-gi-title">.*?<h2>(?P<titulo>.*?)</h2>', re.DOTALL)
 _GI_PANEL_RE = re.compile(
     r'<div class="bce-gi-panel[^"]*" data-year="(?P<anio>\d+)"\s*>(?P<body>.*?)'
@@ -119,9 +121,7 @@ _CARD_DESC_RE = re.compile(r'<p class="bce-gi-month-desc">(?P<desc>.*?)</p>', re
 _CARD_TAGS_RE = re.compile(r'<div class="bce-gi-tags">(?P<body>.*?)</div>', re.DOTALL)
 _TAG_SPAN_RE = re.compile(r"<span>(?P<tag>.*?)</span>", re.DOTALL)
 
-_GI_WEEKLY_TITLE_RE = re.compile(
-    r'<h2 class="bce-gi-weekly-title">(?P<titulo>.*?)</h2>', re.DOTALL
-)
+_GI_WEEKLY_TITLE_RE = re.compile(r'<h2 class="bce-gi-weekly-title">(?P<titulo>.*?)</h2>', re.DOTALL)
 _GI_WEEKLY_PANEL_RE = re.compile(
     # A non-active panel carries a trailing `hidden` attribute instead of a
     # bare closing `>` (confirmed live: only the current year's panel omits
@@ -171,7 +171,7 @@ def _clean_text(html_fragment: str) -> str:
 
 
 def _parse_fecha(texto: str) -> str | None:
-    """"9 de enero de 2026" -> "2026-01-09"; None if unrecognized."""
+    """ "9 de enero de 2026" -> "2026-01-09"; None if unrecognized."""
     m = _FECHA_TEXTO_RE.search(texto)
     if not m:
         return None
@@ -427,7 +427,9 @@ _MAX_ARCHIVOS = 200
 _DEFAULT_MAX_ARCHIVOS = 30
 
 
-async def get_archivo(pagina_id: str, anio: int = 0, max_archivos: int = _DEFAULT_MAX_ARCHIVOS) -> dict[str, Any]:
+async def get_archivo(
+    pagina_id: str, anio: int = 0, max_archivos: int = _DEFAULT_MAX_ARCHIVOS
+) -> dict[str, Any]:
     """
     Read the file archive for one BCE "índice" page (from search_bce_indices).
 

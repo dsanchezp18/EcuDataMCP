@@ -66,9 +66,7 @@ async def test_get_ruc_info_can_skip_establishments(httpx_mock):
         html=_INFO_HTML,
     )
 
-    result = await sri_ruc_client.get_ruc_info(
-        "1718647215001", include_establecimientos=False
-    )
+    result = await sri_ruc_client.get_ruc_info("1718647215001", include_establecimientos=False)
 
     assert "establecimientos" not in result
     assert len(httpx_mock.get_requests()) == 1

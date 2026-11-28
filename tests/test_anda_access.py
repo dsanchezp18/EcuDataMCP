@@ -116,9 +116,7 @@ def test_access_summary_falls_back_to_the_catalog_flag():
 
 @pytest.mark.asyncio
 async def test_get_microdata_access_reads_login_wall_without_the_terms_form(httpx_mock):
-    httpx_mock.add_response(
-        method="GET", url=f"{BASE}/catalog/351/get-microdata", html=LOGIN_WALL
-    )
+    httpx_mock.add_response(method="GET", url=f"{BASE}/catalog/351/get-microdata", html=LOGIN_WALL)
     assert (await anda_client.get_microdata_access("351"))["tipo_acceso"] == "registro"
 
 
@@ -147,7 +145,9 @@ async def test_search_and_download_agree_for_cpv_2022(httpx_mock, monkeypatch):
     assert found["microdatos_disponibles"] is True
     assert got["total_archivos"] == 0
     assert got["total_enlaces_externos"] == 1
-    assert got["enlaces_externos"][0]["url"] == "https://www.censoecuador.gob.ec/data-censo-ecuador/"
+    assert (
+        got["enlaces_externos"][0]["url"] == "https://www.censoecuador.gob.ec/data-censo-ecuador/"
+    )
     assert "search_archivos" in got["siguiente_paso"]
     anda_client._access_cache.clear()
 
@@ -177,9 +177,7 @@ async def test_search_degrades_to_the_catalog_flag_when_the_check_fails(httpx_mo
     httpx_mock.add_response(
         url=f"{BASE}/api/catalog?ps=10", json={"result": {"found": "1", "rows": [CPV_ROW]}}
     )
-    httpx_mock.add_response(
-        method="GET", url=f"{BASE}/catalog/1085/get-microdata", status_code=503
-    )
+    httpx_mock.add_response(method="GET", url=f"{BASE}/catalog/1085/get-microdata", status_code=503)
 
     search = _tool(register_search_anda_tool, "search_anda")
     found = (await search(format="json")).structured_content["results"][0]
@@ -203,7 +201,10 @@ async def test_search_can_skip_the_verification(httpx_mock):
 async def test_download_direct_files_keep_working(httpx_mock):
     httpx_mock.add_response(
         url=f"{BASE}/api/catalog/1153?id_format=id",
-        json={"status": "success", "dataset": {"id": "1153", "title": "ENEMDU", "data_access_type": "direct"}},
+        json={
+            "status": "success",
+            "dataset": {"id": "1153", "title": "ENEMDU", "data_access_type": "direct"},
+        },
     )
     _mock_terms_flow(httpx_mock, "1153", DIRECT_AFTER_TERMS)
 

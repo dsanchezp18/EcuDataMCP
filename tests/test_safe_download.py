@@ -117,9 +117,7 @@ async def test_safe_stream_caps_redirect_count(monkeypatch, httpx_mock):
 
     async with httpx.AsyncClient() as session:
         with pytest.raises(UnsafeUrlError, match="redirecciones"):
-            async with safe_stream(
-                session, "https://example.com/hop0", max_redirects=3
-            ) as resp:
+            async with safe_stream(session, "https://example.com/hop0", max_redirects=3) as resp:
                 await resp.aread()
 
 

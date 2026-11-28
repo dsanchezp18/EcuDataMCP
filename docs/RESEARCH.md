@@ -7570,6 +7570,64 @@ parcial (los RUC de Guayas y Pichincha, 148 y 156 MB, exigían subir
 - Sin probar: Oracle (no alcanza al SRI), dos llamadas a la vez sobre el mismo
   .zip contra el servidor real, y el límite de disco temporal de Render.
 
+
+## Quincuagésima pasada — revisión de la 0.15.3: codificación de `aggregate_csv`, caída del GeoServer del MAATE, archivos temporales (2026-11-28)
+
+Punto de partida: una revisión del código y la operación de la 0.15.3. Lo
+verificado en vivo y con pruebas locales:
+
+### `aggregate_csv` leía mal un archivo Windows-1252 con el primer acento tarde
+
+- La codificación se decidía con los primeros 64 KB y el resto se decodificaba
+  como UTF-8 reemplazando los bytes inválidos. Un CSV en Windows-1252 con 72 KB
+  de filas ASCII y luego `CAÑAR` devolvía el grupo `CA\ufffdAR`, y un filtro
+  `{"PROVINCIA": "CAÑAR"}` no encontraba ninguna de las 2 filas, sin aviso.
+- Ahora UTF-8 se lee de forma estricta y el primer byte que no es UTF-8 hace
+  releer el archivo como Windows-1252, dentro del mismo límite de tiempo. Un
+  miembro de .zip se vuelve a descomprimir desde su archivo temporal.
+
+### El GeoServer del MAATE estuvo caído, no bloqueado
+
+- El smoke diario falló el 2026-11-27 (runner en westus) y el 11-28 (eastus2)
+  con `ConnectTimeout` en `maate`, en las dos pasadas; el 11-27 también en
+  `igm`. Los mismos checks pasaron el 11-23 (us-east-1), el 11-25
+  (westcentralus) y el 11-26 (centralus).
+- Desde una conexión doméstica en Ecuador, el 11-28, el puerto 8080 de
+  `ide.ambiente.gob.ec` no completó la conexión TCP (20 s, dos intentos)
+  mientras el puerto 80 del mismo host respondía en 0,4 s. Es una caída del
+  puerto del GeoServer para todos, no un bloqueo geográfico ni un fallo del
+  cliente: `helpers/smoke_status.py` la clasifica como degradada
+  (`maate_geoserver_down`), fuera de `GEOBLOCKED_SOURCES`.
+- El IGM respondió ese mismo día (200 en 2,2 s). Una sola caída no es un patrón:
+  sigue contando como fallo.
+
+### NASA POWER: noviembre sigue siendo GEOS-IT
+
+- El 11-28 un rango del 1 al 27 de noviembre nombraba solo `GEOSIT`, y el punto
+  de Quito seguía pasando de 4,88 mm el 31 de octubre a 40,59 mm el 1 de
+  noviembre. MERRA-2 aún no cubre noviembre.
+- La nota del tool ya no cita cifras con fecha (NASA las revisa): explica que
+  los días GEOS-IT son provisionales y que la serie salta. Las cifras quedan
+  aquí y en el comentario de `helpers/nasa_power_client.py`.
+
+### Archivos temporales de los .zip
+
+- En un host con Range, dos llamadas simultáneas por el mismo miembro lo bajaban
+  dos veces (el candado por URL y el caché de 5 minutos solo cubrían la descarga
+  completa de un host sin Range). Con 8 peticiones concurrentes
+  (`MCP_MAX_CONCURRENT_REQUESTS`) podían coexistir 8 archivos de 300 o 400 MB.
+- Ahora las llamadas por el mismo miembro comparten una descarga, y hay un
+  máximo de dos miembros sumándose a la vez y dos descargas completas a la vez;
+  las demás esperan su turno.
+- Sin medir todavía: el límite de disco temporal de Render y el comportamiento
+  con llamadas de más de 338 s.
+
+### Qué instancia corre qué commit
+
+- `/health` daba la versión pero no el commit, así que dos servidores en 0.15.3
+  podían estar en commits distintos sin que se notara. Ahora devuelve `commit`
+  (de `ECUADOR_MCP_COMMIT`, de `RENDER_GIT_COMMIT` o de `git rev-parse HEAD`).
+
 ## Archivo del roadmap (2026-11-24)
 
 El 2026-11-24 se limpió [ROADMAP.md](ROADMAP.md). Las filas de ese archivo que ya

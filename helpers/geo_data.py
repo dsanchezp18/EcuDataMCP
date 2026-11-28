@@ -127,9 +127,7 @@ def find_cantones(
     for c in items:
         if r and r not in _strip(c.get("region", "")):
             continue
-        if p and not _matches_filter(
-            p, c.get("provincia", ""), c.get("provincia_codigo", "")
-        ):
+        if p and not _matches_filter(p, c.get("provincia", ""), c.get("provincia_codigo", "")):
             continue
         if not q:
             out.append(c)
@@ -155,13 +153,9 @@ def find_parroquias(
     p = _strip(provincia)
     out: list[dict[str, Any]] = []
     for row in items:
-        if p and not _matches_filter(
-            p, row.get("provincia", ""), row.get("provincia_codigo", "")
-        ):
+        if p and not _matches_filter(p, row.get("provincia", ""), row.get("provincia_codigo", "")):
             continue
-        if c and not _matches_filter(
-            c, row.get("canton", ""), row.get("canton_codigo", "")
-        ):
+        if c and not _matches_filter(c, row.get("canton", ""), row.get("canton_codigo", "")):
             continue
         if not q:
             out.append(row)

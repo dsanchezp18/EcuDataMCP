@@ -162,7 +162,12 @@ def _classify(url: str, link_text: str, context: str, tema: str | None) -> dict[
     if "DICC-CENSO" in up or "DICCIONARIO" in up:
         nivel = next((v for k, v in _NIVELES.items() if re.search(rf"_{k}(?:_|\.)", up)), None)
         label = "Diccionario de variables" + (f" – {nivel}" if nivel else "")
-        return {"label": label + (f" {anio}" if anio else ""), "format": ext, "tipo": "diccionario", "anio": anio}
+        return {
+            "label": label + (f" {anio}" if anio else ""),
+            "format": ext,
+            "tipo": "diccionario",
+            "anio": anio,
+        }
     is_bulk = ext in ("ZIP", "RAR")
     if is_bulk and ("/BD-CENSO/" in up or "/PUBLIC/BBD_CPV" in up or "/PUBLIC/BDD_CPV" in up):
         nivel = next((v for k, v in _NIVELES.items() if re.search(rf"[_/]{k}[_/.]", up)), None)
@@ -172,7 +177,13 @@ def _classify(url: str, link_text: str, context: str, tema: str | None) -> dict[
         fmt = "SPSS" if fmt == "SAV" else fmt
         recod = " (recodificado a la geografía 2022)" if "CORRESP" in up else ""
         label = f"Base de datos CPV {anio or '2022'} – {nivel or name} – {fmt}{recod}"
-        return {"label": label, "format": ext, "tipo": "microdatos", "anio": anio or "2022", "nivel": nivel}
+        return {
+            "label": label,
+            "format": ext,
+            "tipo": "microdatos",
+            "anio": anio or "2022",
+            "nivel": nivel,
+        }
     if "/WP-CONTENT/UPLOADS/" in up and link_text.lower().startswith("formato") and context:
         suffix = "Excel" if ext in ("XLSX", "XLS") else "CSV"
         label = f"{context} – {suffix}"
@@ -284,7 +295,9 @@ async def _fetch_resources() -> tuple[list[dict[str, Any]], str | None]:
     return resources, None
 
 
-async def search_censo_recursos(query: str = "", limit: int = 30, offset: int = 0) -> dict[str, Any]:
+async def search_censo_recursos(
+    query: str = "", limit: int = 30, offset: int = 0
+) -> dict[str, Any]:
     """
     Search the direct file links published on INEC's Census 2022 microsite.
 
@@ -323,9 +336,7 @@ async def search_censo_recursos(query: str = "", limit: int = 30, offset: int = 
         if not all(w in whole for w in words):
             continue
         hits = [
-            (sum(w in t for w in words), sheet)
-            for sheet, t in tables
-            if any(w in t for w in words)
+            (sum(w in t for w in words), sheet) for sheet, t in tables if any(w in t for w in words)
         ]
         hits.sort(key=lambda x: -x[0])
         in_head = sum(w in h for w in words)

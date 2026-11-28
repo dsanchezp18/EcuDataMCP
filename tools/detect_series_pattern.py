@@ -176,7 +176,10 @@ def _pick_pair(resources: list[dict]) -> tuple[dict, dict] | None:
         # confirmed live that CKAN's last_modified/created can't be trusted
         # to track the period a resource covers. Only falls back to the
         # timestamp to break ties within the same extracted period.
-        return (period_sort_key(r.get("name") or ""), r.get("last_modified") or r.get("created") or "")
+        return (
+            period_sort_key(r.get("name") or ""),
+            r.get("last_modified") or r.get("created") or "",
+        )
 
     group.sort(key=sort_key, reverse=True)
     return group[0], group[1]
@@ -340,13 +343,19 @@ def register_detect_series_pattern_tool(mcp: MCPServer) -> None:
                 "",
             ]
             classification = data["classification"]
-            if classification == "indeterminado" and data.get("reason") == "sin_columna_periodo_detectada":
+            if (
+                classification == "indeterminado"
+                and data.get("reason") == "sin_columna_periodo_detectada"
+            ):
                 parts.append(
                     "Clasificación: INDETERMINADO -- no se encontró una columna de "
                     "fecha/período reconocible en alguno de los dos archivos. Revisa "
                     "manualmente con preview_resource_data."
                 )
-            elif classification == "indeterminado" and data.get("reason") == "esquema_distinto_entre_archivos":
+            elif (
+                classification == "indeterminado"
+                and data.get("reason") == "esquema_distinto_entre_archivos"
+            ):
                 parts.append(
                     "Clasificación: INDETERMINADO -- estos dos archivos no parecen tener "
                     "el mismo formato interno (columnas muy distintas), aunque ambos "
@@ -357,15 +366,9 @@ def register_detect_series_pattern_tool(mcp: MCPServer) -> None:
                     "Revisa manualmente con preview_resource_data."
                 )
             else:
-                parts.append(
-                    f"Columna(s) de período: {', '.join(data['period_columns_new'])}"
-                )
-                parts.append(
-                    f"Períodos en el archivo más antiguo: {data['periods_old_count']}"
-                )
-                parts.append(
-                    f"Períodos en el archivo más reciente: {data['periods_new_count']}"
-                )
+                parts.append(f"Columna(s) de período: {', '.join(data['period_columns_new'])}")
+                parts.append(f"Períodos en el archivo más antiguo: {data['periods_old_count']}")
+                parts.append(f"Períodos en el archivo más reciente: {data['periods_new_count']}")
                 parts.append(
                     f"Solapamiento: {data['overlap_count']} "
                     f"({data['coverage'] * 100:.0f}% de los períodos del archivo antiguo "

@@ -197,14 +197,14 @@ async def test_get_familia_archivos_parses_table_and_button_entries(httpx_mock):
     assert micro_sintaxis["grupo"] is None
 
     factores_sav = next(
-        a for a in result["archivos"] if a["titulo"] == "Factores Asociados estudiantes" and a["formato"] == "SAV"
+        a
+        for a in result["archivos"]
+        if a["titulo"] == "Factores Asociados estudiantes" and a["formato"] == "SAV"
     )
     assert factores_sav["url"].endswith("/download/76099/")
 
     # No "Micro"/SAV entry -- that cell was empty in the source table.
-    assert not any(
-        a["titulo"] == "Micro" and a["formato"] == "SAV" for a in result["archivos"]
-    )
+    assert not any(a["titulo"] == "Micro" and a["formato"] == "SAV" for a in result["archivos"])
 
     fichas = next(a for a in result["archivos"] if a["titulo"] == "Descargar Fichas Metodológicas")
     assert fichas["periodo"] is None
@@ -212,7 +212,9 @@ async def test_get_familia_archivos_parses_table_and_button_entries(httpx_mock):
     assert fichas["grupo"] == "Fichas metodológicas vigentes"
 
     stats = next(
-        a for a in result["archivos"] if a["titulo"] == "Descargar promedios históricos de indicadores principales"
+        a
+        for a in result["archivos"]
+        if a["titulo"] == "Descargar promedios históricos de indicadores principales"
     )
     # This button sits AFTER the whole accordion -- periodo must not be
     # misattributed to the last year panel seen in the document.

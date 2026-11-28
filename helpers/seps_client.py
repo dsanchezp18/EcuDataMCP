@@ -251,7 +251,7 @@ _PANEL_BODY_RE = re.compile(
 # iteration -- confirmed live this drops the 2026 calificadoras entry
 # without it.
 _ITEM_RE = re.compile(
-    r'<li(?:\s+[^>]*)?>(?!\s*(?:<a\b|</li>|\s*<ul))(?P<grupo>(?:(?!</li>|<ul\b|<a\b).)*)'
+    r"<li(?:\s+[^>]*)?>(?!\s*(?:<a\b|</li>|\s*<ul))(?P<grupo>(?:(?!</li>|<ul\b|<a\b).)*)"
     r'|<a\s+href="(?P<url>[^"]+)"[^>]*>(?P<label>[^<]*)</a>',
     re.DOTALL,
 )

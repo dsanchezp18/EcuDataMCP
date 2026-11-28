@@ -78,15 +78,21 @@ def _fake_server(hidden: list[str]):
         method = body.get("method")
         if method == "initialize":
             return httpx.Response(
-                200, json={"jsonrpc": "2.0", "id": 0, "result": {}},
+                200,
+                json={"jsonrpc": "2.0", "id": 0, "result": {}},
                 headers={"mcp-session-id": "test-session"},
             )
         if method == "tools/call":
             return httpx.Response(
                 200,
-                json={"jsonrpc": "2.0", "id": 1, "result": {
-                    "content": [{"type": "text", "text": "ok"}], "isError": False,
-                }},
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "result": {
+                        "content": [{"type": "text", "text": "ok"}],
+                        "isError": False,
+                    },
+                },
             )
         return httpx.Response(202)
 
@@ -96,8 +102,11 @@ def _fake_server(hidden: list[str]):
 async def test_main_skips_hidden_tools_in_checks_and_chains(monkeypatch, capsys):
     real_client = httpx.AsyncClient
     monkeypatch.setattr(
-        smoke.httpx, "AsyncClient",
-        lambda *a, **k: real_client(transport=httpx.MockTransport(_fake_server(["search_contratos"]))),
+        smoke.httpx,
+        "AsyncClient",
+        lambda *a, **k: real_client(
+            transport=httpx.MockTransport(_fake_server(["search_contratos"]))
+        ),
     )
 
     await smoke.main()
@@ -113,7 +122,8 @@ async def test_main_skips_hidden_tools_in_checks_and_chains(monkeypatch, capsys)
 async def test_main_still_calls_every_tool_when_the_host_hides_nothing(monkeypatch, capsys):
     real_client = httpx.AsyncClient
     monkeypatch.setattr(
-        smoke.httpx, "AsyncClient",
+        smoke.httpx,
+        "AsyncClient",
         lambda *a, **k: real_client(transport=httpx.MockTransport(_fake_server([]))),
     )
 

@@ -56,9 +56,7 @@ def register_compare_bce_sources_tool(mcp: MCPServer) -> None:
                 limit=limit,
                 historico=historico,
             )
-            result = bce_equivalence.build_equivalence_map(
-                bce_snapshot, iem_catalog
-            )
+            result = bce_equivalence.build_equivalence_map(bce_snapshot, iem_catalog)
             result["bce_consultado_en"] = bce_snapshot.get("consultado_en")
             result["iem_consultado_en"] = iem_catalog.get("catalogado_en")
             if guardar_revision:
@@ -70,8 +68,10 @@ def register_compare_bce_sources_tool(mcp: MCPServer) -> None:
                 freshness="comparacion_de_catalogos_en_vivo",
                 schema_name="bce_equivalencias_candidatas_v1",
                 schema_fields=[
-                    "equivalencias_candidatas", "iem_solo_por_etiquetas",
-                    "bcedata_solo_por_etiquetas", "nota",
+                    "equivalencias_candidatas",
+                    "iem_solo_por_etiquetas",
+                    "bcedata_solo_por_etiquetas",
+                    "nota",
                 ],
                 consulted_at=bce_snapshot.get("consultado_en"),
                 published_at=iem_catalog.get("catalogado_en"),

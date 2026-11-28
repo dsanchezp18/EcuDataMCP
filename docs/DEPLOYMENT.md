@@ -71,7 +71,7 @@ es obligatoria salvo `MCP_AUTH_TOKEN` cuando `MCP_REQUIRE_AUTH=1`.
 | `MCP_HOST` | Dirección de bind. `docker-compose.yml` la fija en `0.0.0.0` | `127.0.0.1` |
 | `MCP_PORT` | Puerto del servidor HTTP (`--port` lo sobreescribe) | `8000` |
 | `MCP_TRANSPORT` | `http` o `stdio` (`--transport` lo sobreescribe). La imagen Docker arranca en `stdio` | `http` |
-| `MCP_PROFILE` | `public` (84 tools), `maintenance` (solo `audit_bce_catalog` y `compare_bce_sources`) o `all` | `public` |
+| `MCP_PROFILE` | `public` (88 tools), `maintenance` (solo `audit_bce_catalog` y `compare_bce_sources`) o `all` | `public` |
 | `LOG_LEVEL` | Nivel de log de Python: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 | `MCP_AUTH_TOKEN` | Token Bearer exigido en `POST /mcp`; vacío desactiva la autenticación | vacío |
 | `MCP_REQUIRE_AUTH` | `1` aborta el arranque si falta `MCP_AUTH_TOKEN`; `docker-compose.yml` lo deja en `1` | `0` |
@@ -97,6 +97,8 @@ es obligatoria salvo `MCP_AUTH_TOKEN` cuando `MCP_REQUIRE_AUTH=1`.
 | `ECUADOR_MCP_MAX_RESPONSE_BYTES` | Tope de bytes del `structuredContent` de cualquier tool; pasado el tope se recorta la lista principal y se declara en `metadatos.truncado` | `200000` |
 | `ECUADOR_MCP_NO_RANGE_ZIP_MB` | Tamaño máximo, en MB, de un .zip que `list_zip_contents`, `read_zip_member` y `aggregate_csv` (con `member`) bajan entero cuando el servidor del archivo no admite HTTP Range. Hasta 20 MB se guarda en memoria; más va a un archivo temporal en el disco del servidor, que se borra solo, y hasta dos archivos se conservan 5 minutos; tope 1024. Los .zip de RUC por provincia del SRI pesan de 2 a 156 MB (Guayas 148, Pichincha 156), así que el valor por defecto los cubre | `400` |
 | `ECUADOR_MCP_USAGE_LOG` | `1` guarda cada llamada (tool, resultado, duración; nunca argumentos) en `<data_dir>/usage.jsonl`; `scripts/usage_report.py` lo resume | vacío |
+| `ECUADOR_MCP_COMMIT` | SHA del commit desplegado, que `/health` devuelve en `commit` para comparar una instancia con su rama. Solo hace falta donde no hay checkout (una imagen Docker): en un clon se lee con `git rev-parse HEAD` y en Render de `RENDER_GIT_COMMIT` | vacío |
+| `ECUADOR_MCP_SUPERCIAS_YEARS` | Número de años fiscales, contados desde el más reciente, que conserva la base financiera de Supercías (`helpers/supercias_financials_build.py`), para un host con poco disco; vacío o `all` conserva toda la historia (2008 en adelante) | vacío |
 
 ### Geobloqueo y TLS
 

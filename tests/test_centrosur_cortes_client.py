@@ -37,8 +37,7 @@ _CORTES_MEDIA_JSON = [
         "media_type": "file",
         "mime_type": "application/pdf",
         "source_url": (
-            "https://www.centrosur.gob.ec/wp-content/uploads/2024/04/"
-            "Cortes_18_19_ABRIL_2024.pdf"
+            "https://www.centrosur.gob.ec/wp-content/uploads/2024/04/Cortes_18_19_ABRIL_2024.pdf"
         ),
     },
     {
@@ -49,8 +48,7 @@ _CORTES_MEDIA_JSON = [
         "media_type": "file",
         "mime_type": "application/pdf",
         "source_url": (
-            "https://www.centrosur.gob.ec/wp-content/uploads/2023/10/"
-            "Cortes-programados-27-oct.pdf"
+            "https://www.centrosur.gob.ec/wp-content/uploads/2023/10/Cortes-programados-27-oct.pdf"
         ),
     },
 ]
@@ -64,8 +62,7 @@ _DESCONEXION_MEDIA_JSON = [
         "media_type": "file",
         "mime_type": "application/pdf",
         "source_url": (
-            "https://www.centrosur.gob.ec/wp-content/uploads/2023/10/"
-            "DESCONEXION-30-31-01-1.pdf"
+            "https://www.centrosur.gob.ec/wp-content/uploads/2023/10/DESCONEXION-30-31-01-1.pdf"
         ),
     },
     {

@@ -85,7 +85,9 @@ def _index_titles(rows: list[tuple[Any, ...]]) -> dict[str, str]:
     return out
 
 
-def _sheet_entry(name: str, rows: list[tuple[Any, ...]], fallback_title: str | None) -> dict[str, Any]:
+def _sheet_entry(
+    name: str, rows: list[tuple[Any, ...]], fallback_title: str | None
+) -> dict[str, Any]:
     title = ""
     number = ""
     header_at: int | None = None
@@ -100,7 +102,7 @@ def _sheet_entry(name: str, rows: list[tuple[Any, ...]], fallback_title: str | N
             number = nonempty[1]
         elif nonempty[0].lower().startswith("índice") and len(nonempty) > 1 and header_at is None:
             header_at = i
-    title = (title or fallback_title or "")[:_MAX_TEXT * 2]
+    title = (title or fallback_title or "")[: _MAX_TEXT * 2]
 
     geo = ""
     columns: list[str] = []
@@ -154,7 +156,9 @@ def extract_workbook_index(raw: bytes) -> list[dict[str, Any]]:
 def file_entry(resource: dict[str, Any], raw: bytes, today: str) -> dict[str, Any]:
     """Index record of one downloaded tabulado."""
     sheets = extract_workbook_index(raw)
-    levels = sorted({lv for s in sheets for lv in s.get("niveles", [])}, key=[l for _, l in _LEVELS].index)
+    levels = sorted(
+        {lv for s in sheets for lv in s.get("niveles", [])}, key=[l for _, l in _LEVELS].index
+    )
     entry: dict[str, Any] = {
         "url": resource["url"],
         "label": resource["label"],
@@ -193,13 +197,21 @@ async def build_index(max_mb: float = DEFAULT_MAX_MB) -> dict[str, Any]:
         raw, truncated = await download_bytes(resource["url"], max_bytes=limit)
         if truncated:
             logger.warning("Skipping %s: larger than %.0f MB", resource["url"], max_mb)
-            skipped.append({"url": resource["url"], "label": resource["label"], "motivo": f"supera {max_mb:g} MB"})
+            skipped.append(
+                {
+                    "url": resource["url"],
+                    "label": resource["label"],
+                    "motivo": f"supera {max_mb:g} MB",
+                }
+            )
             continue
         try:
             files.append(file_entry(resource, raw, today))
         except Exception as exc:  # a corrupt workbook must not sink the whole build
             logger.warning("Skipping %s: unreadable workbook (%s)", resource["url"], exc)
-            skipped.append({"url": resource["url"], "label": resource["label"], "motivo": f"ilegible: {exc}"})
+            skipped.append(
+                {"url": resource["url"], "label": resource["label"], "motivo": f"ilegible: {exc}"}
+            )
             continue
         logger.info("Indexed %s (%d sheets)", resource["label"], len(files[-1]["hojas"]))
     if not files:
@@ -222,7 +234,9 @@ def write_index(index: dict[str, Any], out: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--out", type=Path, default=INDEX_PATH, help="JSON file to write")
-    parser.add_argument("--max-mb", type=float, default=DEFAULT_MAX_MB, help="skip workbooks above this size")
+    parser.add_argument(
+        "--max-mb", type=float, default=DEFAULT_MAX_MB, help="skip workbooks above this size"
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     index = asyncio.run(build_index(args.max_mb))

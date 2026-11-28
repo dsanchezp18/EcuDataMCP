@@ -110,7 +110,9 @@ def register_get_anda_survey_info_tool(mcp: MCPServer) -> None:
                 parts.append(f"Entidad: {data['entidad']}")
 
             microdatos = "sí" if data["microdatos_disponibles"] else "no (solo agregados)"
-            parts.append(f"Microdatos disponibles: {microdatos} (tipo_acceso: {data['tipo_acceso']})")
+            parts.append(
+                f"Microdatos disponibles: {microdatos} (tipo_acceso: {data['tipo_acceso']})"
+            )
             for link in data.get("enlaces_externos") or []:
                 parts.append(f"Enlace externo: {link['nombre']} — {link['url']}")
             if data.get("variables"):

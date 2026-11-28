@@ -52,8 +52,7 @@ def register_get_contrato_info_tool(mcp: MCPServer) -> None:
             package = await sercop_client.get_contract_record(ocid)
         except Exception as e:
             raise ToolError(
-                f"Error al obtener contrato '{ocid}': {e}. "
-                "Si es 429, reintenta en unos segundos."
+                f"Error al obtener contrato '{ocid}': {e}. Si es 429, reintenta en unos segundos."
             ) from e
 
         records = package.get("records") or []
@@ -85,15 +84,12 @@ def register_get_contrato_info_tool(mcp: MCPServer) -> None:
             "ocid": record.get("ocid", ocid),
             "portal": f"{site}/procedimientos",
             "license": package.get("license"),
-            "buyer": {"name": buyer.get("name"), "id": buyer.get("id")}
-            if buyer
-            else None,
+            "buyer": {"name": buyer.get("name"), "id": buyer.get("id")} if buyer else None,
             "tender": {
                 "id": tender.get("id"),
                 "title": tender.get("title"),
                 "status": tender.get("status"),
-                "method": tender.get("procurementMethodDetails")
-                or tender.get("procurementMethod"),
+                "method": tender.get("procurementMethodDetails") or tender.get("procurementMethod"),
                 "value": tender.get("value"),
                 "description": (tender.get("description") or "").strip() or None,
             }
@@ -142,9 +138,7 @@ def register_get_contrato_info_tool(mcp: MCPServer) -> None:
             tender_d = data.get("tender") or {}
             if tender_d:
                 parts.append("")
-                parts.append(
-                    f"Licitación: {tender_d.get('title') or tender_d.get('id', '')}"
-                )
+                parts.append(f"Licitación: {tender_d.get('title') or tender_d.get('id', '')}")
                 if tender_d.get("status"):
                     parts.append(f"Estado: {tender_d['status']}")
                 if tender_d.get("method"):
@@ -160,9 +154,7 @@ def register_get_contrato_info_tool(mcp: MCPServer) -> None:
                 parts.append("")
                 parts.append(f"Adjudicaciones ({len(data['awards'])}):")
                 for i, award in enumerate(data["awards"][:5], 1):
-                    parts.append(
-                        f"{i}. {award.get('title') or award.get('id', 'Adjudicación')}"
-                    )
+                    parts.append(f"{i}. {award.get('title') or award.get('id', 'Adjudicación')}")
                     if award.get("status"):
                         parts.append(f"   Estado: {award['status']}")
                     aval = award.get("value") or {}
@@ -176,9 +168,7 @@ def register_get_contrato_info_tool(mcp: MCPServer) -> None:
                 parts.append("")
                 parts.append(f"Contratos ({len(data['contracts'])}):")
                 for i, contract in enumerate(data["contracts"][:5], 1):
-                    parts.append(
-                        f"{i}. {contract.get('title') or contract.get('id', 'Contrato')}"
-                    )
+                    parts.append(f"{i}. {contract.get('title') or contract.get('id', 'Contrato')}")
                     if contract.get("status"):
                         parts.append(f"   Estado: {contract['status']}")
                     cval = contract.get("value") or {}

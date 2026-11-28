@@ -83,7 +83,11 @@ TRAMITE_INFO = {
 def bce_series(vals: dict[str, float]):
     return {
         "series": [
-            {"label": "Remesas de trabajadores", "ruta": "x\\débito\\y", "valores": {"2025-I": 1.0}},
+            {
+                "label": "Remesas de trabajadores",
+                "ruta": "x\\débito\\y",
+                "valores": {"2025-I": 1.0},
+            },
             {"label": "Remesas de trabajadores", "ruta": "x\\crédito\\y", "valores": vals},
         ]
     }
@@ -156,7 +160,11 @@ class FakeTools:
             "get_indicador_bce": bce_series(REMESAS_VALS),
             "search_companias": FAVORITA,
             "get_resumen_compras": COMPRAS,
-            "search_cortes": {"total": 1, "archivos": [{"archivo": "vigentes"}], "url_fuente": CORTES["url"]},
+            "search_cortes": {
+                "total": 1,
+                "archivos": [{"archivo": "vigentes"}],
+                "url_fuente": CORTES["url"],
+            },
             "get_cortes_horarios": CORTES,
             "search_archivos": ARCHIVOS,
             "search_anda": {
@@ -170,7 +178,9 @@ class FakeTools:
             },
             "download_anda_microdata": {
                 "tipo_acceso": "enlace_externo",
-                "enlaces_externos": [{"url": "https://www.censoecuador.gob.ec/data-censo-ecuador/"}],
+                "enlaces_externos": [
+                    {"url": "https://www.censoecuador.gob.ec/data-censo-ecuador/"}
+                ],
             },
         }
         self.table.update(overrides)
@@ -280,7 +290,10 @@ def test_compras_year_is_previous_full_year_and_top_two_buyers_sorted():
     tools = FakeTools()
     f = run(ra.fetch_compras(tools, CTX))
     assert tools.calls == [("get_resumen_compras", {"comprador": "Manta", "year": 2025})]
-    assert [n for n, _ in f["buyers"]] == ["HOSPITAL GENERAL MANTA", "GOBIERNO AUTONOMO DESCENTRALIZADO MUNICIPAL DEL CANTON MANTA"]
+    assert [n for n, _ in f["buyers"]] == [
+        "HOSPITAL GENERAL MANTA",
+        "GOBIERNO AUTONOMO DESCENTRALIZADO MUNICIPAL DEL CANTON MANTA",
+    ]
     es, en = ra.render_compras(f, "es"), ra.render_compras(f, "en")
     assert es["question"] == "¿Cuánto contrató el sector público en Manta en 2025?"
     assert es["answer"] == (
@@ -333,13 +346,23 @@ def test_sismo_filter_excludes_peru_and_colombia():
 
 def test_sismo_filter_text_beats_coordinates_and_bbox_is_only_a_fallback():
     # Peruvian label with coordinates that fall inside Ecuador's box: text wins.
-    border = ev("b", 4.0, 5.0, -4.5, -80.0, "2026-11-01T00:00:00-05:00", "a 10 km de Sullana, Piura")
+    border = ev(
+        "b", 4.0, 5.0, -4.5, -80.0, "2026-11-01T00:00:00-05:00", "a 10 km de Sullana, Piura"
+    )
     assert not ra.sismo_in_ecuador(border)
     # No region in the text: coordinates decide.
     inside = ev("c", 4.0, 5.0, -1.0, -78.0, "2026-11-01T00:00:00-05:00", "Costa afuera")
     outside = ev("d", 4.0, 5.0, 4.0, -75.0, "2026-11-01T00:00:00-05:00", "Costa afuera")
     assert ra.sismo_in_ecuador(inside) and not ra.sismo_in_ecuador(outside)
-    galapagos = ev("e", 4.0, 5.0, -0.5, -90.5, "2026-11-01T00:00:00-05:00", "a 50 km de Puerto Ayora, Galápagos")
+    galapagos = ev(
+        "e",
+        4.0,
+        5.0,
+        -0.5,
+        -90.5,
+        "2026-11-01T00:00:00-05:00",
+        "a 50 km de Puerto Ayora, Galápagos",
+    )
     assert ra.sismo_in_ecuador(galapagos)
 
 
@@ -363,7 +386,16 @@ def test_sismos_marks_an_automatic_solution_as_preliminary():
     # No review status = IG-EPN's automatic solution, later revised (the
     # 2026-11-19 Guayaquil event: 5.47 automatic, 4.8 at USGS).
     events = [
-        ev("n1", 5.47, 22.1, -2.39, -79.86, "2026-11-19T00:49:27-05:00", "a 25.46 km de Guayaquil, Guayas", estado=""),
+        ev(
+            "n1",
+            5.47,
+            22.1,
+            -2.39,
+            -79.86,
+            "2026-11-19T00:49:27-05:00",
+            "a 25.46 km de Guayaquil, Guayas",
+            estado="",
+        ),
     ]
     tools = FakeTools(search_sismos={**SISMOS, "total": 1, "events": events})
     f = run(ra.fetch_sismos(tools, CTX))
@@ -390,7 +422,10 @@ def test_sismos_reviewed_event_carries_no_preliminary_note():
 
 
 def test_sismos_no_events_template():
-    for events in ([], [SISMOS["events"][2], SISMOS["events"][4]]):  # none at all / only Peru+Colombia
+    for events in (
+        [],
+        [SISMOS["events"][2], SISMOS["events"][4]],
+    ):  # none at all / only Peru+Colombia
         tools = FakeTools(search_sismos={**SISMOS, "total": len(events), "events": events})
         f = run(ra.fetch_sismos(tools, CTX))
         assert f["strongest"] is None
@@ -440,8 +475,12 @@ def test_cortes_no_notices_template():
     tools = FakeTools(search_cortes={"total": 0, "archivos": [], "url_fuente": CORTES["url"]})
     f = run(ra.fetch_cortes(tools, CTX))
     assert f["count"] == 0 and ("get_cortes_horarios" not in [c[0] for c in tools.calls])
-    assert ra.render_cortes(f, "es")["answer"].startswith("No hay avisos de trabajos programados vigentes")
-    assert ra.render_cortes(f, "en")["answer"].startswith("There are no active scheduled-work notices")
+    assert ra.render_cortes(f, "es")["answer"].startswith(
+        "No hay avisos de trabajos programados vigentes"
+    )
+    assert ra.render_cortes(f, "en")["answer"].startswith(
+        "There are no active scheduled-work notices"
+    )
 
 
 def test_cortes_all_notices_in_the_past():
@@ -476,7 +515,11 @@ def test_censo_requires_external_link_shape():
 
 def test_refresh_updates_answers_transcripts_dates_and_version():
     data = load_real()
-    res = run(ra.refresh(data, FakeTools(), ra.Ctx(datetime(2026, 11, 20, 10, 0, tzinfo=ra.ECUADOR_TZ)), "9.9.9"))
+    res = run(
+        ra.refresh(
+            data, FakeTools(), ra.Ctx(datetime(2026, 11, 20, 10, 0, tzinfo=ra.ECUADOR_TZ)), "9.9.9"
+        )
+    )
     assert [r.status for r in res.results].count("kept-previous") == 0
     for lang in ("es", "en"):
         a = res.data[f"{lang}_answers"]
@@ -494,7 +537,9 @@ def test_refresh_updates_answers_transcripts_dates_and_version():
     )
     en_steps = {t["id"]: t["steps"] for t in res.data["en_transcripts"]}
     assert en_steps["sismos"][1]["result"] == "6 events · IG-EPN catalog"
-    assert "**magnitude 4.8**" in next(s for s in en_steps["sismos"] if s["kind"] == "answer")["text"]
+    assert (
+        "**magnitude 4.8**" in next(s for s in en_steps["sismos"] if s["kind"] == "answer")["text"]
+    )
     # input is never mutated
     assert data == load_real()
 
@@ -503,7 +548,9 @@ def test_failed_call_keeps_previous_answer_and_transcript_untouched():
     data = load_real()
     before_es = copy.deepcopy(data["es_answers"]["answers"][1])  # sismos
     tools = FakeTools(search_sismos=RuntimeError("IG-EPN down"))
-    res = run(ra.refresh(data, tools, ra.Ctx(datetime(2026, 11, 20, tzinfo=ra.ECUADOR_TZ)), "9.9.9"))
+    res = run(
+        ra.refresh(data, tools, ra.Ctx(datetime(2026, 11, 20, tzinfo=ra.ECUADOR_TZ)), "9.9.9")
+    )
     by = {r.unit: r for r in res.results}
     assert by["sismos"].status == "kept-previous" and "IG-EPN down" in by["sismos"].detail
     assert by["remesas"].status in {"updated", "unchanged"}

@@ -58,11 +58,7 @@ def register_get_institucion_info_tool(mcp: MCPServer) -> None:
         }
 
         def to_text(data: dict) -> str:
-            title = (
-                f"{data['nombre']} ({data['siglas']})"
-                if data.get("siglas")
-                else data["nombre"]
-            )
+            title = f"{data['nombre']} ({data['siglas']})" if data.get("siglas") else data["nombre"]
             parts = [
                 f"Institución: {title}",
                 f"ID: {data.get('institucion_id', institucion_id)}",

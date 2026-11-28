@@ -54,9 +54,7 @@ def register_get_resource_info_tool(mcp: MCPServer) -> None:
             res = await ckan_client.get_resource(resource_id, source=source)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise ToolError(
-                    f"Error: Recurso con ID '{resource_id}' no encontrado."
-                ) from e
+                raise ToolError(f"Error: Recurso con ID '{resource_id}' no encontrado.") from e
             raise ToolError(f"Error: HTTP {e.response.status_code} - {e}") from e
         except Exception as e:
             raise ToolError(f"Error: {e}") from e

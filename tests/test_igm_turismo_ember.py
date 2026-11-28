@@ -49,7 +49,9 @@ _DESCRIBE = {
 def _mock_igm(httpx_mock):
     for servicio, ws in (("nacional", "nacional_2024"), ("50k", "actualizada"), ("25k", "igm")):
         httpx_mock.add_response(
-            url=re.compile(rf"https://www\.geoportaligm\.gob\.ec/{servicio}/wfs\?.*GetCapabilities"),
+            url=re.compile(
+                rf"https://www\.geoportaligm\.gob\.ec/{servicio}/wfs\?.*GetCapabilities"
+            ),
             content=_CAPS.format(ws=ws, esc=servicio).encode(),
             is_reusable=True,
         )
@@ -59,7 +61,12 @@ def test_parse_feature_types_drops_the_reserved_workspace():
     entries = igm_client.parse_feature_types(_CAPS.format(ws="igm", esc="x").encode(), "25k")
 
     assert [e["name"] for e in entries] == ["igm:poblado_p"]
-    assert entries[0]["bbox_geografico"] == {"minx": -92.0, "miny": -5.0, "maxx": -75.0, "maxy": 2.0}
+    assert entries[0]["bbox_geografico"] == {
+        "minx": -92.0,
+        "miny": -5.0,
+        "maxx": -75.0,
+        "maxy": 2.0,
+    }
 
 
 async def test_igm_search_filters_by_scale(httpx_mock):
@@ -83,7 +90,9 @@ async def test_igm_sample_asks_for_attributes_only(httpx_mock):
     httpx_mock.add_response(
         url=re.compile(r".*/nacional/wfs\?.*GetFeature.*"),
         json={
-            "features": [{"id": "p.1", "geometry": None, "properties": {"nam": "Tumbaco", "nute": "170150"}}],
+            "features": [
+                {"id": "p.1", "geometry": None, "properties": {"nam": "Tumbaco", "nute": "170150"}}
+            ],
             "numberMatched": 1340,
         },
     )
@@ -110,16 +119,34 @@ async def test_igm_reserved_layer_says_so(httpx_mock):
 
 def test_parse_media_keeps_bulletin_pdfs_with_their_period():
     items = [
-        {"mime_type": "application/pdf", "date": "2026-11-05T12:00:00",
-         "title": {"rendered": "Boletin Turismo Octubre 2026"},
-         "source_url": "https://www.produccion.gob.ec/wp-content/uploads/2026/11/Boletin-Turismo-Octubre-2026.pdf"},
-        {"mime_type": "application/pdf", "date": "2025-12-29T10:00:00",
-         "title": {"rendered": "Boletin mensual turismo &#8211; diciembre 2025"},
-         "source_url": "https://www.produccion.gob.ec/b-dic.pdf"},
-        {"mime_type": "application/pdf", "date": "2026-07-02T10:00:00",
-         "title": {"rendered": "Boletin Turismo Junio_2026"}, "source_url": "https://www.produccion.gob.ec/b-jun.pdf"},
-        {"mime_type": "image/jpeg", "title": {"rendered": "CV Vice turismo"}, "source_url": "https://x/cv.jpg"},
-        {"mime_type": "application/pdf", "title": {"rendered": "Informe de gestión"}, "source_url": "https://x/i.pdf"},
+        {
+            "mime_type": "application/pdf",
+            "date": "2026-11-05T12:00:00",
+            "title": {"rendered": "Boletin Turismo Octubre 2026"},
+            "source_url": "https://www.produccion.gob.ec/wp-content/uploads/2026/11/Boletin-Turismo-Octubre-2026.pdf",
+        },
+        {
+            "mime_type": "application/pdf",
+            "date": "2025-12-29T10:00:00",
+            "title": {"rendered": "Boletin mensual turismo &#8211; diciembre 2025"},
+            "source_url": "https://www.produccion.gob.ec/b-dic.pdf",
+        },
+        {
+            "mime_type": "application/pdf",
+            "date": "2026-07-02T10:00:00",
+            "title": {"rendered": "Boletin Turismo Junio_2026"},
+            "source_url": "https://www.produccion.gob.ec/b-jun.pdf",
+        },
+        {
+            "mime_type": "image/jpeg",
+            "title": {"rendered": "CV Vice turismo"},
+            "source_url": "https://x/cv.jpg",
+        },
+        {
+            "mime_type": "application/pdf",
+            "title": {"rendered": "Informe de gestión"},
+            "source_url": "https://x/i.pdf",
+        },
     ]
 
     boletines = turismo_client.parse_media(items)
@@ -133,10 +160,18 @@ async def test_turismo_search_filters_by_text(httpx_mock):
     httpx_mock.add_response(
         url=re.compile(r"https://www\.produccion\.gob\.ec/wp-json/wp/v2/media\?.*"),
         json=[
-            {"mime_type": "application/pdf", "date": "2026-11-05T12:00:00",
-             "title": {"rendered": "Boletin Turismo Octubre 2026"}, "source_url": "https://x/oct.pdf"},
-            {"mime_type": "application/pdf", "date": "2026-10-12T12:00:00",
-             "title": {"rendered": "Boletin Turismo Septiembre 2026"}, "source_url": "https://x/sep.pdf"},
+            {
+                "mime_type": "application/pdf",
+                "date": "2026-11-05T12:00:00",
+                "title": {"rendered": "Boletin Turismo Octubre 2026"},
+                "source_url": "https://x/oct.pdf",
+            },
+            {
+                "mime_type": "application/pdf",
+                "date": "2026-10-12T12:00:00",
+                "title": {"rendered": "Boletin Turismo Septiembre 2026"},
+                "source_url": "https://x/sep.pdf",
+            },
         ],
     )
 
@@ -155,7 +190,9 @@ def test_catalog_lists_every_view_and_filters():
 
 
 def test_parse_csv_with_and_without_code_column():
-    period, cols, rows = ember_client.parse_csv("Entity,Code,Month,Hydropower\nEcuador,ECU,2024-11,1.01\n")
+    period, cols, rows = ember_client.parse_csv(
+        "Entity,Code,Month,Hydropower\nEcuador,ECU,2024-11,1.01\n"
+    )
     assert (period, cols) == ("Month", ["Hydropower"])
     assert rows == [{"periodo": "2024-11", "entidad": "Ecuador", "valores": {"Hydropower": 1.01}}]
 
@@ -166,7 +203,9 @@ def test_parse_csv_with_and_without_code_column():
 
 async def test_ember_series_filters_by_period(httpx_mock):
     httpx_mock.add_response(
-        url=re.compile(r"https://ourworldindata\.org/grapher/electricity-mix\.csv\?.*metric=carbon_intensity.*tab=chart.*"),
+        url=re.compile(
+            r"https://ourworldindata\.org/grapher/electricity-mix\.csv\?.*metric=carbon_intensity.*tab=chart.*"
+        ),
         text="Entity,Code,Year,Carbon intensity\nEcuador,ECU,2023,195.42\nEcuador,ECU,2024,203.61\nEcuador,ECU,2025,159.02\n",
     )
 
@@ -183,9 +222,13 @@ async def test_monthly_by_source_is_assembled_from_single_sources(httpx_mock):
 
         source = request.url.params["source"]
         name = {"solar": "Solar", "wind": "Wind"}[source]
-        return httpx.Response(200, text=f"Entity,Code,Month,{name}\nEcuador,ECU,2024-11,0.0{len(source)}\n")
+        return httpx.Response(
+            200, text=f"Entity,Code,Month,{name}\nEcuador,ECU,2024-11,0.0{len(source)}\n"
+        )
 
-    httpx_mock.add_callback(respond, url=re.compile(r".*electricity-mix\.csv\?.*frequency=monthly.*"), is_reusable=True)
+    httpx_mock.add_callback(
+        respond, url=re.compile(r".*electricity-mix\.csv\?.*frequency=monthly.*"), is_reusable=True
+    )
 
     result = await ember_client.get_serie("by_source/solar_and_wind", frecuencia="M")
 
@@ -202,4 +245,3 @@ async def test_ember_rejects_unknown_views():
         await ember_client.get_serie("demand/hydro")
     with pytest.raises(ValueError, match="frecuencia"):
         await ember_client.get_serie("generation/hydro", frecuencia="Q")
-

@@ -113,9 +113,8 @@ _STILL_ACTIVE = 259
 # process another service creates is outside every job of ours, so
 # _spawn_build asks WMI first and uses the detached/breakaway flags only when
 # WMI is unavailable.
-_WINDOWS_DETACHED_FLAGS = (
-    getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
-    | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+_WINDOWS_DETACHED_FLAGS = getattr(subprocess, "DETACHED_PROCESS", 0x00000008) | getattr(
+    subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200
 )
 _WINDOWS_BREAKAWAY_FLAG = getattr(subprocess, "CREATE_BREAKAWAY_FROM_JOB", 0x01000000)
 _WINDOWS_NO_WINDOW_FLAG = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
@@ -124,10 +123,18 @@ _WINDOWS_NO_WINDOW_FLAG = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
 # helpers/supercias_detached_launch.py).
 _DETACHED_LAUNCH_MODULE = "helpers.supercias_detached_launch"
 _DETACHED_ENV_PREFIXES = ("ECUADOR_MCP_",)
-_DETACHED_ENV_NAMES = frozenset({
-    "CKAN_INSECURE_TLS", "SSL_CERT_FILE", "SSL_CERT_DIR", "REQUESTS_CA_BUNDLE",
-    "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
-})
+_DETACHED_ENV_NAMES = frozenset(
+    {
+        "CKAN_INSECURE_TLS",
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "REQUESTS_CA_BUNDLE",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "NO_PROXY",
+    }
+)
 _WMI_LAUNCH_SECONDS = 30
 
 # Guards the in-process launcher only. Cross-process exclusion (two servers,
@@ -137,36 +144,94 @@ _build_process: subprocess.Popen | _WmiBuild | None = None
 _build_started_at: float | None = None
 
 _RANKING_COLUMNS = (
-    "anio", "expediente", "posicion_general", "cia_imvalores",
-    "id_estado_financiero", "ingresos_ventas", "activos", "patrimonio",
-    "utilidad_an_imp", "impuesto_renta", "n_empleados", "ingresos_totales",
-    "utilidad_ejercicio", "utilidad_neta", "cod_segmento", "ciiu_n1",
-    "ciiu_n6", "liquidez_corriente", "prueba_acida", "end_activo",
-    "end_patrimonial", "end_activo_fijo", "end_corto_plazo",
-    "end_largo_plazo", "cobertura_interes", "apalancamiento",
-    "apalancamiento_financiero", "end_patrimonial_ct", "end_patrimonial_nct",
-    "apalancamiento_c_l_plazo", "rot_cartera", "rot_activo_fijo",
-    "rot_ventas", "per_med_cobranza", "per_med_pago", "impac_gasto_a_v",
-    "impac_carga_finan", "rent_neta_activo", "margen_bruto",
-    "margen_operacional", "rent_neta_ventas", "rent_ope_patrimonio",
-    "rent_ope_activo", "roe", "roa", "fortaleza_patrimonial",
-    "gastos_financieros", "gastos_admin_ventas", "depreciaciones",
-    "amortizaciones", "costos_ventas_prod", "deuda_total",
-    "deuda_total_c_plazo", "total_gastos",
+    "anio",
+    "expediente",
+    "posicion_general",
+    "cia_imvalores",
+    "id_estado_financiero",
+    "ingresos_ventas",
+    "activos",
+    "patrimonio",
+    "utilidad_an_imp",
+    "impuesto_renta",
+    "n_empleados",
+    "ingresos_totales",
+    "utilidad_ejercicio",
+    "utilidad_neta",
+    "cod_segmento",
+    "ciiu_n1",
+    "ciiu_n6",
+    "liquidez_corriente",
+    "prueba_acida",
+    "end_activo",
+    "end_patrimonial",
+    "end_activo_fijo",
+    "end_corto_plazo",
+    "end_largo_plazo",
+    "cobertura_interes",
+    "apalancamiento",
+    "apalancamiento_financiero",
+    "end_patrimonial_ct",
+    "end_patrimonial_nct",
+    "apalancamiento_c_l_plazo",
+    "rot_cartera",
+    "rot_activo_fijo",
+    "rot_ventas",
+    "per_med_cobranza",
+    "per_med_pago",
+    "impac_gasto_a_v",
+    "impac_carga_finan",
+    "rent_neta_activo",
+    "margen_bruto",
+    "margen_operacional",
+    "rent_neta_ventas",
+    "rent_ope_patrimonio",
+    "rent_ope_activo",
+    "roe",
+    "roa",
+    "fortaleza_patrimonial",
+    "gastos_financieros",
+    "gastos_admin_ventas",
+    "depreciaciones",
+    "amortizaciones",
+    "costos_ventas_prod",
+    "deuda_total",
+    "deuda_total_c_plazo",
+    "total_gastos",
 )
 
 # The ratio columns (2018 onwards); the rest of _RANKING_COLUMNS are ids,
 # codes and amounts.
 RATIO_COLUMNS = (
-    "liquidez_corriente", "prueba_acida", "end_activo", "end_patrimonial",
-    "end_activo_fijo", "end_corto_plazo", "end_largo_plazo",
-    "cobertura_interes", "apalancamiento", "apalancamiento_financiero",
-    "end_patrimonial_ct", "end_patrimonial_nct", "apalancamiento_c_l_plazo",
-    "rot_cartera", "rot_activo_fijo", "rot_ventas", "per_med_cobranza",
-    "per_med_pago", "impac_gasto_a_v", "impac_carga_finan",
-    "rent_neta_activo", "margen_bruto", "margen_operacional",
-    "rent_neta_ventas", "rent_ope_patrimonio", "rent_ope_activo", "roe",
-    "roa", "fortaleza_patrimonial",
+    "liquidez_corriente",
+    "prueba_acida",
+    "end_activo",
+    "end_patrimonial",
+    "end_activo_fijo",
+    "end_corto_plazo",
+    "end_largo_plazo",
+    "cobertura_interes",
+    "apalancamiento",
+    "apalancamiento_financiero",
+    "end_patrimonial_ct",
+    "end_patrimonial_nct",
+    "apalancamiento_c_l_plazo",
+    "rot_cartera",
+    "rot_activo_fijo",
+    "rot_ventas",
+    "per_med_cobranza",
+    "per_med_pago",
+    "impac_gasto_a_v",
+    "impac_carga_finan",
+    "rent_neta_activo",
+    "margen_bruto",
+    "margen_operacional",
+    "rent_neta_ventas",
+    "rent_ope_patrimonio",
+    "rent_ope_activo",
+    "roe",
+    "roa",
+    "fortaleza_patrimonial",
 )
 # Not on one scale even at the sector median (checked 2021-2025):
 # margen_operacional is a fraction in 2021 (median 0.07) but spans about
@@ -181,8 +246,14 @@ UNRELIABLE_RATIOS_NOTE = (
 )
 # Ratios compared against the sector in get_financials (one entry per year).
 COMPARISON_COLUMNS = (
-    "liquidez_corriente", "prueba_acida", "end_activo", "end_patrimonial",
-    "margen_bruto", "rent_neta_ventas", "roe", "roa",
+    "liquidez_corriente",
+    "prueba_acida",
+    "end_activo",
+    "end_patrimonial",
+    "margen_bruto",
+    "rent_neta_ventas",
+    "roe",
+    "roa",
 )
 
 # Qualified with the "r." alias used in search_ranking's JOIN query, so an
@@ -230,7 +301,8 @@ def _pid_alive(pid: int) -> bool:
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         kernel32.OpenProcess.restype = ctypes.c_void_p
         kernel32.GetExitCodeProcess.argtypes = (
-            ctypes.c_void_p, ctypes.POINTER(ctypes.c_ulong),
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_ulong),
         )
         kernel32.CloseHandle.argtypes = (ctypes.c_void_p,)
         handle = kernel32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
@@ -312,7 +384,8 @@ def _kill_build(process: subprocess.Popen | _WmiBuild) -> None:
         except (OSError, subprocess.SubprocessError) as exc:
             logger.warning(
                 "taskkill no pudo terminar el árbol del build (PID %d): %s",
-                process.pid, exc,
+                process.pid,
+                exc,
             )
     # Also covers a missing taskkill, and is harmless on an exited process.
     process.kill()
@@ -328,13 +401,11 @@ def _build_in_progress() -> bool:
         return False
     # Kill a server-launched build that hangs (e.g. a download trickling
     # below httpx's read timeout), or it would block every future refresh.
-    if (
-        _build_started_at is not None
-        and time.time() - _build_started_at > BUILD_TIMEOUT_SECONDS
-    ):
+    if _build_started_at is not None and time.time() - _build_started_at > BUILD_TIMEOUT_SECONDS:
         logger.warning(
             "Build de Supercías (PID %d) superó %d min; se termina",
-            _build_process.pid, BUILD_TIMEOUT_SECONDS // 60,
+            _build_process.pid,
+            BUILD_TIMEOUT_SECONDS // 60,
         )
         _kill_build(_build_process)
         # Reap it, or a killed POSIX child lingers as a zombie until exit.
@@ -360,7 +431,9 @@ def _process_creation_time(pid: int) -> int | None:
 
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
     kernel32.OpenProcess.restype = ctypes.c_void_p
-    kernel32.GetProcessTimes.argtypes = (ctypes.c_void_p,) + (ctypes.POINTER(wintypes.FILETIME),) * 4
+    kernel32.GetProcessTimes.argtypes = (ctypes.c_void_p,) + (
+        ctypes.POINTER(wintypes.FILETIME),
+    ) * 4
     kernel32.CloseHandle.argtypes = (ctypes.c_void_p,)
     handle = kernel32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
     if not handle:
@@ -368,8 +441,11 @@ def _process_creation_time(pid: int) -> int | None:
     try:
         created, exited, kernel, user = (wintypes.FILETIME() for _ in range(4))
         if not kernel32.GetProcessTimes(
-            handle, ctypes.byref(created), ctypes.byref(exited),
-            ctypes.byref(kernel), ctypes.byref(user),
+            handle,
+            ctypes.byref(created),
+            ctypes.byref(exited),
+            ctypes.byref(kernel),
+            ctypes.byref(user),
         ):
             return None
         return (created.dwHighDateTime << 32) | created.dwLowDateTime
@@ -393,8 +469,7 @@ class _WmiBuild:
     def poll(self) -> int | None:
         if self.returncode is None:
             same_process = (
-                _pid_alive(self.pid)
-                and _process_creation_time(self.pid) == self._created
+                _pid_alive(self.pid) and _process_creation_time(self.pid) == self._created
             )
             if not same_process:
                 self.returncode = -1  # ended; WMI gives no exit status
@@ -412,7 +487,9 @@ class _WmiBuild:
         if self.poll() is None:
             subprocess.run(
                 ["taskkill", "/PID", str(self.pid), "/F"],
-                capture_output=True, check=False, timeout=10,
+                capture_output=True,
+                check=False,
+                timeout=10,
             )
 
 
@@ -430,9 +507,9 @@ def _spawn_via_wmi(log_path: Path) -> _WmiBuild | None:
         return None
     env_path = log_path.with_name("supercias_build.env.json")
     handed_over = {
-        key: value for key, value in os.environ.items()
-        if key.upper().startswith(_DETACHED_ENV_PREFIXES)
-        or key.upper() in _DETACHED_ENV_NAMES
+        key: value
+        for key, value in os.environ.items()
+        if key.upper().startswith(_DETACHED_ENV_PREFIXES) or key.upper() in _DETACHED_ENV_NAMES
     }
     command_line = subprocess.list2cmdline(
         [sys.executable, "-m", _DETACHED_LAUNCH_MODULE, str(env_path), str(log_path)]
@@ -452,8 +529,11 @@ def _spawn_via_wmi(log_path: Path) -> _WmiBuild | None:
                 "ECUADOR_MCP_WMI_COMMAND": command_line,
                 "ECUADOR_MCP_WMI_CWD": str(_PACKAGE_ROOT),
             },
-            capture_output=True, text=True, check=False,
-            timeout=_WMI_LAUNCH_SECONDS, creationflags=_WINDOWS_NO_WINDOW_FLAG,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=_WMI_LAUNCH_SECONDS,
+            creationflags=_WINDOWS_NO_WINDOW_FLAG,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         env_path.unlink(missing_ok=True)
@@ -464,7 +544,8 @@ def _spawn_via_wmi(log_path: Path) -> _WmiBuild | None:
         env_path.unlink(missing_ok=True)
         logger.warning(
             "WMI no lanzó el build de Supercías (código %d): %s",
-            done.returncode, (done.stderr or done.stdout).strip()[:200],
+            done.returncode,
+            (done.stderr or done.stdout).strip()[:200],
         )
         return None
     return _WmiBuild(int(pid))
@@ -532,7 +613,9 @@ def _trigger_background_build() -> None:
         logger.info(
             "Construyendo/refrescando la base financiera de Supercías en "
             "segundo plano (PID %d): %s -- log en %s",
-            _build_process.pid, _BUILD_MODULE, log_path,
+            _build_process.pid,
+            _BUILD_MODULE,
+            log_path,
         )
 
 
@@ -577,8 +660,7 @@ def _check_db_fresh(path: Path | None = None) -> bool:
         _trigger_background_build()
         raise FinancialsDbUnavailable(
             "La base de datos financiera de Supercías no existe todavía "
-            "(descarga ~356 MB, 15-20 minutos la primera vez)."
-            + _unavailable_suffix()
+            "(descarga ~356 MB, 15-20 minutos la primera vez)." + _unavailable_suffix()
         )
     version = _db_schema_version(path)
     if version is None or version < _MIN_SERVED_SCHEMA_VERSION:
@@ -588,10 +670,7 @@ def _check_db_fresh(path: Path | None = None) -> bool:
             f"versión anterior del esquema ({version}, se requiere "
             f"{SCHEMA_VERSION})." + _unavailable_suffix()
         )
-    stale = (
-        version < SCHEMA_VERSION
-        or time.time() - path.stat().st_mtime > _MAX_DB_AGE_SECONDS
-    )
+    stale = version < SCHEMA_VERSION or time.time() - path.stat().st_mtime > _MAX_DB_AGE_SECONDS
     if stale:
         _trigger_background_build()
     return stale
@@ -770,9 +849,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
     return dict(row)
 
 
-def _lookup_compania(
-    conn: sqlite3.Connection, expediente: int
-) -> dict[str, Any] | None:
+def _lookup_compania(conn: sqlite3.Connection, expediente: int) -> dict[str, Any] | None:
     row = conn.execute(
         "SELECT expediente, ruc, nombre FROM companias WHERE expediente = ?",
         (expediente,),
@@ -879,9 +956,7 @@ def _query_search_ranking(
     descending: bool,
     limit: int,
     offset: int,
-) -> tuple[
-    int | None, int, list[dict[str, Any]], list[str], dict[str, Any] | None
-]:
+) -> tuple[int | None, int, list[dict[str, Any]], list[str], dict[str, Any] | None]:
     if order_by not in _ORDERABLE_COLUMNS:
         disponibles = ", ".join(sorted(_ORDERABLE_COLUMNS))
         raise ValueError(f"order_by inválido '{order_by}'. Disponibles: {disponibles}")
@@ -922,9 +997,7 @@ def _query_search_ranking(
             params.append(ciiu_n1.strip().upper())
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
-        total = conn.execute(
-            f"SELECT COUNT(*) FROM ranking r {where}", params
-        ).fetchone()[0]
+        total = conn.execute(f"SELECT COUNT(*) FROM ranking r {where}", params).fetchone()[0]
 
         direction = "DESC" if descending else "ASC"
         # LEFT JOIN, not INNER: a ranking row missing from companias should
@@ -1004,9 +1077,7 @@ def _query_sector_benchmark(anio: int, ciiu_n1: str) -> dict[str, Any] | None:
         indicadores = _sector_quartiles(conn, anio, sector)
         if not indicadores:
             return None
-        row = conn.execute(
-            "SELECT descripcion FROM ciiu WHERE ciiu = ?", (sector,)
-        ).fetchone()
+        row = conn.execute("SELECT descripcion FROM ciiu WHERE ciiu = ?", (sector,)).fetchone()
         return {
             "anio": anio,
             "ciiu_n1": sector,
@@ -1036,9 +1107,7 @@ async def get_financials(
         desde: Optional first fiscal year of a range (inclusive).
         hasta: Optional last fiscal year of a range (inclusive).
     """
-    return await asyncio.to_thread(
-        _query_get_financials, expediente_or_ruc, anio, desde, hasta
-    )
+    return await asyncio.to_thread(_query_get_financials, expediente_or_ruc, anio, desde, hasta)
 
 
 async def search_ranking(

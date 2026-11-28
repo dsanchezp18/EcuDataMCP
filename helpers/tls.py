@@ -36,7 +36,9 @@ def host_allows_insecure_tls(url: str) -> bool:
     host = (urlparse(url).hostname or "").lower()
     if not host:
         return False
-    return any(host == suffix or host.endswith("." + suffix) for suffix in _INSECURE_TLS_HOST_SUFFIXES)
+    return any(
+        host == suffix or host.endswith("." + suffix) for suffix in _INSECURE_TLS_HOST_SUFFIXES
+    )
 
 
 def is_cert_verification_error(exc: BaseException) -> bool:
@@ -119,9 +121,7 @@ def host_needs_os_trust_store(url: str) -> bool:
     host = (urlparse(url).hostname or "").lower()
     if not host:
         return False
-    return any(
-        host == suffix or host.endswith("." + suffix) for suffix in _OS_TRUST_HOST_SUFFIXES
-    )
+    return any(host == suffix or host.endswith("." + suffix) for suffix in _OS_TRUST_HOST_SUFFIXES)
 
 
 def should_retry_with_os_trust(exc: BaseException, url: str) -> bool:
@@ -168,8 +168,7 @@ def host_needs_legacy_ciphers(url: str) -> bool:
     if not host:
         return False
     return any(
-        host == suffix or host.endswith("." + suffix)
-        for suffix in _LEGACY_CIPHER_HOST_SUFFIXES
+        host == suffix or host.endswith("." + suffix) for suffix in _LEGACY_CIPHER_HOST_SUFFIXES
     )
 
 

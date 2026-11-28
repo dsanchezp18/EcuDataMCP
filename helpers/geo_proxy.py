@@ -121,10 +121,7 @@ def proxy_for(url: str) -> str | None:
 def unreachable_hint(url: str) -> str:
     """Advice to append when a connection to ``url`` could not be opened."""
     if proxy_for(url) is not None:
-        return (
-            "Tampoco respondió a través de ECUADOR_MCP_GEO_PROXY; reintenta en "
-            "unos minutos."
-        )
+        return "Tampoco respondió a través de ECUADOR_MCP_GEO_PROXY; reintenta en unos minutos."
     return (
         "Si el servidor corre fuera de Ecuador (por ejemplo en Render), el sitio "
         "suele descartar esas conexiones: configura ECUADOR_MCP_GEO_PROXY con "

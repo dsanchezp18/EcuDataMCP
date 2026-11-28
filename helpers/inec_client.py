@@ -457,9 +457,7 @@ async def _fetch_categories_fresh() -> dict[int, str]:
         return cached
 
     names: dict[int, str] = {}
-    async with httpx.AsyncClient(
-        timeout=25.0, headers={"User-Agent": USER_AGENT}
-    ) as session:
+    async with httpx.AsyncClient(timeout=25.0, headers={"User-Agent": USER_AGENT}) as session:
         page = 1
         while True:
             try:
@@ -499,8 +497,27 @@ _PUB_FIELDS = "id,link,date,modified,title,excerpt,categories"
 _PUB_PAGE = 100
 _PUB_MAX_PAGES = 20  # per token: 2,000 posts, above the ~1,700 INEC has published
 _PUB_STOPWORDS = frozenset(
-    {"a", "al", "con", "de", "del", "e", "el", "en", "la", "las", "lo", "los",
-     "o", "para", "por", "u", "un", "una", "y"}
+    {
+        "a",
+        "al",
+        "con",
+        "de",
+        "del",
+        "e",
+        "el",
+        "en",
+        "la",
+        "las",
+        "lo",
+        "los",
+        "o",
+        "para",
+        "por",
+        "u",
+        "un",
+        "una",
+        "y",
+    }
 )
 _pub_token_cache = TtlCache(ttl_seconds=1800.0, max_entries=64)
 
@@ -602,9 +619,7 @@ async def search_publicaciones(query: str = "", limit: int = 20, offset: int = 0
         }
         if query.strip():  # only stopwords/symbols: let WordPress decide
             params["search"] = query
-        async with httpx.AsyncClient(
-            timeout=25.0, headers={"User-Agent": USER_AGENT}
-        ) as session:
+        async with httpx.AsyncClient(timeout=25.0, headers={"User-Agent": USER_AGENT}) as session:
             posts, headers = await _get_api_json("posts", params, session=session)
             categories = await _fetch_categories()
         total_header = headers.get("X-WP-Total")
@@ -614,9 +629,7 @@ async def search_publicaciones(query: str = "", limit: int = 20, offset: int = 0
             "publicaciones": [_summarize_post(p, categories) for p in posts],
         }
 
-    async with httpx.AsyncClient(
-        timeout=25.0, headers={"User-Agent": USER_AGENT}
-    ) as session:
+    async with httpx.AsyncClient(timeout=25.0, headers={"User-Agent": USER_AGENT}) as session:
         per_token = await asyncio.gather(*[_fetch_token_posts(t, session) for t in tokens])
         categories = await _fetch_categories()
 
@@ -681,9 +694,7 @@ async def get_publicacion_files(post: int | str) -> dict[str, Any]:
     if cached is not None:
         return cached
 
-    async with httpx.AsyncClient(
-        timeout=25.0, headers={"User-Agent": USER_AGENT}
-    ) as session:
+    async with httpx.AsyncClient(timeout=25.0, headers={"User-Agent": USER_AGENT}) as session:
         matches, _ = await _get_api_json("posts", lookup, session=session)
         if not matches:
             raise ValueError(f"No se encontró la publicación '{post}' en Ecuador en Cifras")

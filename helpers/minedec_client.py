@@ -130,6 +130,7 @@ def _label_from_url(url: str) -> str:
     stem = _LEADING_DIGIT_RE.sub("", stem)  # CMS ordering prefix: "1", "2", ...
     return _WS_RE.sub(" ", stem.replace("_", " ").replace("-", " ")).strip()
 
+
 def _classify(filename: str) -> tuple[str, str | None]:
     """(tipo, periodo) from the filename: tipo is registro/metadato/
     diccionario; periodo is inicio/fin/None. Kept deliberately simple —
@@ -298,7 +299,9 @@ def parse_bases(page: str) -> list[dict[str, Any]]:
                 "url": url,
                 "formato": None,
                 "tipo": "historico_1993_2007" if historic else "tematico",
-                "periodo": re.search(r"\d{4}-\d{4}", label).group(0) if re.search(r"\d{4}-\d{4}", label) else None,
+                "periodo": re.search(r"\d{4}-\d{4}", label).group(0)
+                if re.search(r"\d{4}-\d{4}", label)
+                else None,
                 "corte": None,
             }
         )
@@ -334,8 +337,10 @@ async def search_bases(query: str = "") -> dict[str, Any]:
     files = await _fetch_bases()
     q = _strip(query)
     matched = [
-        f for f in files
-        if not q or q in _strip(f"{f['titulo']} {f['tipo']} {f['periodo'] or ''} {f['corte'] or ''}")
+        f
+        for f in files
+        if not q
+        or q in _strip(f"{f['titulo']} {f['tipo']} {f['periodo'] or ''} {f['corte'] or ''}")
     ]
     return {
         "source": "MINEDEC — bases de datos por año lectivo (AMIE) y archivos temáticos",

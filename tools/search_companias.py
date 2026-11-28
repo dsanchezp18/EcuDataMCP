@@ -60,9 +60,7 @@ def register_search_companias_tool(mcp: MCPServer) -> None:
                 offset=offset,
             )
         except Exception as e:
-            raise ToolError(
-                f"Error al consultar el directorio de Supercías: {e}"
-            ) from e
+            raise ToolError(f"Error al consultar el directorio de Supercías: {e}") from e
 
         def to_text(data: dict) -> str:
             companias = data.get("companias") or []
@@ -88,9 +86,7 @@ def register_search_companias_tool(mcp: MCPServer) -> None:
                 if tipo_provincia:
                     parts.append("   " + "  ·  ".join(tipo_provincia))
                 if c.get("representante"):
-                    parts.append(
-                        f"   Representante: {c['representante']} ({c.get('cargo')})"
-                    )
+                    parts.append(f"   Representante: {c['representante']} ({c.get('cargo')})")
                 if c.get("capital_suscrito"):
                     parts.append(f"   Capital suscrito: {c['capital_suscrito']}")
                 parts.append("")

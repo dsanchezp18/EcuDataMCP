@@ -84,10 +84,7 @@ def register_lookup_ubicacion_tool(mcp: MCPServer) -> None:
 
             # Avoid dumping all 1000+ parroquias unless filtered.
             wants_parroquias = nivel_norm in {"auto", "parroquia"} and (
-                query.strip()
-                or canton.strip()
-                or provincia.strip()
-                or nivel_norm == "parroquia"
+                query.strip() or canton.strip() or provincia.strip() or nivel_norm == "parroquia"
             )
             if wants_parroquias:
                 if nivel_norm == "parroquia" and not (
@@ -171,18 +168,12 @@ def register_lookup_ubicacion_tool(mcp: MCPServer) -> None:
                 shown = data["cantones"]
                 parts.append(
                     f"Cantones ({data['cantones_total']}"
-                    + (
-                        f", mostrando {len(shown)}"
-                        if data["cantones_total"] > len(shown)
-                        else ""
-                    )
+                    + (f", mostrando {len(shown)}" if data["cantones_total"] > len(shown) else "")
                     + "):"
                 )
                 for c in shown:
                     pop = c.get("poblacion")
-                    pop_txt = (
-                        f", pob≈{int(pop):,}" if isinstance(pop, (int, float)) else ""
-                    )
+                    pop_txt = f", pob≈{int(pop):,}" if isinstance(pop, (int, float)) else ""
                     parts.append(
                         f"- {c['codigo']} {c['nombre']} ({c['provincia']}"
                         f", {c.get('region', '')}{pop_txt})"

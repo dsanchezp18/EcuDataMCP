@@ -15,8 +15,7 @@ def register_get_sipa_resumen_indicadores_tool(mcp: MCPServer) -> None:
     @mcp.tool(
         title="Ver el Resumen de Indicadores anual de SIPA",
         description=(
-            "Monthly PDF links of SIPA's (MAG) \"Resumen de Indicadores\" for one "
-            "year, 2018 onward."
+            'Monthly PDF links of SIPA\'s (MAG) "Resumen de Indicadores" for one year, 2018 onward.'
         ),
         annotations=READ_ONLY,
     )
@@ -51,9 +50,7 @@ def register_get_sipa_resumen_indicadores_tool(mcp: MCPServer) -> None:
         except ValueError as e:
             raise ToolError(f"Error: {e}") from e
         except Exception as e:
-            raise ToolError(
-                f"Error al obtener el Resumen de Indicadores de SIPA: {e}"
-            ) from e
+            raise ToolError(f"Error al obtener el Resumen de Indicadores de SIPA: {e}") from e
 
         def to_text(data: dict) -> str:
             meses = data.get("meses") or []

@@ -137,9 +137,7 @@ async def get_electricidad(
     payload = _data_cache.get(cache_key)
     if payload is None:
         body = {
-            "query": [
-                {"code": country_dim, "selection": {"filter": "item", "values": [code]}}
-            ],
+            "query": [{"code": country_dim, "selection": {"filter": "item", "values": [code]}}],
             "response": {"format": "json-stat2"},
         }
         payload = await _request(table["url"], body)
@@ -147,7 +145,10 @@ async def get_electricidad(
 
     dims = payload["id"]
     labels = {
-        d: {c: payload["dimension"][d]["category"]["label"][c] for c in payload["dimension"][d]["category"]["index"]}
+        d: {
+            c: payload["dimension"][d]["category"]["label"][c]
+            for c in payload["dimension"][d]["category"]["index"]
+        }
         for d in dims
     }
     order = {d: list(payload["dimension"][d]["category"]["index"]) for d in dims}

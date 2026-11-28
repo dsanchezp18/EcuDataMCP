@@ -29,9 +29,7 @@ async def test_fetch_range_uses_geo_proxy_for_listed_hosts(monkeypatch, proxy_se
     monkeypatch.setattr(csv_reader, "safe_stream", fake_do_stream)
 
     with pytest.raises(_Stop):
-        await csv_reader._fetch_range(
-            "https://www.datosabiertos.gob.ec/a.zip", "bytes=0-0", 1
-        )
+        await csv_reader._fetch_range("https://www.datosabiertos.gob.ec/a.zip", "bytes=0-0", 1)
 
     expected = "socks5://127.0.0.1:1080" if proxy_set else None
     assert seen.get("proxy") == expected

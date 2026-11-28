@@ -20,8 +20,16 @@ _PAGE_RANGE_RE = re.compile(r"(\d+)(?:-(\d+))?")
 # extension avoids burning a doomed 5 MB partial download before pypdf
 # would fail on it anyway.
 _NON_PDF_EXTENSIONS = (
-    ".zip", ".tar.gz", ".tgz", ".rar", ".7z",
-    ".xlsx", ".xls", ".csv", ".docx", ".doc",
+    ".zip",
+    ".tar.gz",
+    ".tgz",
+    ".rar",
+    ".7z",
+    ".xlsx",
+    ".xls",
+    ".csv",
+    ".docx",
+    ".doc",
 )
 
 
@@ -72,8 +80,7 @@ def extract_text_from_bytes(raw: bytes, pages: str = "") -> dict[str, Any]:
         reader = PdfReader(io.BytesIO(raw))
     except PdfReadError as e:
         raise ValueError(
-            "El archivo no se pudo leer como PDF: está corrupto o no es un "
-            "PDF válido."
+            "El archivo no se pudo leer como PDF: está corrupto o no es un PDF válido."
         ) from e
 
     if reader.is_encrypted:
@@ -85,9 +92,7 @@ def extract_text_from_bytes(raw: bytes, pages: str = "") -> dict[str, Any]:
         except (PyPdfError, NotImplementedError):
             pass
     if reader.is_encrypted:
-        raise ValueError(
-            "Este PDF está protegido con contraseña; no se puede leer sin ella."
-        )
+        raise ValueError("Este PDF está protegido con contraseña; no se puede leer sin ella.")
 
     total_pages = len(reader.pages)
     if total_pages == 0:

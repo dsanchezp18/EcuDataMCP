@@ -86,9 +86,7 @@ def register_audit_bce_catalog_tool(mcp: MCPServer) -> None:
             if data["errores"]:
                 parts.extend(["", "Errores:"])
                 for error in data["errores"]:
-                    parts.append(
-                        f"- {error.get('id_grupo')}: {error.get('detalle')}"
-                    )
+                    parts.append(f"- {error.get('id_grupo')}: {error.get('detalle')}")
             grid_audit = data.get("auditoria_grid")
             if grid_audit:
                 parts.extend(
@@ -155,8 +153,12 @@ def register_audit_bce_catalog_tool(mcp: MCPServer) -> None:
             freshness="auditoria_en_vivo",
             schema_name="bcedata_auditoria_catalogo_v1",
             schema_fields=[
-                "total_grupos", "total_series", "errores", "revision_fuente",
-                "auditoria_grid", "comparacion",
+                "total_grupos",
+                "total_series",
+                "errores",
+                "revision_fuente",
+                "auditoria_grid",
+                "comparacion",
             ],
             consulted_at=result["consultado_en"],
         )

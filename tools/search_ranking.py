@@ -111,9 +111,7 @@ def register_search_ranking_tool(mcp: MCPServer) -> None:
         except ValueError as e:
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.exception(
-                "search_ranking failed (anio=%r, ciiu_n1=%r)", anio, ciiu_n1
-            )
+            logger.exception("search_ranking failed (anio=%r, ciiu_n1=%r)", anio, ciiu_n1)
             raise ToolError(f"Error al consultar el ranking de Supercías: {e}") from e
 
         result = supercias_financials.with_financials_metadata(result)

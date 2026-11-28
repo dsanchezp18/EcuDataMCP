@@ -18,18 +18,42 @@ _strip_accents = partial(strip_accents, lower=False)
 
 
 _KEYWORD_TO_INSTITUTION = {
-    "ruc": "8", "sri": "8", "impuesto": "8", "factura": "8",
-    "tributar": "8", "retención": "8", "retenciones": "8",
-    "declaracion": "8", "declaración": "8", "rimpe": "8",
-    "cedula": "23", "cédula": "23", "partida": "23",
-    "nacimiento": "23", "registro civil": "23", "defunción": "23",
-    "matrimonio": "23", "identidad": "23",
-    "licencia": "48", "conducir": "48", "matricula": "48",
-    "vehicul": "48", "ant": "48", "revision tecnica": "48",
-    "pasaporte": "6", "apostilla": "6", "visa": "6",
-    "consulado": "6", "legalizacion": "6",
-    "iess": "163", "seguro social": "163", "pensión": "163",
-    "fondo de reserva": "163", "fondos de reserva": "163", "afiliacion": "163", "cesantia": "163",
+    "ruc": "8",
+    "sri": "8",
+    "impuesto": "8",
+    "factura": "8",
+    "tributar": "8",
+    "retención": "8",
+    "retenciones": "8",
+    "declaracion": "8",
+    "declaración": "8",
+    "rimpe": "8",
+    "cedula": "23",
+    "cédula": "23",
+    "partida": "23",
+    "nacimiento": "23",
+    "registro civil": "23",
+    "defunción": "23",
+    "matrimonio": "23",
+    "identidad": "23",
+    "licencia": "48",
+    "conducir": "48",
+    "matricula": "48",
+    "vehicul": "48",
+    "ant": "48",
+    "revision tecnica": "48",
+    "pasaporte": "6",
+    "apostilla": "6",
+    "visa": "6",
+    "consulado": "6",
+    "legalizacion": "6",
+    "iess": "163",
+    "seguro social": "163",
+    "pensión": "163",
+    "fondo de reserva": "163",
+    "fondos de reserva": "163",
+    "afiliacion": "163",
+    "cesantia": "163",
 }
 
 
@@ -124,9 +148,7 @@ def register_search_tramites_tool(mcp: MCPServer) -> None:
             institution_id = _guess_institution(query)
 
         query_words = (
-            [_strip_accents(w.lower()) for w in query.split() if len(w) >= 2]
-            if query
-            else []
+            [_strip_accents(w.lower()) for w in query.split() if len(w) >= 2] if query else []
         )
 
         try:
@@ -186,9 +208,7 @@ def register_search_tramites_tool(mcp: MCPServer) -> None:
                 if data.get("institution_id"):
                     msg_parts.append(f"en la institución ID {data['institution_id']}")
                 if query and data.get("total_scanned", 0) > 0:
-                    msg_parts.append(
-                        f"(se revisaron {data['total_scanned']} trámites en total)"
-                    )
+                    msg_parts.append(f"(se revisaron {data['total_scanned']} trámites en total)")
                 return " ".join(msg_parts) + "."
 
             parts: list[str] = []
@@ -198,8 +218,7 @@ def register_search_tramites_tool(mcp: MCPServer) -> None:
                     f"en institución ID {data['institution_id']}:"
                 )
                 parts.append(
-                    f"Encontrados: {data['total']} de {data['total_scanned']} "
-                    "trámites revisados\n"
+                    f"Encontrados: {data['total']} de {data['total_scanned']} trámites revisados\n"
                 )
             elif data.get("institution_id"):
                 parts.append(

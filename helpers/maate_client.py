@@ -70,9 +70,7 @@ def parse_feature_types(xml_bytes: bytes) -> list[dict[str, Any]]:
             if tag in ("Name", "Title", "Abstract") and child.text:
                 fields[tag] = child.text.strip()
             elif tag == "WGS84BoundingBox":
-                corners = {
-                    _local(c.tag): [float(v) for v in (c.text or "").split()] for c in child
-                }
+                corners = {_local(c.tag): [float(v) for v in (c.text or "").split()] for c in child}
                 lower, upper = corners.get("LowerCorner"), corners.get("UpperCorner")
                 if lower and upper and len(lower) == 2 and len(upper) == 2:
                     bbox = {"minx": lower[0], "miny": lower[1], "maxx": upper[0], "maxy": upper[1]}
@@ -105,7 +103,9 @@ async def _fetch_catalog_fresh() -> list[dict[str, Any]]:
         logger.info("Descargando GetCapabilities WFS del Ministerio de Ambiente")
         raw, truncated = await download_bytes(url)
         if truncated:
-            raise ValueError("El GetCapabilities WFS del Ministerio de Ambiente superó el límite de descarga.")
+            raise ValueError(
+                "El GetCapabilities WFS del Ministerio de Ambiente superó el límite de descarga."
+            )
         catalog = sorted(parse_feature_types(raw), key=lambda e: e["name"])
         if catalog:
             _catalog_cache.set("catalog", catalog)
@@ -135,9 +135,7 @@ async def search_capas(query: str = "") -> dict[str, Any]:
     matched = [
         e
         for e in catalog
-        if all(
-            word in _strip(f"{e['name']} {e['title']} {e['abstract'] or ''}") for word in words
-        )
+        if all(word in _strip(f"{e['name']} {e['title']} {e['abstract'] or ''}") for word in words)
     ]
     return {
         "total": len(matched),

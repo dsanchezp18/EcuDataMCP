@@ -113,9 +113,7 @@ def strip_geometry_columns(
     drop_set = set(drop_idx)
     dropped_names = [headers[i] for i in drop_idx]
     new_headers = [h for i, h in enumerate(headers) if i not in drop_set]
-    new_rows = [
-        [cell for i, cell in enumerate(row) if i not in drop_set] for row in rows
-    ]
+    new_rows = [[cell for i, cell in enumerate(row) if i not in drop_set] for row in rows]
     return new_headers, new_rows, dropped_names
 
 
@@ -194,6 +192,24 @@ def _insecure_client(url: str) -> httpx.AsyncClient:
     )
 
 
+def _plain_client(url: str) -> httpx.AsyncClient:
+    """The client a download of `url` starts with, certificate verified.
+
+    Hosts with old TLS configs need SECLEVEL=1 to complete the handshake at
+    all. download_bytes and the Range readers share this, so a .zip on such a
+    host is read by Range the same way its other files are downloaded.
+    """
+    verify: ssl.SSLContext | bool = (
+        legacy_cipher_context() if host_needs_legacy_ciphers(url) else True
+    )
+    return httpx.AsyncClient(
+        headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url), verify=verify
+    )
+
+
+_ON_CHUNK_FLUSH_BYTES = 1024 * 1024
+
+
 def _should_raise(resp: httpx.Response, raise_for_status: bool | frozenset[int]) -> bool:
     if isinstance(raise_for_status, bool):
         return raise_for_status
@@ -220,16 +236,23 @@ async def _download(
         # fully received file must not be refused for it) or send garbage;
         # the byte counter below is what decides `truncated`.
         chunks: list[bytes] = []
-        total = 0
+        total = held = 0
         async for chunk in resp.aiter_bytes(chunk_size=64 * 1024):
-            if on_chunk is None:
-                chunks.append(chunk)
-            else:
-                on_chunk(chunk)
+            chunks.append(chunk)
             total += len(chunk)
+            held += len(chunk)
+            if on_chunk is not None and held >= _ON_CHUNK_FLUSH_BYTES:
+                # The callback may write to disk: off the event loop, and in
+                # pieces big enough that the thread hop does not dominate.
+                await asyncio.to_thread(on_chunk, b"".join(chunks))
+                chunks, held = [], 0
             if total > max_bytes:
                 truncated = True
                 break
+        if on_chunk is not None:
+            if chunks:
+                await asyncio.to_thread(on_chunk, b"".join(chunks))
+            return b"", truncated
 
     return b"".join(chunks), truncated
 
@@ -262,9 +285,10 @@ async def download_bytes(
     preview_xlsb/preview_ods) trades a bounded amount of extra worst-case
     bandwidth for turning a guaranteed failure into a successful preview.
 
-    on_chunk hands every 64 KB chunk to a callback (a file or a SpooledBlob)
-    instead of keeping it, and the returned bytes are then empty, so a file far
-    past memory can be downloaded. A TLS retry only happens when the handshake
+    on_chunk hands the download to a callback (a file or a SpooledBlob), about
+    1 MB at a time and in a worker thread, instead of keeping it, and the
+    returned bytes are then empty, so a file far past memory can be downloaded
+    without its disk writes holding up other requests. A TLS retry only happens when the handshake
     fails, before any chunk, so the callback never sees a partial first attempt.
     """
     own = session is None
@@ -273,14 +297,7 @@ async def download_bytes(
         # makes its own per-request follow_redirects=False and handles
         # redirects itself (validating each hop), so a client-level default
         # would be misleading rather than wrong.
-        # Hosts with old TLS configs need SECLEVEL=1 to complete the
-        # handshake at all; the certificate is still verified.
-        verify: ssl.SSLContext | bool = (
-            legacy_cipher_context() if host_needs_legacy_ciphers(url) else True
-        )
-        session = httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url), verify=verify
-        )
+        session = _plain_client(url)
     assert session is not None
     try:
         logger.debug("Downloading from %s (max %d bytes)", url, max_bytes)
@@ -360,9 +377,7 @@ async def post_json_bytes(
     return b"".join(chunks), False
 
 
-async def sniff_content_type(
-    url: str, session: httpx.AsyncClient | None = None
-) -> str | None:
+async def sniff_content_type(url: str, session: httpx.AsyncClient | None = None) -> str | None:
     """Best-effort Content-Type sniff for a resource with no recognizable
     URL extension and no useful declared CKAN format.
 
@@ -373,9 +388,7 @@ async def sniff_content_type(
     """
     own = session is None
     if own:
-        session = httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url)
-        )
+        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url))
     assert session is not None
     try:
         async with safe_stream(session, url, timeout=_TIMEOUT) as resp:
@@ -570,9 +583,7 @@ async def preview_json(
                 for key in item:
                     if key not in keys:
                         keys.append(key)
-            rows = [
-                [str(item.get(k, ""))[:120] for k in keys] for item in data[:max_rows]
-            ]
+            rows = [[str(item.get(k, ""))[:120] for k in keys] for item in data[:max_rows]]
             keys, rows, dropped_geom = strip_geometry_columns(keys, rows)
             result: dict[str, Any] = {
                 "headers": keys,
@@ -650,9 +661,7 @@ def _select_sheet(names: list[str], sheet: str) -> int:
     if wanted.isdigit() and 1 <= int(wanted) <= len(names):
         return int(wanted) - 1
     listed = "; ".join(f"{i + 1}. {n}" for i, n in enumerate(names))
-    raise ValueError(
-        f"No hay una hoja '{sheet}' en el libro. Hojas disponibles: {listed}."
-    )
+    raise ValueError(f"No hay una hoja '{sheet}' en el libro. Hojas disponibles: {listed}.")
 
 
 def _parse_xlsx_bytes(
@@ -704,9 +713,7 @@ def _parse_xlsx_bytes(
         wb.close()
 
 
-def _parse_xls_bytes(
-    raw: bytes, max_rows: int, truncated: bool, sheet: str = ""
-) -> dict[str, Any]:
+def _parse_xls_bytes(raw: bytes, max_rows: int, truncated: bool, sheet: str = "") -> dict[str, Any]:
     import xlrd
 
     wb = xlrd.open_workbook(file_contents=raw)
@@ -795,9 +802,7 @@ def _parse_xlsb_bytes(
         wb.close()
 
 
-def _parse_ods_bytes(
-    raw: bytes, max_rows: int, truncated: bool, sheet: str = ""
-) -> dict[str, Any]:
+def _parse_ods_bytes(raw: bytes, max_rows: int, truncated: bool, sheet: str = "") -> dict[str, Any]:
     from odf.opendocument import load
     from odf.table import Table, TableCell, TableRow
     from odf.teletype import extractText
@@ -872,9 +877,7 @@ async def preview_xlsx(
     see download_bytes' max_bytes docstring. Worth the larger cap since the
     alternative is a guaranteed failure, not a safety margin.
     """
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         raise ValueError(
             "El archivo .xlsx supera el límite de 20 MB de este preview, así "
@@ -890,9 +893,7 @@ async def preview_xls(
     url: str, max_rows: int = 20, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     """Preview the first sheet of a legacy Excel (.xls) workbook."""
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         raise ValueError(
             "El archivo .xls supera el límite de 20 MB de este preview, así "
@@ -906,9 +907,7 @@ async def preview_xlsb(
     url: str, max_rows: int = 20, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     """Preview the first sheet of an Excel Binary Workbook (.xlsb)."""
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         # .xlsb is a ZIP container (BIFF12 records instead of XLSX's XML),
         # so it fails the exact same way a truncated .zip does: the central
@@ -943,9 +942,7 @@ async def preview_ods(
     the default cap, only a guaranteed failure.
     """
 
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         raise ValueError(
             "El archivo .ods supera el límite de 20 MB de este preview, así "
@@ -957,9 +954,7 @@ async def preview_ods(
     return await run_parser_off_loop(_parse_ods_bytes, raw, max_rows, truncated)
 
 
-def _gunzip_capped(
-    raw: bytes, cap: int = _MAX_DECOMPRESSED_BYTES
-) -> tuple[bytes, bool]:
+def _gunzip_capped(raw: bytes, cap: int = _MAX_DECOMPRESSED_BYTES) -> tuple[bytes, bool]:
     """Decompress gzip bytes, stopping once `cap` output bytes are produced."""
     return _inflate_capped(raw, 16 + zlib.MAX_WBITS, cap)
 
@@ -1072,9 +1067,7 @@ async def preview_targz(
                 "este preview y se cortó a la mitad. Descarga el enlace "
                 "directo del recurso (un .tar.gz no se puede leer por partes)."
             ) from e
-        raise ValueError(
-            "El archivo .tar.gz no se pudo leer: está corrupto"
-        ) from e
+        raise ValueError("El archivo .tar.gz no se pudo leer: está corrupto") from e
 
     truncated = truncated or len(inner_raw) > MAX_DOWNLOAD_BYTES
     inner_raw = inner_raw[:MAX_DOWNLOAD_BYTES]
@@ -1138,9 +1131,7 @@ async def preview_zip(
             with zf.open(member_name) as f:
                 inner_raw = f.read(MAX_DOWNLOAD_BYTES + 1)
     except zipfile.BadZipFile as e:
-        raise ValueError(
-            "El archivo .zip no se pudo leer: está corrupto"
-        ) from e
+        raise ValueError("El archivo .zip no se pudo leer: está corrupto") from e
 
     truncated = truncated or len(inner_raw) > MAX_DOWNLOAD_BYTES
     inner_raw = inner_raw[:MAX_DOWNLOAD_BYTES]
@@ -1182,6 +1173,26 @@ _BLOB_CACHE_SECONDS = 300.0
 _blob_cache = TtlCache(ttl_seconds=_BLOB_CACHE_SECONDS, max_entries=2, stale_seconds=0.0)
 # One download per URL at a time: two calls for the same 150 MB zip share it.
 _zip_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
+# Big transfers that go to a temporary file are counted, so the disk in use has
+# a ceiling whatever the number of requests in flight: two whole-zip downloads
+# (_download_whole_zip) and, in csv_aggregate, two zip members being summed.
+# The rest wait their turn. Without this, eight concurrent requests (the
+# default MCP_MAX_CONCURRENT_REQUESTS) could each hold a 300 or 400 MB file.
+ZIP_WORK_SLOTS = 2
+_slots_by_loop: weakref.WeakKeyDictionary[
+    asyncio.AbstractEventLoop, dict[str, asyncio.Semaphore]
+] = weakref.WeakKeyDictionary()
+# A member being fetched by Range right now, so a second call for the same
+# member waits for that file instead of downloading it again.
+_spools_in_flight: dict[tuple[str, int, int], asyncio.Task[SpooledBlob]] = {}
+
+
+def zip_work_slots(kind: str) -> asyncio.Semaphore:
+    """The semaphore that counts one kind of big zip work on the running loop."""
+    slots = _slots_by_loop.setdefault(asyncio.get_running_loop(), {})
+    if kind not in slots:
+        slots[kind] = asyncio.Semaphore(ZIP_WORK_SLOTS)
+    return slots[kind]
 
 
 class _RangeUnsupported(ValueError):
@@ -1228,9 +1239,7 @@ async def _fetch_range(
 
     own = session is None
     if own:
-        session = httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url)
-        )
+        session = _plain_client(url)
     assert session is not None
     try:
         try:
@@ -1292,7 +1301,11 @@ async def _ranged(
             f"El .zip está corrupto (el rango {range_header} queda fuera del "
             f"archivo, de {total} bytes)."
         )
-    body = blob[start : end + 1][:cap]
+    last = min(end, start + cap - 1)
+    if isinstance(blob, SpooledBlob) and blob.on_disk:
+        body = await asyncio.to_thread(blob.__getitem__, slice(start, last + 1))
+    else:
+        body = blob[start : last + 1]
     return body, httpx.Headers({"content-range": f"bytes {start}-{end}/{total}"}), 206
 
 
@@ -1363,7 +1376,8 @@ async def _zip_source(
                 blob = _blob_cache.get(url)
                 if blob is None:
                     logger.info("%s no soporta HTTP Range; descargando el .zip completo", url)
-                    blob = await _download_whole_zip(url, session)
+                    async with zip_work_slots("whole_zip"):
+                        blob = await _download_whole_zip(url, session)
                     try:
                         members, total_size, entries = await _fetch_central_directory(
                             url, session, blob=blob
@@ -1459,8 +1473,18 @@ async def _read_zip64_eocd(
         _check_partial(status, headers, record_offset)
     if len(record) < 56 or record[:4] != _ZIP64_EOCD_SIGNATURE:
         raise _Zip64Required(eocd_index)
-    (_sig, _size, _made, _needed, _disk, _cd_disk, _entries_disk, total_entries,
-     cd_size, cd_offset) = struct.unpack_from("<4sQHHIIQQQQ", record, 0)
+    (
+        _sig,
+        _size,
+        _made,
+        _needed,
+        _disk,
+        _cd_disk,
+        _entries_disk,
+        total_entries,
+        cd_size,
+        cd_offset,
+    ) = struct.unpack_from("<4sQHHIIQQQQ", record, 0)
     return cd_offset, cd_size, total_entries
 
 
@@ -1552,9 +1576,7 @@ def _parse_central_directory(data: bytes, expected_entries: int) -> list[dict[st
                 "is_dir": name.endswith("/"),
                 "compressed_size": compressed_size,
                 "uncompressed_size": uncompressed_size,
-                "compression": {0: "stored", 8: "deflate"}.get(
-                    compression, str(compression)
-                ),
+                "compression": {0: "stored", 8: "deflate"}.get(compression, str(compression)),
                 # Internal fields for read_zip_member; list_zip_contents
                 # projects them out (_PUBLIC_MEMBER_KEYS).
                 "compression_method": compression,
@@ -1637,9 +1659,7 @@ async def _fetch_central_directory(
     return _parse_central_directory(cd_data, total_entries), total_size, total_entries
 
 
-async def list_zip_contents(
-    url: str, session: httpx.AsyncClient | None = None
-) -> dict[str, Any]:
+async def list_zip_contents(url: str, session: httpx.AsyncClient | None = None) -> dict[str, Any]:
     """
     List a .zip archive's members (name, size, compression) via HTTP Range
     requests, without downloading the archive itself.
@@ -1738,9 +1758,7 @@ async def _parse_table_bytes(
     # max_rows data rows once it is skipped.
     parse_rows = max_rows + (_HEADER_SCAN_ROWS if skip_rows < 0 else skip_rows)
     if ext in _ZIP_SHEET_PARSERS:
-        result = await run_parser_off_loop(
-            _ZIP_SHEET_PARSERS[ext], out, parse_rows, False, sheet
-        )
+        result = await run_parser_off_loop(_ZIP_SHEET_PARSERS[ext], out, parse_rows, False, sheet)
     else:
         if sheet.strip():
             raise ValueError(
@@ -1874,9 +1892,7 @@ async def read_zip_member(
                 "se lee la URL misma."
             )
         name, ext, out, truncated, size = await _read_direct_file(url, session)
-        result = await _parse_table_bytes(
-            name, ext, out, truncated, max_rows, skip_rows, sheet
-        )
+        result = await _parse_table_bytes(name, ext, out, truncated, max_rows, skip_rows, sheet)
         result.update(
             {
                 "member_name": name,
@@ -1906,9 +1922,7 @@ async def read_zip_member(
         info["uncompressed_size"],
         info["local_header_offset"],
     ):
-        raise ValueError(
-            f"'{name}': el .zip está corrupto (tamaño ZIP64 sin su campo extra)."
-        )
+        raise ValueError(f"'{name}': el .zip está corrupto (tamaño ZIP64 sin su campo extra).")
     compressed_size = info["compressed_size"]
 
     ext = _ext_of(name)
@@ -1982,9 +1996,7 @@ async def read_zip_member(
 
     complete = not truncated and len(out) == info["uncompressed_size"]
     if not truncated and not complete:
-        raise ValueError(
-            f"'{name}': el .zip está corrupto (tamaño descomprimido inesperado)."
-        )
+        raise ValueError(f"'{name}': el .zip está corrupto (tamaño descomprimido inesperado).")
     if complete and zlib.crc32(out) != info["crc32"]:
         raise ValueError(f"'{name}': el .zip está corrupto (CRC32 no coincide).")
     if is_sheet and not complete:
@@ -2003,9 +2015,7 @@ async def read_zip_member(
         sizes = (inner_sizes[0], inner_sizes[1])
         ext = _ext_of(read_name)
 
-    result = await _parse_table_bytes(
-        read_name, ext, out, truncated, max_rows, skip_rows, sheet
-    )
+    result = await _parse_table_bytes(read_name, ext, out, truncated, max_rows, skip_rows, sheet)
     result.update(
         {
             "member_name": read_name,
@@ -2018,7 +2028,6 @@ async def read_zip_member(
         # member_name and the sizes describe the inner file that was read.
         result["outer_member"] = name
     return result
-
 
 
 @dataclass(frozen=True)
@@ -2053,7 +2062,7 @@ async def _spool_member_data(
     # One connection for the whole span, not a TLS handshake per request.
     own = session is None
     if own:
-        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url))
+        session = _plain_client(url)
     try:
         position = start
         while position < end:
@@ -2064,7 +2073,7 @@ async def _spool_member_data(
             _check_partial(status, headers, position)
             if len(chunk) != last - position + 1:
                 raise ValueError("El .zip está corrupto (datos incompletos).")
-            spool.write(chunk)
+            await asyncio.to_thread(spool.write, chunk)
             position = last + 1
     except BaseException:
         spool.close()
@@ -2073,6 +2082,37 @@ async def _spool_member_data(
         if own and session is not None:
             await session.aclose()
     return spool
+
+
+async def _shared_member_spool(
+    url: str, start: int, end: int, session: httpx.AsyncClient | None
+) -> SpooledBlob:
+    """_spool_member_data within its deadline; calls for the same bytes share one fetch.
+
+    The fetch runs as its own task, so a caller that gives up does not cancel
+    it for the others; it still ends at _SPAN_DEADLINE_SECONDS. A caller that
+    brings its own session fetches alone, since that session is its to close.
+    """
+    if session is not None:
+        return await asyncio.wait_for(
+            _spool_member_data(url, start, end, session), timeout=_SPAN_DEADLINE_SECONDS
+        )
+    key = (url, start, end)
+    task = _spools_in_flight.get(key)
+    if task is None or task.get_loop() is not asyncio.get_running_loop():
+        task = asyncio.ensure_future(
+            asyncio.wait_for(
+                _spool_member_data(url, start, end, None), timeout=_SPAN_DEADLINE_SECONDS
+            )
+        )
+        _spools_in_flight[key] = task
+
+        def _forget(done: asyncio.Task[SpooledBlob], key: tuple[str, int, int] = key) -> None:
+            if _spools_in_flight.get(key) is done:
+                del _spools_in_flight[key]
+
+        task.add_done_callback(_forget)
+    return await asyncio.shield(task)
 
 
 async def locate_zip_member(
@@ -2145,10 +2185,7 @@ async def locate_zip_member(
         offset = data_start
     else:
         try:
-            source = await asyncio.wait_for(
-                _spool_member_data(url, data_start, data_end, session),
-                timeout=_SPAN_DEADLINE_SECONDS,
-            )
+            source = await _shared_member_spool(url, data_start, data_end, session)
         except TimeoutError as exc:
             raise ValueError(
                 f"La descarga de '{name}' no terminó en {int(_SPAN_DEADLINE_SECONDS)} s; "
@@ -2292,11 +2329,7 @@ def _tidy_report_table(table: list[list[str]], skip_rows: int) -> dict[str, Any]
         }
 
     width = max(len(row) for row in body)
-    keep = [
-        i
-        for i in range(width)
-        if any(i < len(row) and row[i].strip() for row in body)
-    ]
+    keep = [i for i in range(width) if any(i < len(row) and row[i].strip() for row in body)]
     trimmed = [[row[i] if i < len(row) else "" for i in keep] for row in body]
     return {
         "headers": trimmed[0],
@@ -2330,9 +2363,7 @@ def format_table(headers: list[str], rows: list[list[str]], max_col_width: int =
             col_widths[i] = max(col_widths[i], len(cell))
 
     def fmt_row(cells: list[str]) -> str:
-        return " | ".join(
-            cell.ljust(col_widths[i]) for i, cell in enumerate(cells[:ncols])
-        )
+        return " | ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(cells[:ncols]))
 
     lines = [fmt_row(display_headers)]
     lines.append("-+-".join("-" * w for w in col_widths))

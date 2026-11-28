@@ -14,22 +14,42 @@ def test_series_key_reads_the_code_and_name():
         "3.1.1",
         "Cuentas internet fijos y moviles",
     )
-    assert arcotel_client.series_key("15.1.-Listado_Radioaficionados_Mes_Septiembre_2026-1.xlsx") == (
+    assert arcotel_client.series_key(
+        "15.1.-Listado_Radioaficionados_Mes_Septiembre_2026-1.xlsx"
+    ) == (
         "15.1",
         "Listado Radioaficionados",
     )
-    assert arcotel_client.series_key("Informe_Series_Tel_Fija_Sep2026.xlsx")[0] == "informe_series_tel_fija"
+    assert (
+        arcotel_client.series_key("Informe_Series_Tel_Fija_Sep2026.xlsx")[0]
+        == "informe_series_tel_fija"
+    )
     assert arcotel_client.series_key("RI-1700-1800-Jul-Sep-2026.xlsx") is None
 
 
 def test_parse_series_media_keeps_the_newest_real_series():
     base = "https://www.arcotel.gob.ec/wp-content/uploads/2026"
     items = [
-        {"date": "2026-10-29T10:00:00", "source_url": f"{base}/10/1.1.1-Lineas-activas-por-servicio_y_Densidad_septiembre_2026.xlsx"},
-        {"date": "2026-10-05T10:00:00", "source_url": f"{base}/10/1.1.1-Lineas-activas-por-servicio_y_Densidad_agosto_2026.xlsx"},
-        {"date": "2025-12-29T10:00:00", "source_url": f"{base}/12/1-Formulario-observaciones-OTECEL.xls"},
-        {"date": "2023-12-20T10:00:00", "source_url": f"{base}/12/2.1.181223-OBSERVACIONES-PRI.xlsx"},
-        {"date": "2026-10-13T10:00:00", "source_url": f"{base}/10/5.1.1-Usuarios-enlaces-SPT_septiembre_2026.xls"},
+        {
+            "date": "2026-10-29T10:00:00",
+            "source_url": f"{base}/10/1.1.1-Lineas-activas-por-servicio_y_Densidad_septiembre_2026.xlsx",
+        },
+        {
+            "date": "2026-10-05T10:00:00",
+            "source_url": f"{base}/10/1.1.1-Lineas-activas-por-servicio_y_Densidad_agosto_2026.xlsx",
+        },
+        {
+            "date": "2025-12-29T10:00:00",
+            "source_url": f"{base}/12/1-Formulario-observaciones-OTECEL.xls",
+        },
+        {
+            "date": "2023-12-20T10:00:00",
+            "source_url": f"{base}/12/2.1.181223-OBSERVACIONES-PRI.xlsx",
+        },
+        {
+            "date": "2026-10-13T10:00:00",
+            "source_url": f"{base}/10/5.1.1-Usuarios-enlaces-SPT_septiembre_2026.xls",
+        },
     ]
 
     series = arcotel_client.parse_series_media(items)
@@ -45,9 +65,18 @@ def test_parse_series_media_keeps_the_newest_real_series():
 
 def test_msp_price_releases_carry_their_cutoff_date():
     items = [
-        {"date": "2026-10-30T09:00:00", "source_url": "https://www.salud.gob.ec/wp-content/uploads/2026/10/Consolidado-precios-techo-actualizado-2026-10-30.xlsx"},
-        {"date": "2021-09-21T09:00:00", "source_url": "https://www.salud.gob.ec/wp-content/uploads/2021/09/Consolidado-precios-techo-actualizado-2021-08-23..xlsx"},
-        {"date": "2019-03-28T09:00:00", "source_url": "https://www.salud.gob.ec/wp-content/uploads/2019/03/LISTADO.pdf"},
+        {
+            "date": "2026-10-30T09:00:00",
+            "source_url": "https://www.salud.gob.ec/wp-content/uploads/2026/10/Consolidado-precios-techo-actualizado-2026-10-30.xlsx",
+        },
+        {
+            "date": "2021-09-21T09:00:00",
+            "source_url": "https://www.salud.gob.ec/wp-content/uploads/2021/09/Consolidado-precios-techo-actualizado-2021-08-23..xlsx",
+        },
+        {
+            "date": "2019-03-28T09:00:00",
+            "source_url": "https://www.salud.gob.ec/wp-content/uploads/2019/03/LISTADO.pdf",
+        },
     ]
 
     files = msp_precios_client.parse_media(items, "precios_techo")
@@ -88,10 +117,22 @@ def test_parse_bases_classifies_registers_and_downloads():
     files = minedec_client.parse_bases(_BASES)
 
     by_tipo = {f["tipo"]: f for f in files}
-    assert set(by_tipo) == {"registro_xlsx", "registro_csv", "diccionario", "historico_1993_2007", "tematico"}
+    assert set(by_tipo) == {
+        "registro_xlsx",
+        "registro_csv",
+        "diccionario",
+        "historico_1993_2007",
+        "tematico",
+    }
     assert by_tipo["registro_csv"]["url"].startswith("https://educacion.gob.ec/")
-    assert (by_tipo["registro_csv"]["periodo"], by_tipo["registro_csv"]["corte"]) == ("2024-2025", "Inicio")
-    assert by_tipo["tematico"]["titulo"] == "Conectividad de instituciones educativas fiscales con fines pedagógicos"
+    assert (by_tipo["registro_csv"]["periodo"], by_tipo["registro_csv"]["corte"]) == (
+        "2024-2025",
+        "Inicio",
+    )
+    assert (
+        by_tipo["tematico"]["titulo"]
+        == "Conectividad de instituciones educativas fiscales con fines pedagógicos"
+    )
     assert by_tipo["historico_1993_2007"]["periodo"] == "1993-1994"
     assert not any("MAIS" in f["url"] for f in files)
 

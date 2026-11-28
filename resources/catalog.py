@@ -79,9 +79,7 @@ def _all_fuentes() -> dict:
             },
             {
                 "id": "sri",
-                "nombre": (
-                    "SRI: datasets fuera de CKAN, RUC y estadísticas de recaudación"
-                ),
+                "nombre": ("SRI: datasets fuera de CKAN, RUC y estadísticas de recaudación"),
                 "base": "https://www.sri.gob.ec/datasets",
                 "tools": [
                     "search_archivos",
@@ -308,8 +306,7 @@ def _all_fuentes() -> dict:
             {
                 "id": "supercias",
                 "nombre": (
-                    "Superintendencia de Compañías (directorio de compañías, "
-                    "auditores externos)"
+                    "Superintendencia de Compañías (directorio de compañías, auditores externos)"
                 ),
                 "base": "https://mercadodevalores.supercias.gob.ec/reportes/",
                 "tools": [
@@ -383,8 +380,7 @@ def _all_fuentes() -> dict:
             {
                 "id": "centrosur",
                 "nombre": (
-                    "Centrosur (cronogramas de cortes de luz en Azuay, Cañar "
-                    "y Morona Santiago)"
+                    "Centrosur (cronogramas de cortes de luz en Azuay, Cañar y Morona Santiago)"
                 ),
                 "base": "https://www.centrosur.gob.ec/",
                 "tools": ["search_cortes", "get_cortes_horarios"],
@@ -466,8 +462,7 @@ def _all_fuentes() -> dict:
             {
                 "id": "trabajo",
                 "nombre": (
-                    "Ministerio del Trabajo (salarios sectoriales y boletín "
-                    "estadístico anual)"
+                    "Ministerio del Trabajo (salarios sectoriales y boletín estadístico anual)"
                 ),
                 "base": "https://www.trabajo.gob.ec/",
                 "tools": [
@@ -614,9 +609,7 @@ def register_catalog_resources(mcp: MCPServer) -> None:
     )
     def herramienta(nombre: str) -> str:
         if nombre not in TOOL_DOCS:
-            raise ValueError(
-                f"Tool '{nombre}' no existe. Ver tools/list o ecuador://fuentes."
-            )
+            raise ValueError(f"Tool '{nombre}' no existe. Ver tools/list o ecuador://fuentes.")
         return TOOL_DOCS[nombre]
 
     @mcp.resource(

@@ -215,9 +215,7 @@ def register_preview_resource_data_tool(mcp: MCPServer) -> None:
             # The guard's message names the resolved private IP: keep that
             # detail in the server log, never in the client-facing error.
             logger.warning("preview_resource_data rechazó la URL %s: %s", url, e)
-            raise ToolError(
-                "URL rechazada por seguridad: el destino no es público"
-            ) from e
+            raise ToolError("URL rechazada por seguridad: el destino no es público") from e
         except Exception as e:
             raise ToolError(f"Error al procesar el archivo: {e}") from e
 
@@ -277,8 +275,7 @@ def register_preview_resource_data_tool(mcp: MCPServer) -> None:
                 parts.append("⚠ Archivo truncado (excede 5 MB o tiene más filas)")
             if data.get("dropped_columns"):
                 parts.append(
-                    "⚠ Columnas de geometría omitidas (WKT): "
-                    + ", ".join(data["dropped_columns"])
+                    "⚠ Columnas de geometría omitidas (WKT): " + ", ".join(data["dropped_columns"])
                 )
             if data.get("converted_decimal_columns"):
                 parts.append(

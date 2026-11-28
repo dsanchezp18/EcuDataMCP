@@ -81,9 +81,7 @@ def _registered_tool_names() -> set[str]:
 
 
 def test_fuentes_covers_every_registered_tool():
-    listed = {
-        tool for source in _fuentes_payload()["fuentes"] for tool in source["tools"]
-    }
+    listed = {tool for source in _fuentes_payload()["fuentes"] for tool in source["tools"]}
     missing = sorted(_registered_tool_names() - listed)
     assert not missing, f"tools missing from ecuador://fuentes: {missing}"
 
@@ -149,4 +147,3 @@ def test_buscar_inec_prompt_skips_anda_when_hidden(monkeypatch):
 
     assert "salta el paso 1" not in str(shown)
     assert "salta el paso 1" in str(hidden)
-

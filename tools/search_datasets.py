@@ -25,8 +25,7 @@ def _compact_dataset(ds: dict[str, Any]) -> dict[str, Any]:
         "metadata_modified": ds.get("metadata_modified"),
         "organization": org.get("title") if isinstance(org, dict) else None,
         "resources": [
-            {k: r.get(k) for k in _COMPACT_RESOURCE_KEYS}
-            for r in ds.get("resources") or []
+            {k: r.get(k) for k in _COMPACT_RESOURCE_KEYS} for r in ds.get("resources") or []
         ],
     }
 
@@ -164,9 +163,7 @@ def register_search_datasets_tool(mcp: MCPServer) -> None:
                     parts.append(f"   Organización: {org.get('title', '')}")
                 tags = ds.get("tags", [])
                 if tags:
-                    tag_names = [
-                        t.get("display_name", t.get("name", "")) for t in tags[:5]
-                    ]
+                    tag_names = [t.get("display_name", t.get("name", "")) for t in tags[:5]]
                     parts.append(f"   Tags: {', '.join(tag_names)}")
                 num_res = ds.get("num_resources", len(ds.get("resources", [])))
                 parts.append(f"   Recursos: {num_res}")
@@ -181,6 +178,4 @@ def register_search_datasets_tool(mcp: MCPServer) -> None:
                 )
             return "\n".join(parts)
 
-        return render_structured(
-            payload, format, text_builder=lambda _: to_text(text_payload)
-        )
+        return render_structured(payload, format, text_builder=lambda _: to_text(text_payload))
