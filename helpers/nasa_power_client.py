@@ -51,19 +51,20 @@ _NOTA = (
     "punto exacto. Los días recientes pueden faltar: NASA publica con unos días de rezago."
 )
 
-# Seen 2026-11-24 to 11-27. On the 24th the Guayaquil cell's October rain averaged
-# 21 mm/day and Quito showed tens of mm a day from October; by the 27th a range
-# ending 31 October named only MERRA2 and the same October averaged 8 mm/day in
-# Guayaquil and 2.75 in Quito. November, still GEOS-IT, kept 29 and 23 mm/day
-# (Open-Meteo: 10 at Quito, with no step on 1 November).
+# Seen 2026-11-24 to 11-28; the figures stay here and in docs/RESEARCH.md, not in
+# the note, because NASA revises them. On the 24th the Guayaquil cell's October
+# rain averaged 21 mm/day and Quito showed tens of mm a day from October; by the
+# 27th a range ending 31 October named only MERRA2 and the same October averaged
+# 8 mm/day in Guayaquil and 2.75 in Quito. At the Quito point the daily rain went
+# from 4.9 mm on 31 October to 40.6 mm on 1 November, the first GEOS-IT day
+# (Open-Meteo: no step, and 10 mm/day for November against 23). On the 28th
+# November was still GEOS-IT only.
 _GEOSIT_NOTE = (
     "Los días más recientes (`fuentes_datos` incluye GEOSIT) son provisionales: NASA los "
-    "calcula con GEOS-IT hasta que llega MERRA-2 y entonces los reemplaza. En Ecuador "
-    "GEOS-IT da mucha más lluvia: el 1 de noviembre de 2026 la lluvia diaria de la celda de "
-    "Quito pasó de 4,9 a 40,6 mm sin que Open-Meteo registrara salto alguno, y la de octubre "
-    "en la celda de Guayaquil figuraba con 21 mm/día el 24 de noviembre y con 8 mm/día el 27, "
-    "ya con MERRA-2. No compares esos días con los anteriores ni los tomes como un episodio "
-    "sin otra fuente."
+    "calcula con GEOS-IT hasta que llega MERRA-2, semanas después, y entonces los reemplaza. "
+    "En Ecuador GEOS-IT da varias veces más lluvia que MERRA-2, así que la serie salta en el "
+    "primer día GEOS-IT sin que haya llovido más. No compares esos días con los anteriores "
+    "ni los tomes como un episodio de lluvia sin otra fuente."
 )
 
 # clave -> (POWER parameter, unit, name). The units are the ones the API

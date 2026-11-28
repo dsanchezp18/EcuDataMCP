@@ -380,3 +380,34 @@ def test_classifies_elecgalapagos_503_as_degraded():
     )
 
     assert assess_response(text, [], is_error=True).status == "degraded"
+
+
+def test_classifies_the_maate_geoserver_port_outage_as_degraded_not_geoblocked():
+    from helpers.smoke_status import GEOBLOCKED_SOURCES
+
+    for text in (
+        ("Error executing tool search_capas_geo: Error al consultar el catálogo de "
+        "capas de maate: ConnectTimeout (la fuente no respondió a tiempo; reintenta "
+        "en unos minutos)"),
+        ("Error executing tool get_capa_geo_datos: Error al consultar la capa "
+        "'mae_ide:v_fa210_snap_a' de maate: ConnectTimeout (la fuente no respondió "
+        "a tiempo; reintenta en unos minutos)"),
+    ):
+        assert degraded_source(text) == "maate_geoserver_down"
+    assert "maate_geoserver_down" not in GEOBLOCKED_SOURCES
+
+
+def test_other_maate_and_igm_errors_stay_failures():
+    assert (
+        degraded_source(
+            "Error al consultar la capa 'mae_ide:x' de maate: Client error '404 Not Found'"
+        )
+        is None
+    )
+    assert (
+        degraded_source(
+            "Error al consultar el catálogo de capas de igm: ConnectTimeout (la fuente "
+            "no respondió a tiempo; reintenta en unos minutos)"
+        )
+        is None
+    )

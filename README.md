@@ -322,7 +322,7 @@ El contrato JSON para agentes de BCEData/IEM está en
 | Endpoint | Descripción |
 |----------|-------------|
 | `POST /mcp` | Mensajes JSON-RPC (cliente → servidor) |
-| `GET /health` | Health check: `{"status":"ok","uptime_since":"...","version":"..."}` |
+| `GET /health` | Health check: `{"status":"ok","uptime_since":"...","version":"...","commit":"..."}` (`commit` es el SHA del que arrancó el servidor, o `null` en una instalación sin checkout) |
 | `GET /usage` | Llamadas, errores y latencia p50/p95 por tool desde el arranque |
 
 Cuando `MCP_AUTH_TOKEN` está definido, `POST /mcp` requiere el encabezado
