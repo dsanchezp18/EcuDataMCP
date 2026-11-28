@@ -49,9 +49,7 @@ Chunk = tuple[float, float, float, str]  # x, y (up), font size, text
 
 _TIME_FONT_MIN = 18.0
 _SECTOR_MIN_LEN = 30
-_HEADER_RE = re.compile(
-    r"(PROVINCIA|CANT[OÓ]N).*SECTORES|SECTORES.*SUBESTACIONES", re.IGNORECASE
-)
+_HEADER_RE = re.compile(r"(PROVINCIA|CANT[OÓ]N).*SECTORES|SECTORES.*SUBESTACIONES", re.IGNORECASE)
 _NOISE_RE = re.compile(
     r"^(Programaci|cortes del servicio|de energ|[ÁA]rea de concesi|Azuay, Ca|Fecha|"
     r"PROVINCIA|CANT[OÓ]N ZONA)",
@@ -96,9 +94,7 @@ def _chunks(page: Any) -> list[Chunk]:
     rotated (text matrix [0, s, -s, 0, e, f] under /Rotate 90)."""
     out: list[Chunk] = []
 
-    def visit(
-        text: str, cm: list[float], tm: list[float], _font: Any, size: float
-    ) -> None:
+    def visit(text: str, cm: list[float], tm: list[float], _font: Any, size: float) -> None:
         text = text.strip()
         if not text:
             return
@@ -163,12 +159,8 @@ def _split_place(label: str) -> tuple[str | None, str | None, str]:
     return provincia, canton, " ".join(words)
 
 
-def _parse_section(
-    chunks: list[Chunk], horario: list[str], fecha: str
-) -> list[dict[str, Any]]:
-    long_lines = sorted(
-        c[0] for c in chunks if "," in c[3] and len(c[3]) >= _SECTOR_MIN_LEN
-    )
+def _parse_section(chunks: list[Chunk], horario: list[str], fecha: str) -> list[dict[str, Any]]:
+    long_lines = sorted(c[0] for c in chunks if "," in c[3] and len(c[3]) >= _SECTOR_MIN_LEN)
     if not long_lines:
         return []
 
@@ -278,9 +270,7 @@ def _parse_section(
                 provincia, canton, zona = _split_place(_join(group))
             else:
                 provincia, canton, zona = None, None, _join(group)
-            span_provincia, span_canton, span_y = spanning(
-                (lines[0][1] + lines[-1][1]) / 2
-            )
+            span_provincia, span_canton, span_y = spanning((lines[0][1] + lines[-1][1]) / 2)
 
             # A canton read from the row's own label is reliable; one taken
             # from a merged cell is an estimate that can be off by a row or
@@ -353,13 +343,9 @@ def _parse_page_chunks(raw_chunks: list[Chunk]) -> list[dict[str, Any]]:
         out = []
         for i, t in enumerate(time_labels):
             floor = time_labels[i + 1][1] if i + 1 < len(time_labels) else float("-inf")
+            section = [c for c in chunks if c[2] < _TIME_FONT_MIN and floor < c[1] < t[1]]
             section = [
-                c for c in chunks if c[2] < _TIME_FONT_MIN and floor < c[1] < t[1]
-            ]
-            section = [
-                c
-                for c in section
-                if not _NOISE_RE.match(c[3]) and not _HEADER_RE.search(c[3])
+                c for c in section if not _NOISE_RE.match(c[3]) and not _HEADER_RE.search(c[3])
             ]
             out.extend(_parse_section(section, parse_horario(t[3]), fecha))
         return out

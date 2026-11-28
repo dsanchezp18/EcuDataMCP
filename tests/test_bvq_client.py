@@ -57,10 +57,7 @@ def test_list_secciones_covers_every_section():
 
 def test_titulo_from_file_name():
     assert client._titulo_from_url(f"{_COT_BASE}/notas-credito.xls") == "Notas credito"
-    assert (
-        client._titulo_from_url(f"{client._BASE}/uploads/x/curva_spot.xls")
-        == "Curva spot"
-    )
+    assert client._titulo_from_url(f"{client._BASE}/uploads/x/curva_spot.xls") == "Curva spot"
 
 
 @pytest.mark.asyncio
@@ -113,16 +110,12 @@ async def test_valoracion_merges_pages_and_resolves_relative_hrefs(httpx_mock):
     result = await client.get_seccion_archivos("valoracion")
 
     assert result["total"] == 2
-    assert all(
-        a["url"].startswith("https://www.bolsadequito.com/") for a in result["archivos"]
-    )
+    assert all(a["url"].startswith("https://www.bolsadequito.com/") for a in result["archivos"])
 
 
 @pytest.mark.asyncio
 async def test_empty_section_is_not_cached(httpx_mock):
-    httpx_mock.add_response(
-        url=f"{client._EST}/boletines/analisis-de-sensibilidad", html=_EMPTY
-    )
+    httpx_mock.add_response(url=f"{client._EST}/boletines/analisis-de-sensibilidad", html=_EMPTY)
 
     result = await client.get_seccion_archivos("analisis_sensibilidad")
 

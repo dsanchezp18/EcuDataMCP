@@ -31,7 +31,9 @@ async def test_get_horarios_passes_archivo_to_the_right_client(monkeypatch):
         return {"filas": []}
 
     monkeypatch.setattr(cortes.eeq_cortes_client, "get_eeq_cortes_horarios", fake_eeq)
-    monkeypatch.setattr(cortes.centrosur_cortes_client, "get_centrosur_cortes_horarios", fake_centrosur)
+    monkeypatch.setattr(
+        cortes.centrosur_cortes_client, "get_centrosur_cortes_horarios", fake_centrosur
+    )
 
     await cortes._get_horarios("eeq", "22-abril", "")
     result = await cortes._get_horarios("centrosur", "https://centrosur/c.pdf", "")

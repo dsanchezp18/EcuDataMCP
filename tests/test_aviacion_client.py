@@ -423,12 +423,8 @@ async def test_get_aip_aerodromo_parses_sections_and_fields(httpx_mock):
 
     geograficos = result["secciones"][1]
     assert "DATOS GEOGRÁFICOS" in geograficos["titulo"]
-    assert geograficos["campos"][0]["etiqueta"] == (
-        "Coordenadas del ARP y emplazamiento en el AD"
-    )
-    assert geograficos["campos"][0]["valor"] == (
-        "000727S 0782116W\nCentro de RWY 18/36"
-    )
+    assert geograficos["campos"][0]["etiqueta"] == ("Coordenadas del ARP y emplazamiento en el AD")
+    assert geograficos["campos"][0]["valor"] == ("000727S 0782116W\nCentro de RWY 18/36")
     assert geograficos["campos"][1]["etiqueta"] == "Elevación / temperatura de referencia"
     assert geograficos["campos"][1]["valor"] == "2411 M / 25°C"
 

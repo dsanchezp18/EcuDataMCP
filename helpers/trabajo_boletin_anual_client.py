@@ -144,17 +144,13 @@ async def search_boletines(query: str = "") -> dict[str, Any]:
     matched = [
         e
         for e in _EDICIONES
-        if not q
-        or q in _strip(e["anio"])
-        or q in _strip(e["titulo"])
-        or q in _strip(e["url"])
+        if not q or q in _strip(e["anio"]) or q in _strip(e["titulo"]) or q in _strip(e["url"])
     ]
     return {
         "total": len(matched),
         "total_conocido": len(_EDICIONES),
         "source": (
-            "Ministerio del Trabajo — Boletín Estadístico Anual: "
-            "El Mercado Laboral en el Ecuador"
+            "Ministerio del Trabajo — Boletín Estadístico Anual: El Mercado Laboral en el Ecuador"
         ),
         "url_indice": _INDICE_URL,
         "cobertura_incompleta": True,

@@ -51,9 +51,7 @@ _publicaciones_cache = TtlCache(ttl_seconds=21600.0, max_entries=1)
 _fetch_lock = asyncio.Lock()
 
 _WS_RE = re.compile(r"\s+")
-_SECTION_RE = re.compile(
-    r'<section class="bce-ultimas-publicaciones">.*?</section>', re.DOTALL
-)
+_SECTION_RE = re.compile(r'<section class="bce-ultimas-publicaciones">.*?</section>', re.DOTALL)
 _ROW_RE = re.compile(r"<tr>(?P<row>.*?)</tr>", re.DOTALL)
 _FECHA_RE = re.compile(r'<td class="fecha">(?P<fecha>.*?)</td>', re.DOTALL)
 _ICONO_RE = re.compile(
@@ -95,7 +93,7 @@ _FORMATOS_POR_EXTENSION = {
 
 
 def _parse_fecha(texto: str) -> str | None:
-    """"1 de septiembre de 2026" -> "2026-09-01"; None if unrecognized."""
+    """ "1 de septiembre de 2026" -> "2026-09-01"; None if unrecognized."""
     m = _FECHA_TEXTO_RE.search(texto)
     if not m:
         return None
@@ -140,8 +138,7 @@ def _parse_publicaciones(html: str) -> list[dict[str, Any]]:
                 "url": url,
                 "formato": _formato_from_url(url),
                 "icono_titulo": icono_m.group("titulo") if icono_m else None,
-                "nuevo": bool(nuevo_m)
-                and "icono-vacio" not in nuevo_m.group("classes"),
+                "nuevo": bool(nuevo_m) and "icono-vacio" not in nuevo_m.group("classes"),
             }
         )
     return items
@@ -196,8 +193,7 @@ async def search_publicaciones(query: str = "", formato: str = "") -> dict[str, 
     matched = [
         item
         for item in items
-        if (not q or q in _strip(item["titulo"]))
-        and (not fmt or item["formato"] == fmt)
+        if (not q or q in _strip(item["titulo"])) and (not fmt or item["formato"] == fmt)
     ]
     return {
         "total": len(matched),

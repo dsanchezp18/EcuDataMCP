@@ -23,9 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from helpers import bce_iem_client
 
 
-async def _run(
-    hash_xlsx: bool, max_hash_files: int, desde_anio: int, hasta_anio: int
-) -> int:
+async def _run(hash_xlsx: bool, max_hash_files: int, desde_anio: int, hasta_anio: int) -> int:
     result = await bce_iem_client.search_tables(
         historico=True,
         desde_anio=desde_anio,
@@ -51,20 +49,20 @@ async def _run(
     result["cobertura_historica"] = coverage
     print(
         json.dumps(
-            {
-                key: value
-                for key, value in result.items()
-                if key != "tablas"
-            },
+            {key: value for key, value in result.items() if key != "tablas"},
             ensure_ascii=False,
             indent=2,
             default=str,
         )
     )
-    return 0 if (
-        result.get("boletines_sin_tablas", 0) == 0
-        and coverage["completa_desde_anio_solicitado"]
-    ) else 1
+    return (
+        0
+        if (
+            result.get("boletines_sin_tablas", 0) == 0
+            and coverage["completa_desde_anio_solicitado"]
+        )
+        else 1
+    )
 
 
 if __name__ == "__main__":
@@ -94,7 +92,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     sys.exit(
-        asyncio.run(
-            _run(args.hash_xlsx, args.max_hash_files, args.desde_anio, args.hasta_anio)
-        )
+        asyncio.run(_run(args.hash_xlsx, args.max_hash_files, args.desde_anio, args.hasta_anio))
     )

@@ -134,7 +134,9 @@ def register_get_resumen_compras_tool(mcp: MCPServer) -> None:
                     parts.append(f"  Proveedores principales: {top}")
             if p["otros_compradores"]:
                 parts.append(f"\n… y {p['otros_compradores']} compradores más (ver format=json).")
-            parts.append("\nTip: search_contratos lista los procesos; get_contrato_info(ocid) da el expediente.")
+            parts.append(
+                "\nTip: search_contratos lista los procesos; get_contrato_info(ocid) da el expediente."
+            )
             return "\n".join(parts)
 
         return render_structured(payload, format, text_builder=to_text)

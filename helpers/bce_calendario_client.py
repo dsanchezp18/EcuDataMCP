@@ -43,7 +43,9 @@ from helpers.csv_reader import download_bytes
 from helpers.ecuador_time import today_ecuador
 from helpers.text_utils import strip_accents as _strip
 
-_CSV_URL = "https://contenido.bce.fin.ec/documentos/CalendarioEstadistico/calendario_publicaciones.csv"
+_CSV_URL = (
+    "https://contenido.bce.fin.ec/documentos/CalendarioEstadistico/calendario_publicaciones.csv"
+)
 _PAGE_URL = "https://contenido.bce.fin.ec/calendario-estadistico/"
 _SOURCE_NAME = "Banco Central del Ecuador — Calendario de Publicaciones Estadísticas"
 
@@ -74,7 +76,7 @@ def _clean(value: str | None) -> str:
 
 
 def _parse_fecha(raw: str) -> str | None:
-    """"14/1/2026" (D/M/YYYY, not zero-padded) -> "2026-01-14"."""
+    """ "14/1/2026" (D/M/YYYY, not zero-padded) -> "2026-01-14"."""
     raw = raw.strip()
     if not raw:
         return None
@@ -93,8 +95,7 @@ def _validate_fecha(raw: str, nombre: str) -> str:
         return date.fromisoformat(raw).isoformat()
     except ValueError:
         raise ValueError(
-            f"Error: {nombre} debe ser una fecha válida en formato YYYY-MM-DD "
-            f"(recibido: {raw!r})."
+            f"Error: {nombre} debe ser una fecha válida en formato YYYY-MM-DD (recibido: {raw!r})."
         ) from None
 
 

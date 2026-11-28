@@ -135,9 +135,7 @@ async def get_resumen_indicadores(anio: int) -> dict[str, Any]:
         anio: Year, e.g. 2025. Earliest confirmed live: ANIO_MINIMO (2018).
     """
     if anio < ANIO_MINIMO:
-        raise ValueError(
-            f"Año {anio} no soportado. El primer año publicado es {ANIO_MINIMO}."
-        )
+        raise ValueError(f"Año {anio} no soportado. El primer año publicado es {ANIO_MINIMO}.")
 
     cached = _page_cache.get(anio)
     if cached is not None:

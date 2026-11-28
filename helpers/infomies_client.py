@@ -151,9 +151,7 @@ _YEAR_LINK_RE = re.compile(r'href="(/index\.php/zona-\d+-bz/\d{4}-bz\d+)"')
 # --- Reporte Boletines Zonales (consolidated annual XLSX, still updated) ---
 
 _RBZ_BASE = f"{_BASE}/index.php/reportes-boletines-zonales"
-_RBZ_ANIOS = {
-    year: f"{_RBZ_BASE}/reportes-boletines-zonales-{year}" for year in range(2021, 2027)
-}
+_RBZ_ANIOS = {year: f"{_RBZ_BASE}/reportes-boletines-zonales-{year}" for year in range(2021, 2027)}
 
 # Pages are Phoca Download listings refreshed monthly at most (new BDD file
 # or zonal report a few times a year) -- a few hours balances staleness

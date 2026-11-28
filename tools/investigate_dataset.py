@@ -109,9 +109,7 @@ def register_investigate_dataset_tool(mcp: MCPServer) -> None:
         # The shared session only serves CKAN metadata calls; resource files
         # live on other hosts, so sniffing and previews build their own
         # per-URL clients (User-Agent + geo proxy for that host).
-        session = httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, proxy=proxy_for(site)
-        )
+        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, proxy=proxy_for(site))
         try:
             try:
                 dataset = await ckan_client.get_dataset(dataset_id, source=source, session=session)
@@ -241,7 +239,7 @@ def register_investigate_dataset_tool(mcp: MCPServer) -> None:
                     "ℹ Este dataset parece publicar una serie periódica (varios "
                     "archivos con nombres casi idénticos). Antes de sumar o "
                     "comparar valores entre ellos, usa "
-                    f"detect_series_pattern(\"{ds['id']}\") para saber si cada "
+                    f'detect_series_pattern("{ds["id"]}") para saber si cada '
                     "archivo nuevo reemplaza a los anteriores o los complementa."
                 )
             return "\n".join(parts)

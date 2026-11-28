@@ -239,10 +239,14 @@ async def test_tool_text_names_the_canton_units_and_summary(httpx_mock):
     httpx_mock.add_response(url=_MONTHLY_URL, json=_monthly_payload())
 
     text = (
-        await _server().call_tool(
-            "get_clima_nasa_power", {"canton": "1701", "desde": "2024-01", "hasta": "2024-03"}
+        (
+            await _server().call_tool(
+                "get_clima_nasa_power", {"canton": "1701", "desde": "2024-01", "hasta": "2024-03"}
+            )
         )
-    ).content[0].text
+        .content[0]
+        .text
+    )
 
     assert "Quito (Pichincha)" in text
     assert "- 2024-01: lluvia 3.47 mm/día, temperatura 18.0 °C" in text
@@ -254,7 +258,13 @@ async def test_tool_accepts_plain_coordinates(httpx_mock):
 
     result = await _server().call_tool(
         "get_clima_nasa_power",
-        {"latitud": -2.17, "longitud": -79.9, "desde": "2024-01", "hasta": "2024-03", "format": "json"},
+        {
+            "latitud": -2.17,
+            "longitud": -79.9,
+            "desde": "2024-01",
+            "hasta": "2024-03",
+            "format": "json",
+        },
     )
     payload = json.loads(result.content[0].text)
 
@@ -283,7 +293,13 @@ async def test_an_ambiguous_name_is_settled_by_the_province(httpx_mock):
 
     result = await _server().call_tool(
         "get_clima_nasa_power",
-        {"canton": "Bolivar", "provincia": "Carchi", "desde": "2024-01", "hasta": "2024-03", "format": "json"},
+        {
+            "canton": "Bolivar",
+            "provincia": "Carchi",
+            "desde": "2024-01",
+            "hasta": "2024-03",
+            "format": "json",
+        },
     )
 
     assert json.loads(result.content[0].text)["canton"]["codigo"] == "0402"

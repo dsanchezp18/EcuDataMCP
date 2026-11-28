@@ -48,6 +48,7 @@ def _apply_stale(payload: dict[str, Any]) -> dict[str, Any]:
     }
     return {**payload, "metadatos": metadata}
 
+
 # Keys tools already use for provenance, in the order they are trusted.
 _SOURCE_KEYS = ("source", "fuente_nombre", "fuente")
 _SOURCE_URL_KEYS = ("url_fuente", "source_url")

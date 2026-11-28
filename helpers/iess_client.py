@@ -152,9 +152,7 @@ _DETAIL_DOWNLOAD_RE = re.compile(
     r'<img class="icon" src="[^"]*/file_system/large/(?P<ext>\w+)\.png"'
 )
 
-_TOTAL_RESULTS_RE = re.compile(
-    r"el intervalo\s+\d+\s*-\s*\d+\s+de\s+(?P<total>\d+)\s+resultados"
-)
+_TOTAL_RESULTS_RE = re.compile(r"el intervalo\s+\d+\s*-\s*\d+\s+de\s+(?P<total>\d+)\s+resultados")
 
 
 def _parse_detail_download(html: str) -> tuple[str, str] | None:
@@ -256,9 +254,7 @@ async def _fetch_boletines() -> list[dict[str, Any]]:
                 {"id": doc_id, "titulo": titulo, "anios": _years_in(titulo)}
                 for doc_id, titulo in seen.items()
             ]
-            await _resolve_detail_links(
-                boletines, lambda e: _bol_detail_url(e["id"]), session
-            )
+            await _resolve_detail_links(boletines, lambda e: _bol_detail_url(e["id"]), session)
 
         if boletines:
             _boletines_cache.set("boletines", boletines)
@@ -362,8 +358,7 @@ async def _fetch_actuariales() -> dict[int, list[dict[str, Any]]]:
         async with _new_session() as session:
             index_html = await _fetch_text(_ACT_INDEX_URL, session)
             year_urls = {
-                int(m.group("anio")): m.group("url")
-                for m in _ACT_YEAR_LINK_RE.finditer(index_html)
+                int(m.group("anio")): m.group("url") for m in _ACT_YEAR_LINK_RE.finditer(index_html)
             }
 
             pages = await asyncio.gather(
@@ -387,9 +382,7 @@ async def _fetch_actuariales() -> dict[int, list[dict[str, Any]]]:
         return por_anio
 
 
-async def list_estudios_actuariales(
-    anio: int | None = None, query: str = ""
-) -> dict[str, Any]:
+async def list_estudios_actuariales(anio: int | None = None, query: str = "") -> dict[str, Any]:
     """
     List IESS's Estudios Actuariales (iess.gob.ec/estudios-actuariales/) —
     actuarial valuation studies per social-security fund (IVM, Salud,
@@ -467,9 +460,7 @@ async def _fetch_auditoria_anios() -> list[dict[str, Any]]:
         if cached is not None:
             return cached
 
-        logger.info(
-            "Descargando el índice de Informes de Auditoría de IESS (carpetas por año)"
-        )
+        logger.info("Descargando el índice de Informes de Auditoría de IESS (carpetas por año)")
         seen: dict[str, dict[str, Any]] = {}
         async with _new_session() as session:
             page = 1
@@ -597,9 +588,7 @@ async def _resolve_auditoria_anio(anio_info: dict[str, Any]) -> list[dict[str, A
 
     pages_needed = max(1, -(-total // 20))
     base_url = _aud_year_folder_url(folder_id)
-    row_re = re.compile(
-        _AUD_DOC_ROW_RE_TEMPLATE.format(portlet=_AUD_PORTLET, folder_id=folder_id)
-    )
+    row_re = re.compile(_AUD_DOC_ROW_RE_TEMPLATE.format(portlet=_AUD_PORTLET, folder_id=folder_id))
 
     logger.info(
         "Descargando %d documento(s) de Informes de Auditoría IESS %s (carpeta %s)",
@@ -624,9 +613,7 @@ async def _resolve_auditoria_anio(anio_info: dict[str, Any]) -> list[dict[str, A
                     "anio": anio_info["anio"],
                     "id": doc_id,
                     "titulo": _clean(m.group("titulo")),
-                    "descripcion": _clean(m.group("descripcion"))
-                    if m.group("descripcion")
-                    else "",
+                    "descripcion": _clean(m.group("descripcion")) if m.group("descripcion") else "",
                 }
 
         documentos = list(seen.values())

@@ -30,9 +30,7 @@ def test_launcher_restores_the_environment_logs_and_runs_the_build(monkeypatch, 
     monkeypatch.delenv("ECUADOR_MCP_DATA_DIR")
 
 
-def test_launcher_deletes_the_env_file_even_when_it_is_unreadable_json(
-    monkeypatch, tmp_path
-):
+def test_launcher_deletes_the_env_file_even_when_it_is_unreadable_json(monkeypatch, tmp_path):
     env_file = tmp_path / "build.env.json"
     env_file.write_text("{not json", encoding="utf-8")
     monkeypatch.setattr(sys, "stdout", sys.stdout)

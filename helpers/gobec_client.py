@@ -69,9 +69,7 @@ async def _fetch_json(
         transport = httpx.AsyncHTTPTransport(
             retries=2, proxy=proxy_for(env_config.get_base_url("gobec_site"))
         )
-        session = httpx.AsyncClient(
-            headers=_HEADERS, transport=transport, follow_redirects=True
-        )
+        session = httpx.AsyncClient(headers=_HEADERS, transport=transport, follow_redirects=True)
     assert session is not None
     try:
         logger.debug("GobEC GET %s params=%s", url, params)
@@ -84,7 +82,9 @@ async def _fetch_json(
                 if attempt == _ATTEMPTS:
                     logger.error(
                         "GobEC gave up on %s after %d attempts: %r",
-                        url, _ATTEMPTS, exc,
+                        url,
+                        _ATTEMPTS,
+                        exc,
                     )
                     # ReadError and the timeouts stringify to "", which
                     # reached the user as "Error al buscar trámites: ".
@@ -95,7 +95,10 @@ async def _fetch_json(
                     ) from exc
                 logger.warning(
                     "GobEC %s en %s (intento %d de %d); reintentando",
-                    type(exc).__name__, url, attempt, _ATTEMPTS,
+                    type(exc).__name__,
+                    url,
+                    attempt,
+                    _ATTEMPTS,
                 )
                 await asyncio.sleep(attempt)
         resp.raise_for_status()
@@ -165,9 +168,7 @@ async def list_instituciones(
     session: httpx.AsyncClient | None = None,
 ) -> list[dict[str, Any]]:
     """List public institutions from gob.ec."""
-    result = await _fetch_json(
-        _gobec_url("instituciones"), params={"page": page}, session=session
-    )
+    result = await _fetch_json(_gobec_url("instituciones"), params={"page": page}, session=session)
     if isinstance(result, list):
         return result
     return []
@@ -176,9 +177,7 @@ async def list_instituciones(
 _MAX_PAGINAS_INSTITUCIONES = 3  # ~1500 institutions
 
 
-async def find_institucion(
-    query: str, session: httpx.AsyncClient | None = None
-) -> dict[str, Any]:
+async def find_institucion(query: str, session: httpx.AsyncClient | None = None) -> dict[str, Any]:
     """
     Find institutions matching a query by searching through the first
     pages of the listing. Searches in name, siglas (acronym), and
@@ -193,9 +192,7 @@ async def find_institucion(
         transport = httpx.AsyncHTTPTransport(
             retries=2, proxy=proxy_for(env_config.get_base_url("gobec_site"))
         )
-        session = httpx.AsyncClient(
-            headers=_HEADERS, transport=transport, follow_redirects=True
-        )
+        session = httpx.AsyncClient(headers=_HEADERS, transport=transport, follow_redirects=True)
     assert session is not None
     try:
         query_lower = _strip(query).lower()
@@ -264,9 +261,7 @@ async def list_regulaciones(
     session: httpx.AsyncClient | None = None,
 ) -> list[dict[str, Any]]:
     """List regulations published on gob.ec."""
-    result = await _fetch_json(
-        _gobec_url("regulaciones"), params={"page": page}, session=session
-    )
+    result = await _fetch_json(_gobec_url("regulaciones"), params={"page": page}, session=session)
     if isinstance(result, list):
         return result
     return []
@@ -310,9 +305,7 @@ async def find_regulaciones(
         transport = httpx.AsyncHTTPTransport(
             retries=2, proxy=proxy_for(env_config.get_base_url("gobec_site"))
         )
-        session = httpx.AsyncClient(
-            headers=_HEADERS, transport=transport, follow_redirects=True
-        )
+        session = httpx.AsyncClient(headers=_HEADERS, transport=transport, follow_redirects=True)
     assert session is not None
     try:
         matches: list[dict[str, Any]] = []
@@ -343,9 +336,7 @@ async def get_tramite_regulaciones(
     tramite_id: str, session: httpx.AsyncClient | None = None
 ) -> list[dict[str, Any]]:
     """Regulations that underpin a given trámite."""
-    result = await _fetch_json(
-        _gobec_url(f"tramites-regulaciones/{tramite_id}"), session=session
-    )
+    result = await _fetch_json(_gobec_url(f"tramites-regulaciones/{tramite_id}"), session=session)
     if isinstance(result, list):
         return result
     if isinstance(result, dict):
@@ -362,9 +353,7 @@ async def get_tramite_estadisticas(
     (2021), newest first, exactly as gob.ec exposes it -- this is a small
     per-trámite series (tens of rows), not something that needs pagination.
     """
-    result = await _fetch_json(
-        _gobec_url(f"tramites-transparencia/{tramite_id}"), session=session
-    )
+    result = await _fetch_json(_gobec_url(f"tramites-transparencia/{tramite_id}"), session=session)
     if isinstance(result, list):
         return result
     if isinstance(result, dict):

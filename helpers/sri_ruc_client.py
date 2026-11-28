@@ -52,12 +52,10 @@ from helpers.user_agent import USER_AGENT
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
 SRI_RUC_INFO_URL = (
-    "https://srienlinea.sri.gob.ec/facturacion-internet/consultas/publico/"
-    "ruc-datos2.jspa"
+    "https://srienlinea.sri.gob.ec/facturacion-internet/consultas/publico/ruc-datos2.jspa"
 )
 SRI_RUC_ESTABLECIMIENTOS_URL = (
-    "https://srienlinea.sri.gob.ec/facturacion-internet/consultas/publico/"
-    "ruc-establec.jspa"
+    "https://srienlinea.sri.gob.ec/facturacion-internet/consultas/publico/ruc-establec.jspa"
 )
 SRI_CATASTRO_BASE = "https://srienlinea.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/ConsolidadoContribuyente"
 
@@ -191,9 +189,7 @@ async def _fetch_public_page(url: str, ruc: str) -> str:
     return await _fetch_page(url, ruc)
 
 
-async def get_ruc_info(
-    ruc: str, include_establecimientos: bool = True
-) -> dict[str, Any] | None:
+async def get_ruc_info(ruc: str, include_establecimientos: bool = True) -> dict[str, Any] | None:
     """Return public SRI registry information for an exact 13-digit RUC."""
     ruc = _validate_ruc(ruc)
     html = await _fetch_public_page(SRI_RUC_INFO_URL, ruc)
@@ -211,9 +207,7 @@ async def get_ruc_info(
     if include_establecimientos:
         data["url_establecimientos"] = SRI_RUC_ESTABLECIMIENTOS_URL
         try:
-            establishments_html = await _fetch_public_page(
-                SRI_RUC_ESTABLECIMIENTOS_URL, ruc
-            )
+            establishments_html = await _fetch_public_page(SRI_RUC_ESTABLECIMIENTOS_URL, ruc)
         except (httpx.TransportError, httpx.HTTPStatusError) as exc:
             # The establishments page answers HTTP 500 for every RUC on days
             # the registry page itself works (seen 2026-11-25 for two RUCs from
@@ -228,9 +222,7 @@ async def get_ruc_info(
                 "o consulta los establecimientos en srienlinea.sri.gob.ec."
             )
         else:
-            data["establecimientos"] = _parse_establishments_page(
-                establishments_html
-            )
+            data["establecimientos"] = _parse_establishments_page(establishments_html)
 
     return data
 

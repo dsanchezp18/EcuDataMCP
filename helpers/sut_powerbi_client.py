@@ -395,16 +395,32 @@ def _lookup(indicador: str, fuente: str) -> dict[str, str]:
     info = _INDICADORES_BY_FUENTE_KEY.get((fuente, indicador))
     if info is None:
         valid = ", ".join(sorted(k for f, k in _INDICADORES_BY_FUENTE_KEY if f == fuente))
-        raise ValueError(f"Indicador '{indicador}' no reconocido en la fuente '{fuente}'. Válidos: {valid}")
+        raise ValueError(
+            f"Indicador '{indicador}' no reconocido en la fuente '{fuente}'. Válidos: {valid}"
+        )
     return info
 
 
 _TYPE_NAMES = {
-    "int": "int", "int32": "int", "int64": "int", "integer": "int", "whole": "int", "long": "int",
-    "double": "decimal", "decimal": "decimal", "float": "decimal", "number": "decimal", "currency": "decimal",
-    "boolean": "bool", "bool": "bool", "logical": "bool",
-    "datetime": "datetime", "date": "datetime", "time": "datetime",
-    "text": "string", "string": "string",
+    "int": "int",
+    "int32": "int",
+    "int64": "int",
+    "integer": "int",
+    "whole": "int",
+    "long": "int",
+    "double": "decimal",
+    "decimal": "decimal",
+    "float": "decimal",
+    "number": "decimal",
+    "currency": "decimal",
+    "boolean": "bool",
+    "bool": "bool",
+    "logical": "bool",
+    "datetime": "datetime",
+    "date": "datetime",
+    "time": "datetime",
+    "text": "string",
+    "string": "string",
 }
 
 
@@ -434,7 +450,9 @@ def _looks_numeric(valor: Any) -> bool:
     return True
 
 
-def _field_label(entity: str, prop: str, kind: str, level: str | None = None, func: int | None = None) -> str:
+def _field_label(
+    entity: str, prop: str, kind: str, level: str | None = None, func: int | None = None
+) -> str:
     if kind == "measure":
         return f"{entity}.{prop} [medida]"
     if kind == "hierarchy":
@@ -444,7 +462,9 @@ def _field_label(entity: str, prop: str, kind: str, level: str | None = None, fu
     return f"{entity}.{prop}"
 
 
-def _spec_from_select_item(item: dict[str, Any], alias_to_entity: dict[str, str]) -> dict[str, Any] | None:
+def _spec_from_select_item(
+    item: dict[str, Any], alias_to_entity: dict[str, str]
+) -> dict[str, Any] | None:
     """Turn one prototypeQuery Select entry into a field spec, or None if
     its shape isn't one of the three kinds seen live (Column/Measure/
     HierarchyLevel-with-PropertyVariationSource) -- callers must treat
@@ -455,7 +475,12 @@ def _spec_from_select_item(item: dict[str, Any], alias_to_entity: dict[str, str]
         if entity is None:
             return None
         prop = c["Property"]
-        spec = {"entity": entity, "property": prop, "kind": "column", "query_name": f"{entity}.{prop}"}
+        spec = {
+            "entity": entity,
+            "property": prop,
+            "kind": "column",
+            "query_name": f"{entity}.{prop}",
+        }
         dtype = _type_from_node(c) or _type_from_node(item)
         if dtype:
             spec["data_type"] = dtype
@@ -466,7 +491,12 @@ def _spec_from_select_item(item: dict[str, Any], alias_to_entity: dict[str, str]
         if entity is None:
             return None
         prop = m["Property"]
-        return {"entity": entity, "property": prop, "kind": "measure", "query_name": f"{entity}.{prop}"}
+        return {
+            "entity": entity,
+            "property": prop,
+            "kind": "measure",
+            "query_name": f"{entity}.{prop}",
+        }
     if "Aggregation" in item:
         a = item["Aggregation"]
         func = a.get("Function")
@@ -522,7 +552,9 @@ def _collect_fields(exploration: dict[str, Any]) -> dict[str, dict[str, Any]]:
             try:
                 cfg = json.loads(cfg_raw)
             except Exception:
-                logger.debug("Config de visualContainer no es JSON válido, se omite.", exc_info=True)
+                logger.debug(
+                    "Config de visualContainer no es JSON válido, se omite.", exc_info=True
+                )
                 continue
             query = (cfg.get("singleVisual") or {}).get("prototypeQuery") or {}
             alias_to_entity = {f["Name"]: f["Entity"] for f in query.get("From") or []}
@@ -533,7 +565,13 @@ def _collect_fields(exploration: dict[str, Any]) -> dict[str, dict[str, Any]]:
                     spec = None
                 if spec is None:
                     continue
-                label = _field_label(spec["entity"], spec["property"], spec["kind"], spec.get("level"), spec.get("function"))
+                label = _field_label(
+                    spec["entity"],
+                    spec["property"],
+                    spec["kind"],
+                    spec.get("level"),
+                    spec.get("function"),
+                )
                 campos.setdefault(label, spec)
     return campos
 
@@ -556,7 +594,12 @@ def _walk_entity_fields(node: Any, found: dict[str, dict[str, Any]]) -> None:
                     prop = body["Property"]
                     spec_kind = "measure" if kind == "Measure" else "column"
                     label = _field_label(entity, prop, spec_kind)
-                    spec = {"entity": entity, "property": prop, "kind": spec_kind, "query_name": f"{entity}.{prop}"}
+                    spec = {
+                        "entity": entity,
+                        "property": prop,
+                        "kind": spec_kind,
+                        "query_name": f"{entity}.{prop}",
+                    }
                     dtype = _type_from_node(body)
                     if dtype and spec_kind == "column":
                         spec["data_type"] = dtype
@@ -566,7 +609,12 @@ def _walk_entity_fields(node: Any, found: dict[str, dict[str, Any]]) -> None:
             column = (agg.get("Expression") or {}).get("Column") or {}
             entity = ((column.get("Expression") or {}).get("SourceRef") or {}).get("Entity")
             func = agg.get("Function")
-            if entity and column.get("Property") and func in _AGG_LABELS and not entity.startswith("LocalDateTable_"):
+            if (
+                entity
+                and column.get("Property")
+                and func in _AGG_LABELS
+                and not entity.startswith("LocalDateTable_")
+            ):
                 prop = column["Property"]
                 label = f"{entity}.{prop} [{_AGG_LABELS[func]}]"
                 found.setdefault(
@@ -653,7 +701,10 @@ async def get_indicador_schema(indicador: str, fuente: str = "sut") -> dict[str,
 def _build_select_item(spec: dict[str, Any], alias: str) -> dict[str, Any]:
     if spec["kind"] == "measure":
         return {
-            "Measure": {"Expression": {"SourceRef": {"Source": alias}}, "Property": spec["property"]},
+            "Measure": {
+                "Expression": {"SourceRef": {"Source": alias}},
+                "Property": spec["property"],
+            },
             "Name": spec["query_name"],
             "NativeReferenceName": spec["property"],
         }
@@ -665,7 +716,12 @@ def _build_select_item(spec: dict[str, Any], alias: str) -> dict[str, Any]:
         # on a "Fecha de Carga" min-date query on the same report).
         return {
             "Aggregation": {
-                "Expression": {"Column": {"Expression": {"SourceRef": {"Source": alias}}, "Property": spec["property"]}},
+                "Expression": {
+                    "Column": {
+                        "Expression": {"SourceRef": {"Source": alias}},
+                        "Property": spec["property"],
+                    }
+                },
                 "Function": spec.get("function", 0),
             },
             "Name": spec["query_name"],
@@ -875,7 +931,12 @@ async def query_indicador(
                 "Condition": {
                     "In": {
                         "Expressions": [
-                            {"Column": {"Expression": {"SourceRef": {"Source": alias}}, "Property": fspec["property"]}}
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": alias}},
+                                    "Property": fspec["property"],
+                                }
+                            }
                         ],
                         "Values": [[{"Literal": {"Value": _literal_value(fspec, valor)}}]],
                     }
@@ -897,8 +958,15 @@ async def query_indicador(
                             "SemanticQueryDataShapeCommand": {
                                 "Query": query,
                                 "Binding": {
-                                    "Primary": {"Groupings": [{"Projections": list(range(len(select_items)))}]},
-                                    "DataReduction": {"DataVolume": 4, "Primary": {"Window": {"Count": limite}}},
+                                    "Primary": {
+                                        "Groupings": [
+                                            {"Projections": list(range(len(select_items)))}
+                                        ]
+                                    },
+                                    "DataReduction": {
+                                        "DataVolume": 4,
+                                        "Primary": {"Window": {"Count": limite}},
+                                    },
                                     "Version": 1,
                                 },
                                 "ExecutionMetricsKind": 1,
@@ -909,7 +977,9 @@ async def query_indicador(
                 "QueryId": "",
                 "ApplicationContext": {
                     "DatasetId": bootstrap["dataset_id"],
-                    "Sources": [{"ReportId": str(bootstrap["report_id"]), "VisualId": "ecuador-datos-mcp"}],
+                    "Sources": [
+                        {"ReportId": str(bootstrap["report_id"]), "VisualId": "ecuador-datos-mcp"}
+                    ],
                 },
             }
         ],
@@ -978,7 +1048,9 @@ def _raise_on_query_error(payload: Any) -> None:
         error = first.get("error") or (first.get("result") or {}).get("error")
     if error is not None:
         if isinstance(error, dict):
-            detail = error.get("message") or error.get("code") or json.dumps(error, ensure_ascii=False)
+            detail = (
+                error.get("message") or error.get("code") or json.dumps(error, ensure_ascii=False)
+            )
         else:
             detail = str(error)
         raise ValueError(f"Power BI rechazó la consulta: {detail}")

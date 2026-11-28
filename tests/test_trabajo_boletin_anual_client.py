@@ -24,9 +24,7 @@ async def test_search_boletines_every_edition_has_a_direct_pdf_url():
     result = await trabajo_boletin_anual_client.search_boletines()
 
     for edicion in result["ediciones"]:
-        assert edicion["url"].startswith(
-            "https://www.trabajo.gob.ec/wp-content/uploads/"
-        )
+        assert edicion["url"].startswith("https://www.trabajo.gob.ec/wp-content/uploads/")
         assert edicion["url"].endswith(".pdf")
         assert edicion["formato"] == "PDF"
 

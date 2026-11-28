@@ -83,7 +83,13 @@ async def test_sut_tools_pass_fuente_through_and_default_to_sut(monkeypatch):
 
     async def fake_query(indicador, campos, filtros=None, limite=0, fuente="sut"):
         seen.append(("query", indicador, fuente))
-        return {"indicador": indicador, "fuente": fuente, "nombre": "N", "campos": campos, "filas": [{"a.b": 1}]}
+        return {
+            "indicador": indicador,
+            "fuente": fuente,
+            "nombre": "N",
+            "campos": campos,
+            "filas": [{"a.b": 1}],
+        }
 
     monkeypatch.setattr(sut_powerbi_client, "get_indicador_schema", fake_schema)
     monkeypatch.setattr(sut_powerbi_client, "query_indicador", fake_query)
@@ -147,7 +153,11 @@ async def test_aviso_metar_uppercases_designador(monkeypatch):
 
 async def test_serie_wdi_without_indicador_searches_the_catalog(monkeypatch):
     async def fake_search(query, limit):
-        return {"total": 1, "total_catalogo": 9, "indicadores": [{"indicador": "A.B", "nombre": query}]}
+        return {
+            "total": 1,
+            "total_catalogo": 9,
+            "indicadores": [{"indicador": "A.B", "nombre": query}],
+        }
 
     monkeypatch.setattr(wdi_client, "search_indicadores", fake_search)
     tool = _tool(register_serie_internacional_tools, "get_serie_internacional")
@@ -163,8 +173,14 @@ async def test_serie_passes_years_to_wdi_and_irena(monkeypatch):
 
     async def fake_wdi(indicador, pais, desde, hasta):
         calls["wdi"] = (desde, hasta)
-        return {"indicador": indicador, "nombre": "X", "pais": pais, "total_registros": 0,
-                "anios_sin_dato": 0, "serie": []}
+        return {
+            "indicador": indicador,
+            "nombre": "X",
+            "pais": pais,
+            "total_registros": 0,
+            "anios_sin_dato": 0,
+            "serie": [],
+        }
 
     async def fake_irena(**kwargs):
         calls["irena"] = (kwargs["desde"], kwargs["hasta"])
@@ -182,8 +198,14 @@ async def test_serie_passes_years_to_wdi_and_irena(monkeypatch):
 
 async def test_serie_xm_requires_both_dates_and_renders_zero_days(monkeypatch):
     async def fake_xm(desde, hasta, sentido, agregacion):
-        return {"sentido": "Colombia → Ecuador", "desde": desde, "hasta": hasta, "total_gwh": 0.0,
-                "total_por_periodo": {desde: 0.0}, "registros": []}
+        return {
+            "sentido": "Colombia → Ecuador",
+            "desde": desde,
+            "hasta": hasta,
+            "total_gwh": 0.0,
+            "total_por_periodo": {desde: 0.0},
+            "registros": [],
+        }
 
     monkeypatch.setattr(xm_client, "get_intercambio", fake_xm)
     tool = _tool(register_serie_internacional_tools, "get_serie_internacional")
@@ -206,8 +228,10 @@ async def test_serie_rejects_non_year_for_wdi():
 
 async def test_search_archivos_formato_filters_before_paginating(monkeypatch):
     async def fake(query=""):
-        files = [{"titulo": f"p{i}", "url": f"https://b/{i}", "formato": fmt}
-                 for i, fmt in enumerate(["PDF", "XLSX", "PDF", "XLSX", "XLSX"])]
+        files = [
+            {"titulo": f"p{i}", "url": f"https://b/{i}", "formato": fmt}
+            for i, fmt in enumerate(["PDF", "XLSX", "PDF", "XLSX", "XLSX"])
+        ]
         return {"publicaciones": files}
 
     monkeypatch.setitem(sa._UNPAGINATED, "bce_publicaciones", fake)

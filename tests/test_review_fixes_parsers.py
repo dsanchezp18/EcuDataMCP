@@ -110,7 +110,23 @@ def test_parse_central_directory_reads_a_complete_entry_then_stops():
     name = b"datos.csv"
     header = struct.pack(
         "<4sHHHHHHIIIHHHHHII",
-        b"PK\x01\x02", 20, 20, 0x0800, 8, 0, 0, 0, 10, 20, len(name), 0, 0, 0, 0, 0, 0,
+        b"PK\x01\x02",
+        20,
+        20,
+        0x0800,
+        8,
+        0,
+        0,
+        0,
+        10,
+        20,
+        len(name),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
     )
     data = header + name + b"PK\x01\x02" + b"\x00" * 5
 

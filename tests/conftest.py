@@ -82,8 +82,10 @@ def _fresh_module_locks() -> Iterator[None]:
         for attr, value in list(vars(module).items()):
             if isinstance(value, asyncio.Lock):
                 setattr(module, attr, asyncio.Lock())
-            elif isinstance(value, dict) and value and all(
-                isinstance(v, asyncio.Lock) for v in value.values()
+            elif (
+                isinstance(value, dict)
+                and value
+                and all(isinstance(v, asyncio.Lock) for v in value.values())
             ):
                 for key in value:
                     value[key] = asyncio.Lock()

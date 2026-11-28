@@ -72,10 +72,7 @@ def parse_feature_types(xml_bytes: bytes, servicio: str) -> list[dict[str, Any]]
             if tag in ("Name", "Title", "Abstract") and child.text:
                 fields[tag] = child.text.strip()
             elif tag == "WGS84BoundingBox":
-                corners = {
-                    _local(c.tag): [float(v) for v in (c.text or "").split()]
-                    for c in child
-                }
+                corners = {_local(c.tag): [float(v) for v in (c.text or "").split()] for c in child}
                 lower, upper = corners.get("LowerCorner"), corners.get("UpperCorner")
                 if lower and upper and len(lower) == 2 and len(upper) == 2:
                     bbox = {"minx": lower[0], "miny": lower[1], "maxx": upper[0], "maxy": upper[1]}
@@ -112,7 +109,9 @@ async def _fetch_catalog_fresh() -> list[dict[str, Any]]:
             logger.info("Descargando GetCapabilities WFS del IGM (%s)", servicio)
             raw, truncated = await download_bytes(url)
             if truncated:
-                raise ValueError(f"El GetCapabilities WFS del IGM ({servicio}) superó el límite de descarga.")
+                raise ValueError(
+                    f"El GetCapabilities WFS del IGM ({servicio}) superó el límite de descarga."
+                )
             catalog.extend(parse_feature_types(raw, servicio))
         catalog.sort(key=lambda e: (list(SERVICIOS).index(e["servicio"]), e["name"]))
         if catalog:
@@ -145,7 +144,9 @@ async def search_capas(query: str = "", servicio: str = "") -> dict[str, Any]:
         e
         for e in catalog
         if (not servicio or e["servicio"] == servicio)
-        and (not q or q in _strip(e["name"]) or q in _strip(e["title"]) or q in _strip(e["abstract"]))
+        and (
+            not q or q in _strip(e["name"]) or q in _strip(e["title"]) or q in _strip(e["abstract"])
+        )
     ]
     return {
         "total": len(matched),
@@ -162,7 +163,9 @@ def _exception_text(raw: bytes) -> str:
     message = raw.decode("utf-8", errors="replace")[:300]
     try:
         root = ET.fromstring(raw)
-        text = next((el.text for el in root.iter() if _local(el.tag) == "ExceptionText" and el.text), None)
+        text = next(
+            (el.text for el in root.iter() if _local(el.tag) == "ExceptionText" and el.text), None
+        )
         return text.strip() if text else message
     except ET.ParseError:
         return message
@@ -179,7 +182,9 @@ async def _get_json(url: str, what: str) -> dict[str, Any]:
         raise ValueError(f"{what} falló: {_exception_text(raw)}") from exc
 
 
-async def get_layer_features(layer_name: str, count: int = _DEFAULT_FEATURE_COUNT) -> dict[str, Any]:
+async def get_layer_features(
+    layer_name: str, count: int = _DEFAULT_FEATURE_COUNT
+) -> dict[str, Any]:
     """A bounded sample of a layer's attributes (no geometry), via WFS GetFeature."""
     catalog = await _fetch_catalog()
     entry = next((e for e in catalog if e["name"] == layer_name), None)

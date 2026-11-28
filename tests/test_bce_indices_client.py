@@ -149,7 +149,9 @@ async def test_fetch_catalog_discovers_from_sitemap_and_skips_pages_without_widg
         "boletin-analitico-del-sector-petrolero-indice",
         "boletin-monetario-semanal-indices",
     }
-    petroleo = next(e for e in catalog if e["pagina_id"] == "boletin-analitico-del-sector-petrolero-indice")
+    petroleo = next(
+        e for e in catalog if e["pagina_id"] == "boletin-analitico-del-sector-petrolero-indice"
+    )
     assert petroleo["cadencia"] == "trimestral"
     assert petroleo["total_archivos"] == 3
     assert petroleo["rango_anios"] == [2016, 2026]
@@ -195,7 +197,9 @@ async def test_get_archivo_filters_by_year_and_caps_results(httpx_mock):
         url="https://contenido.bce.fin.ec/memoria-anual-indice/", html=_NO_WIDGET_HTML
     )
 
-    all_years = await bce_indices_client.get_archivo("boletin-analitico-del-sector-petrolero-indice")
+    all_years = await bce_indices_client.get_archivo(
+        "boletin-analitico-del-sector-petrolero-indice"
+    )
     assert all_years["total_archivos"] == 3
     assert all_years["archivos_mostrados"] == 3
     assert all_years["truncado"] is False
@@ -273,7 +277,7 @@ async def test_discover_paginas_includes_hand_verified_extra_slugs(monkeypatch, 
     monkeypatch.setattr(bce_indices_client, "_EXTRA_SLUGS", ("cifras-economicas-del-ecuador",))
     sitemap_with_extra = _SITEMAP_XML.replace(
         "</urlset>",
-        '<url><loc>https://contenido.bce.fin.ec/cifras-economicas-del-ecuador/</loc>'
+        "<url><loc>https://contenido.bce.fin.ec/cifras-economicas-del-ecuador/</loc>"
         "<lastmod>2026-08-01T00:00:00-05:00</lastmod></url>\n</urlset>",
     )
     httpx_mock.add_response(url=bce_indices_client._SITEMAP_URL, html=sitemap_with_extra)

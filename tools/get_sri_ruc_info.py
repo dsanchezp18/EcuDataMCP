@@ -48,9 +48,7 @@ def register_get_sri_ruc_info_tool(mcp: MCPServer) -> None:
             ) from exc
 
         if data is None:
-            raise ToolError(
-                f"No se encontró información pública para el RUC '{ruc}'."
-            )
+            raise ToolError(f"No se encontró información pública para el RUC '{ruc}'.")
 
         def to_text(result: dict) -> str:
             labels = (
@@ -74,9 +72,7 @@ def register_get_sri_ruc_info_tool(mcp: MCPServer) -> None:
                     parts.append(f"{label}: {result[key]}")
 
             if result.get("establecimientos_no_disponibles"):
-                parts.extend(
-                    ["", f"Establecimientos: {result['establecimientos_no_disponibles']}"]
-                )
+                parts.extend(["", f"Establecimientos: {result['establecimientos_no_disponibles']}"])
             elif "establecimientos" in result:
                 parts.extend(["", "Establecimientos registrados:"])
                 establishments = result["establecimientos"]

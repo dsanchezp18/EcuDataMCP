@@ -88,15 +88,9 @@ def clear_caches():
 async def test_list_boletines_paginates_and_resolves_detail_links(httpx_mock):
     httpx_mock.add_response(url=iess_client._BOL_LIST_URL, html=_BOL_PAGE1_HTML)
     httpx_mock.add_response(url=_BOL_PAGE2_URL, html=_BOL_PAGE2_HTML)
-    httpx_mock.add_response(
-        url=iess_client._bol_detail_url("171705"), html=_BOL_DETAIL_171705
-    )
-    httpx_mock.add_response(
-        url=iess_client._bol_detail_url("151612"), html=_BOL_DETAIL_151612
-    )
-    httpx_mock.add_response(
-        url=iess_client._bol_detail_url("50202"), html=_BOL_DETAIL_50202
-    )
+    httpx_mock.add_response(url=iess_client._bol_detail_url("171705"), html=_BOL_DETAIL_171705)
+    httpx_mock.add_response(url=iess_client._bol_detail_url("151612"), html=_BOL_DETAIL_151612)
+    httpx_mock.add_response(url=iess_client._bol_detail_url("50202"), html=_BOL_DETAIL_50202)
 
     result = await iess_client.list_boletines()
 
@@ -119,15 +113,9 @@ async def test_list_boletines_paginates_and_resolves_detail_links(httpx_mock):
 async def test_list_boletines_filters_by_anio_and_query(httpx_mock):
     httpx_mock.add_response(url=iess_client._BOL_LIST_URL, html=_BOL_PAGE1_HTML)
     httpx_mock.add_response(url=_BOL_PAGE2_URL, html=_BOL_PAGE2_HTML)
-    httpx_mock.add_response(
-        url=iess_client._bol_detail_url("171705"), html=_BOL_DETAIL_171705
-    )
-    httpx_mock.add_response(
-        url=iess_client._bol_detail_url("151612"), html=_BOL_DETAIL_151612
-    )
-    httpx_mock.add_response(
-        url=iess_client._bol_detail_url("50202"), html=_BOL_DETAIL_50202
-    )
+    httpx_mock.add_response(url=iess_client._bol_detail_url("171705"), html=_BOL_DETAIL_171705)
+    httpx_mock.add_response(url=iess_client._bol_detail_url("151612"), html=_BOL_DETAIL_151612)
+    httpx_mock.add_response(url=iess_client._bol_detail_url("50202"), html=_BOL_DETAIL_50202)
 
     by_year = await iess_client.list_boletines(anio=1978)
     assert by_year["total"] == 1
@@ -309,9 +297,7 @@ async def test_list_auditoria_anios(httpx_mock):
 @pytest.mark.asyncio
 async def test_get_auditoria_documentos_single_page_year(httpx_mock):
     httpx_mock.add_response(url=iess_client._AUD_LIST_URL, html=_AUD_INDEX_HTML)
-    httpx_mock.add_response(
-        url=iess_client._aud_year_folder_url("25751514"), html=_AUD_2024_HTML
-    )
+    httpx_mock.add_response(url=iess_client._aud_year_folder_url("25751514"), html=_AUD_2024_HTML)
     httpx_mock.add_response(
         url=iess_client._aud_year_detail_url("25751514", "140340"),
         html=_AUD_2024_DOC_DETAIL_HTML,

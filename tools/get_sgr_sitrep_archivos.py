@@ -49,9 +49,7 @@ def register_get_sgr_sitrep_archivos_tool(mcp: MCPServer) -> None:
         except ValueError as e:
             raise ToolError(str(e)) from e
         except Exception as e:
-            raise ToolError(
-                f"Error al obtener la página de evento SITREP de SGR: {e}"
-            ) from e
+            raise ToolError(f"Error al obtener la página de evento SITREP de SGR: {e}") from e
 
         def to_text(data: dict) -> str:
             archivos = data.get("archivos") or []

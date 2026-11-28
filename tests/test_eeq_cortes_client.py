@@ -116,9 +116,7 @@ async def test_search_page_without_result_list_raises_and_is_not_cached(httpx_mo
     # No cards and no "N resultados" count: an anti-bot/maintenance page or
     # a redesign, not a genuine empty search -- must not silently fall back
     # to the seed list as if the live search had been consulted.
-    httpx_mock.add_response(
-        url=_search_url(1), text="<html><body>Access denied</body></html>"
-    )
+    httpx_mock.add_response(url=_search_url(1), text="<html><body>Access denied</body></html>")
     httpx_mock.add_response(url=_search_url(1), text=_SEARCH_PAGE)
 
     with pytest.raises(ValueError, match="EEQ"):

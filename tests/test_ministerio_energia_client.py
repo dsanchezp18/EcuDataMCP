@@ -47,12 +47,8 @@ _MINERAS_PNG = _item(
     mime="image/png",
 )
 _SEMANA = _item(7, "2021-07-05T11:00:00", "2021/07/Semana-26-Reporte-Mineria.pdf")
-_SEMANA_ACENTO = _item(
-    8, "2020-10-05T11:00:00", "2020/10/Semana-40-Reporte-Miner%C3%ADa.pdf"
-)
-_BEN_2025 = _item(
-    9, "2026-09-11T11:00:00", "2026/09/CAPITULO_001-BEN_2025_compressed.pdf"
-)
+_SEMANA_ACENTO = _item(8, "2020-10-05T11:00:00", "2020/10/Semana-40-Reporte-Miner%C3%ADa.pdf")
+_BEN_2025 = _item(9, "2026-09-11T11:00:00", "2026/09/CAPITULO_001-BEN_2025_compressed.pdf")
 _BEN_24 = _item(10, "2025-09-01T11:00:00", "2025/09/BEN_24-CAPITULO_1.pdf")
 _BEN_ONLY_NAME = _item(
     11, "2026-08-11T11:00:00", "2026/08/4439-0913731279-PERALTA-BENITEZ-JILL-LIANA.pdf"
@@ -151,13 +147,9 @@ async def test_periodo_is_the_first_year_in_the_filename(httpx_mock):
     hidro = await client.get_seccion_archivos("estadistica_hidrocarburos")
     ben = await client.get_seccion_archivos("balance_energetico")
 
-    por_url = {
-        a["url"].rsplit("/", 1)[-1]: a for a in hidro["archivos"] + ben["archivos"]
-    }
+    por_url = {a["url"].rsplit("/", 1)[-1]: a for a in hidro["archivos"] + ben["archivos"]}
     # Uploaded in Dec 2025 but it is the 2024 yearbook.
-    assert (
-        por_url["ESTADISTICAS-DE-HIDROCARBUROS-2024_8.12.2025.pdf"]["periodo"] == "2024"
-    )
+    assert por_url["ESTADISTICAS-DE-HIDROCARBUROS-2024_8.12.2025.pdf"]["periodo"] == "2024"
     assert por_url["2008-ESTADISTICA-CRUDO.pdf"]["periodo"] == "2008"
     assert por_url["CAPITULO_001-BEN_2025_compressed.pdf"]["periodo"] == "2025"
     # No year in the name: left empty, not guessed from the upload date.
@@ -206,9 +198,7 @@ async def test_pages_past_the_first_are_followed(httpx_mock):
         headers={"X-WP-TotalPages": "2"},
     )
     for term in terms[1:]:
-        httpx_mock.add_response(
-            url=_search_url(term), json=[], headers={"X-WP-TotalPages": "1"}
-        )
+        httpx_mock.add_response(url=_search_url(term), json=[], headers={"X-WP-TotalPages": "1"})
 
     hidro = await client.get_seccion_archivos("estadistica_hidrocarburos")
 
@@ -228,9 +218,7 @@ async def test_dropped_connection_is_retried(httpx_mock, monkeypatch):
         headers={"X-WP-TotalPages": "1"},
     )
     for term in terms[1:]:
-        httpx_mock.add_response(
-            url=_search_url(term), json=[], headers={"X-WP-TotalPages": "1"}
-        )
+        httpx_mock.add_response(url=_search_url(term), json=[], headers={"X-WP-TotalPages": "1"})
 
     hidro = await client.get_seccion_archivos("estadistica_hidrocarburos")
 
@@ -316,9 +304,7 @@ async def test_all_terms_failing_raises(monkeypatch):
 
 async def test_items_from_foreign_hosts_are_dropped(monkeypatch):
     foreign = {**_BEN_2025, "id": 99, "source_url": "https://evil.example/2026/09/BEN_2025.pdf"}
-    monkeypatch.setattr(
-        client, "_get_page", _fake_get_page({"BEN_": [[foreign, _BEN_24]]})
-    )
+    monkeypatch.setattr(client, "_get_page", _fake_get_page({"BEN_": [[foreign, _BEN_24]]}))
 
     result = await client.get_seccion_archivos("balance_energetico")
 

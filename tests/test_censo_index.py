@@ -23,8 +23,16 @@ def _workbook() -> bytes:
     idx["A7"], idx["B7"] = "1", "Población por esfera, según provincia y área de residencia"
     idx["A8"], idx["B8"] = "1.2", "Población por esfera, según provincia, cantón y parroquia"
     for name, title, geo in (
-        ("1", "Población por esfera de funcionamiento, según provincia y área de residencia", "Provincia y área"),
-        ("1.2", "Población por esfera de funcionamiento, según provincia, cantón y parroquia", "Provincia, cantón y parroquia"),
+        (
+            "1",
+            "Población por esfera de funcionamiento, según provincia y área de residencia",
+            "Provincia y área",
+        ),
+        (
+            "1.2",
+            "Población por esfera de funcionamiento, según provincia, cantón y parroquia",
+            "Provincia, cantón y parroquia",
+        ),
     ):
         ws = wb.create_sheet(name)
         ws["A3"], ws["B3"] = "Tabla N°:", name
@@ -72,7 +80,12 @@ def test_title_falls_back_to_the_indice_sheet():
 def test_file_entry_records_checksum_size_and_date():
     raw = _workbook()
     entry = censo_index_build.file_entry(
-        {"url": "https://x/y.xlsx", "label": "Dificultades – Excel", "format": "XLSX", "tema": "poblacion"},
+        {
+            "url": "https://x/y.xlsx",
+            "label": "Dificultades – Excel",
+            "format": "XLSX",
+            "tema": "poblacion",
+        },
         raw,
         "2026-11-08",
     )
@@ -88,8 +101,19 @@ async def test_build_skips_and_logs_oversized_workbooks(monkeypatch, caplog):
     from helpers import csv_reader
 
     resources = [
-        {"url": "https://x/small.xlsx", "label": "Chico – Excel", "format": "XLSX", "tipo": "tabulado", "tema": "hogar"},
-        {"url": "https://x/huge.xlsx", "label": "Enorme – Excel", "format": "XLSX", "tipo": "tabulado"},
+        {
+            "url": "https://x/small.xlsx",
+            "label": "Chico – Excel",
+            "format": "XLSX",
+            "tipo": "tabulado",
+            "tema": "hogar",
+        },
+        {
+            "url": "https://x/huge.xlsx",
+            "label": "Enorme – Excel",
+            "format": "XLSX",
+            "tipo": "tabulado",
+        },
         {"url": "https://x/data.zip", "label": "CSV", "format": "ZIP", "tipo": "microdatos"},
     ]
 
@@ -118,7 +142,9 @@ async def test_build_skips_and_logs_oversized_workbooks(monkeypatch, caplog):
 def test_committed_index_loads_and_has_the_ict_tabulado():
     index = censo_index.load_index()
     assert index["archivos"], "run scripts/build_censo_index.py"
-    assert all(f["sha256"] and f["extraido"] and f["url"].startswith("https://") for f in index["archivos"])
+    assert all(
+        f["sha256"] and f["extraido"] and f["url"].startswith("https://") for f in index["archivos"]
+    )
     assert index["omitidos"] == [] or all("motivo" in o for o in index["omitidos"])
     ict = next(f for f in index["archivos"] if "03_2022_CPV_TIC" in f["url"])
     text = " ".join(censo_index.sheet_text(h) for h in ict["hojas"])
@@ -128,7 +154,9 @@ def test_committed_index_loads_and_has_the_ict_tabulado():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("query", ["internet", "computadora"])
-async def test_search_finds_the_ict_tabulado_via_the_committed_index(httpx_mock, monkeypatch, query):
+async def test_search_finds_the_ict_tabulado_via_the_committed_index(
+    httpx_mock, monkeypatch, query
+):
     _mock_pages(httpx_mock, monkeypatch)
     censo_client._resources_cache.clear()
     result = await censo_client.search_censo_recursos(query)
@@ -151,7 +179,10 @@ async def test_search_matches_inside_tables_not_just_file_names(httpx_mock, monk
     result = await censo_client.search_censo_recursos("tablet")
     censo_client._resources_cache.clear()
     assert result["recursos"] and all("TIC" in r["url"] for r in result["recursos"])
-    assert "tablet" in json.dumps(result["recursos"][0]["tablas_coincidentes"], ensure_ascii=False).lower()
+    assert (
+        "tablet"
+        in json.dumps(result["recursos"][0]["tablas_coincidentes"], ensure_ascii=False).lower()
+    )
 
 
 @pytest.mark.asyncio

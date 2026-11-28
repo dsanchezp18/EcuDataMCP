@@ -153,9 +153,7 @@ async def search_indicadores(query: str = "", lang: str = "es") -> dict[str, Any
     indicadores = await _fetch_indicadores(lang)
     q = _strip(query)
     matched = [
-        i
-        for i in indicadores
-        if not q or q in _strip(i["nombre"]) or q in _strip(i["area"])
+        i for i in indicadores if not q or q in _strip(i["nombre"]) or q in _strip(i["area"])
     ]
     return {
         "total": len(matched),
@@ -184,19 +182,50 @@ async def _fetch_dimensions(indicator_id: int, lang: str) -> list[dict[str, Any]
 # reports. Lets "BOL" or "PER" resolve; the table doubles as the list of
 # genuine countries whose names contain " y " (see _is_aggregate).
 _ISO3_TO_NAME: dict[str, str] = {
-    "ARG": "argentina", "ATG": "antigua y barbuda", "BHS": "bahamas",
-    "BRB": "barbados", "BLZ": "belice", "BOL": "bolivia", "BRA": "brasil",
-    "CHL": "chile", "COL": "colombia", "CRI": "costa rica", "CUB": "cuba",
-    "DMA": "dominica", "DOM": "republica dominicana", "ECU": "ecuador",
-    "SLV": "el salvador", "GRD": "granada", "GTM": "guatemala",
-    "GUY": "guyana", "HTI": "haiti", "HND": "honduras", "JAM": "jamaica",
-    "MEX": "mexico", "NIC": "nicaragua", "PAN": "panama", "PRY": "paraguay",
-    "PER": "peru", "KNA": "saint kitts y nevis", "LCA": "santa lucia",
-    "VCT": "san vicente y las granadinas", "SUR": "suriname",
-    "TTO": "trinidad y tabago", "URY": "uruguay", "VEN": "venezuela",
-    "PRI": "puerto rico", "ESP": "espana", "USA": "estados unidos",
-    "CAN": "canada", "PRT": "portugal", "FRA": "francia", "DEU": "alemania",
-    "ITA": "italia", "GBR": "reino unido", "CHN": "china", "JPN": "japon",
+    "ARG": "argentina",
+    "ATG": "antigua y barbuda",
+    "BHS": "bahamas",
+    "BRB": "barbados",
+    "BLZ": "belice",
+    "BOL": "bolivia",
+    "BRA": "brasil",
+    "CHL": "chile",
+    "COL": "colombia",
+    "CRI": "costa rica",
+    "CUB": "cuba",
+    "DMA": "dominica",
+    "DOM": "republica dominicana",
+    "ECU": "ecuador",
+    "SLV": "el salvador",
+    "GRD": "granada",
+    "GTM": "guatemala",
+    "GUY": "guyana",
+    "HTI": "haiti",
+    "HND": "honduras",
+    "JAM": "jamaica",
+    "MEX": "mexico",
+    "NIC": "nicaragua",
+    "PAN": "panama",
+    "PRY": "paraguay",
+    "PER": "peru",
+    "KNA": "saint kitts y nevis",
+    "LCA": "santa lucia",
+    "VCT": "san vicente y las granadinas",
+    "SUR": "suriname",
+    "TTO": "trinidad y tabago",
+    "URY": "uruguay",
+    "VEN": "venezuela",
+    "PRI": "puerto rico",
+    "ESP": "espana",
+    "USA": "estados unidos",
+    "CAN": "canada",
+    "PRT": "portugal",
+    "FRA": "francia",
+    "DEU": "alemania",
+    "ITA": "italia",
+    "GBR": "reino unido",
+    "CHN": "china",
+    "JPN": "japon",
 }
 
 
@@ -233,9 +262,7 @@ def _find_pais_member(dimensions: list[dict[str, Any]], pais: str) -> dict[str, 
     Several remaining partial matches ("Guin" -> Guinea, Guinea
     Ecuatorial) raise, listing only those candidates."""
     q = _strip(pais).strip()
-    pais_dim = next(
-        (d for d in dimensions if _PAIS_DIM_HINT in _strip(d.get("name", ""))), None
-    )
+    pais_dim = next((d for d in dimensions if _PAIS_DIM_HINT in _strip(d.get("name", ""))), None)
     if pais_dim is None:
         return None
     members = pais_dim.get("members") or []
@@ -302,9 +329,7 @@ def _decode_record(record: dict[str, Any], dim_labels: dict[str, dict[int, str]]
 _QUIEBRE_UMBRAL_PP = 25.0
 
 
-def _detectar_quiebres(
-    registros: list[dict[str, Any]], unit: str
-) -> list[dict[str, Any]]:
+def _detectar_quiebres(registros: list[dict[str, Any]], unit: str) -> list[dict[str, Any]]:
     """Year-over-year jumps above 25 percentage points in a percentage
     series, per (country, other-dimension) group. Real changes of that size
     are rare; they are usually a methodology or survey change, so the

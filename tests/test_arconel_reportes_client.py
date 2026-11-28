@@ -53,11 +53,11 @@ def _hidden(n: int) -> list[tuple[str, str, str]]:
 
 
 def _grid(rows: list[list[str]]) -> str:
-    body = "".join(
-        "<tr>" + "".join(f"<td><div>{c}</div></td>" for c in r) + "</tr>" for r in rows
-    )
+    body = "".join("<tr>" + "".join(f"<td><div>{c}</div></td>" for c in r) + "</tr>" for r in rows)
     # Real SSRS output: the grid sits two 1x1 layout tables deep.
-    return f"<table><tr><td><table><tr><td><table>{body}</table></td></tr></table></td></tr></table>"
+    return (
+        f"<table><tr><td><table><tr><td><table>{body}</table></td></tr></table></td></tr></table>"
+    )
 
 
 def _page(rows: list[list[str]], current: int, total: int, estimate: bool) -> str:
@@ -111,13 +111,9 @@ def _mock_report(httpx_mock, pages: list[str], mes_disabled: bool = True) -> Non
         httpx_mock.add_response(
             method="POST",
             url=client._URL,
-            text=_delta(
-                *_hidden(n + 1), ("updatePanel", "UpdatePanel1", _form(mes_disabled))
-            ),
+            text=_delta(*_hidden(n + 1), ("updatePanel", "UpdatePanel1", _form(mes_disabled))),
         )
-    httpx_mock.add_response(
-        method="POST", url=client._URL, text=_delta(*_hidden(5))
-    )  # Generar
+    httpx_mock.add_response(method="POST", url=client._URL, text=_delta(*_hidden(5)))  # Generar
     for page in pages:
         httpx_mock.add_response(method="POST", url=client._URL, text=page)
 
@@ -228,9 +224,7 @@ async def test_get_reporte_restarts_full_session_after_ssrs_500(httpx_mock):
             httpx_mock.add_response(
                 method="POST",
                 url=client._URL,
-                text=_delta(
-                    *_hidden(n + 1), ("updatePanel", "UpdatePanel1", _form())
-                ),
+                text=_delta(*_hidden(n + 1), ("updatePanel", "UpdatePanel1", _form())),
             )
         httpx_mock.add_response(method="POST", url=client._URL, text=_delta(*_hidden(5)))
         httpx_mock.add_response(

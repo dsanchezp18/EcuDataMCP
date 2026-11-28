@@ -13,27 +13,86 @@ from helpers.cache import TtlCache
 from helpers.geo_proxy import proxy_for
 
 _HEADER = (
-    "No. FILA", "EXPEDIENTE", "RUC", "NOMBRE", "SITUACIÓN LEGAL",
-    "FECHA_CONSTITUCION", "TIPO", "PAÍS", "REGIÓN", "PROVINCIA", "CANTÓN",
-    "CIUDAD", "CALLE", "NÚMERO", "INTERSECCIÓN", "BARRIO", "TELÉFONO",
-    "REPRESENTANTE", "CARGO", "CAPITAL SUSCRITO", "CIIU NIVEL 1",
-    "CIIU NIVEL 6", "ÚLTIMO BALANCE", "PRESENTÓ BALANCE INICIAL",
+    "No. FILA",
+    "EXPEDIENTE",
+    "RUC",
+    "NOMBRE",
+    "SITUACIÓN LEGAL",
+    "FECHA_CONSTITUCION",
+    "TIPO",
+    "PAÍS",
+    "REGIÓN",
+    "PROVINCIA",
+    "CANTÓN",
+    "CIUDAD",
+    "CALLE",
+    "NÚMERO",
+    "INTERSECCIÓN",
+    "BARRIO",
+    "TELÉFONO",
+    "REPRESENTANTE",
+    "CARGO",
+    "CAPITAL SUSCRITO",
+    "CIIU NIVEL 1",
+    "CIIU NIVEL 6",
+    "ÚLTIMO BALANCE",
+    "PRESENTÓ BALANCE INICIAL",
     "FECHA PRESENTACIÓN BALANCE INICIAL",
 )
 
 _ROW_1 = (
-    1, "1", "1790013731001", "ACEITES TROPICALES SOCIEDAD ANONIMA ATSA",
-    "ACTIVA", "20/07/1951", "ANÓNIMA", "ECUADOR", "SIERRA", "PICHINCHA",
-    "QUITO", "QUITO", "VIA QUININDE KM 37", "SN", "SN", "", "022762426",
-    "ACOSTA LLERENA JUAN CARLOS", "GERENTE GENERAL", "48.200,00", "A",
-    "A0126.01", "2025", "NO APLICA", "NO APLICA",
+    1,
+    "1",
+    "1790013731001",
+    "ACEITES TROPICALES SOCIEDAD ANONIMA ATSA",
+    "ACTIVA",
+    "20/07/1951",
+    "ANÓNIMA",
+    "ECUADOR",
+    "SIERRA",
+    "PICHINCHA",
+    "QUITO",
+    "QUITO",
+    "VIA QUININDE KM 37",
+    "SN",
+    "SN",
+    "",
+    "022762426",
+    "ACOSTA LLERENA JUAN CARLOS",
+    "GERENTE GENERAL",
+    "48.200,00",
+    "A",
+    "A0126.01",
+    "2025",
+    "NO APLICA",
+    "NO APLICA",
 )
 _ROW_2 = (
-    2, "2", "1790004724001", "ACERIA DEL ECUADOR CA ADELCA.", "ACTIVA",
-    "17/12/1963", "ANÓNIMA", "ECUADOR", "SIERRA", "GUAYAS", "GUAYAQUIL",
-    "GUAYAQUIL", "PANAMERICANA NORTE", "S/N", "S/N", "", "023801321",
-    "DIRECACERO DIRECCION DE EMPRESAS DEL ACERO S.A.", "PRESIDENTE EJECUTIVO",
-    "125.500.000,00", "C", "C2410.25", "2025", "NO APLICA", "NO APLICA",
+    2,
+    "2",
+    "1790004724001",
+    "ACERIA DEL ECUADOR CA ADELCA.",
+    "ACTIVA",
+    "17/12/1963",
+    "ANÓNIMA",
+    "ECUADOR",
+    "SIERRA",
+    "GUAYAS",
+    "GUAYAQUIL",
+    "GUAYAQUIL",
+    "PANAMERICANA NORTE",
+    "S/N",
+    "S/N",
+    "",
+    "023801321",
+    "DIRECACERO DIRECCION DE EMPRESAS DEL ACERO S.A.",
+    "PRESIDENTE EJECUTIVO",
+    "125.500.000,00",
+    "C",
+    "C2410.25",
+    "2025",
+    "NO APLICA",
+    "NO APLICA",
 )
 
 
@@ -54,11 +113,31 @@ def _build_xlsx() -> bytes:
 
 def _build_xlsx_with_duplicate_ruc() -> bytes:
     dup_row = (
-        3, "3", "1790013731001", "ACEITES TROPICALES (EXPEDIENTE DUPLICADO)",
-        "ACTIVA", "20/07/1951", "ANÓNIMA", "ECUADOR", "SIERRA", "PICHINCHA",
-        "QUITO", "QUITO", "VIA QUININDE KM 37", "SN", "SN", "", "022762426",
-        "OTRO REPRESENTANTE", "GERENTE GENERAL", "48.200,00", "A",
-        "A0126.01", "2025", "NO APLICA", "NO APLICA",
+        3,
+        "3",
+        "1790013731001",
+        "ACEITES TROPICALES (EXPEDIENTE DUPLICADO)",
+        "ACTIVA",
+        "20/07/1951",
+        "ANÓNIMA",
+        "ECUADOR",
+        "SIERRA",
+        "PICHINCHA",
+        "QUITO",
+        "QUITO",
+        "VIA QUININDE KM 37",
+        "SN",
+        "SN",
+        "",
+        "022762426",
+        "OTRO REPRESENTANTE",
+        "GERENTE GENERAL",
+        "48.200,00",
+        "A",
+        "A0126.01",
+        "2025",
+        "NO APLICA",
+        "NO APLICA",
     )
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -76,20 +155,44 @@ def _build_xlsx_with_duplicate_ruc() -> bytes:
 
 
 _AUDITORES_HEADER = (
-    "RNAE", "IDENTIFICACIÓN", "NOMBRE", "NÚMERO DE RESOLUCIÓN",
-    "FECHA DE RESOLUCIÓN", "NACIONALIDAD", "PROVINCIA", "CANTÓN",
-    "DIRECCIÓN", "TELÉFONO", "CORREO ELECTRÓNICO",
+    "RNAE",
+    "IDENTIFICACIÓN",
+    "NOMBRE",
+    "NÚMERO DE RESOLUCIÓN",
+    "FECHA DE RESOLUCIÓN",
+    "NACIONALIDAD",
+    "PROVINCIA",
+    "CANTÓN",
+    "DIRECCIÓN",
+    "TELÉFONO",
+    "CORREO ELECTRÓNICO",
 )
 
 _AUDITOR_ROW_1 = (
-    "1379", "1792904471001", "'ACG' ATTESTING & CONSULTING GROUP C.L.",
-    "35791", "25/10/2019", "ECUADOR", "PICHINCHA", "QUITO",
-    "AV. SOLANDA S24-37", "025129335", "info@acg-ec.com",
+    "1379",
+    "1792904471001",
+    "'ACG' ATTESTING & CONSULTING GROUP C.L.",
+    "35791",
+    "25/10/2019",
+    "ECUADOR",
+    "PICHINCHA",
+    "QUITO",
+    "AV. SOLANDA S24-37",
+    "025129335",
+    "info@acg-ec.com",
 )
 _AUDITOR_ROW_2 = (
-    "1424", "0993226475001", "'ADVANCED AUDIT ECUADOR' AAE CIA.LTDA.",
-    "11854", "15/06/2026", "ECUADOR", "GUAYAS", "GUAYAQUIL",
-    "AV. FRANCISCO DE ORELLANA", "042443199", "corellana@advanced.ec",
+    "1424",
+    "0993226475001",
+    "'ADVANCED AUDIT ECUADOR' AAE CIA.LTDA.",
+    "11854",
+    "15/06/2026",
+    "ECUADOR",
+    "GUAYAS",
+    "GUAYAQUIL",
+    "AV. FRANCISCO DE ORELLANA",
+    "042443199",
+    "corellana@advanced.ec",
 )
 
 
@@ -170,9 +273,7 @@ async def test_search_companias_by_name_and_ruc(httpx_mock):
 async def test_search_companias_filters_by_provincia_and_situacion(httpx_mock):
     httpx_mock.add_response(url=supercias_client._EXCEL_URL, content=_build_xlsx())
 
-    result = await supercias_client.search_companias(
-        provincia="guayas", situacion_legal="activa"
-    )
+    result = await supercias_client.search_companias(provincia="guayas", situacion_legal="activa")
     assert result["total"] == 1
     assert result["companias"][0]["provincia"] == "GUAYAS"
 

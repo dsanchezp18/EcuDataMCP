@@ -132,9 +132,7 @@ async def test_get_centrosur_cortes_horarios_filters_by_query(httpx_mock):
         headers={"Content-Type": "application/pdf"},
     )
 
-    result = await centrosur_cortes_client.get_centrosur_cortes_horarios(
-        url, query="gualaceo"
-    )
+    result = await centrosur_cortes_client.get_centrosur_cortes_horarios(url, query="gualaceo")
 
     assert result["total"] == 2
     assert result["total_en_archivo"] == 3
@@ -142,9 +140,7 @@ async def test_get_centrosur_cortes_horarios_filters_by_query(httpx_mock):
 
 async def test_get_centrosur_cortes_horarios_rejects_foreign_url():
     with pytest.raises(ValueError, match="centrosur"):
-        await centrosur_cortes_client.get_centrosur_cortes_horarios(
-            "https://example.com/x.pdf"
-        )
+        await centrosur_cortes_client.get_centrosur_cortes_horarios("https://example.com/x.pdf")
 
 
 def test_unlabelled_page_takes_the_nearest_preceding_horario():

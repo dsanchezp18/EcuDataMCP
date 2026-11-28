@@ -41,7 +41,11 @@ def test_summarize_rows_groups_by_buyer_and_totals():
     assert quito["procesos_con_monto"] == 2
     assert quito["monto_total"] == 150.5
     assert quito["presupuesto_total"] == 120.0
-    assert quito["por_tipo"][0] == {"tipo": "Subasta Inversa Electrónica", "procesos": 2, "monto": 100.0}
+    assert quito["por_tipo"][0] == {
+        "tipo": "Subasta Inversa Electrónica",
+        "procesos": 2,
+        "monto": 100.0,
+    }
     assert quito["por_mes"] == [
         {"mes": 3, "procesos": 1, "monto": 100.0},
         {"mes": 5, "procesos": 2, "monto": 50.5},
@@ -62,7 +66,12 @@ BASE = "https://datosabiertos.compraspublicas.gob.ec/PLATAFORMA/api/search_ocds"
 
 
 def _proc(n, amount="100.000000"):
-    return {**_row("GAD QUITO", float(amount)), "ocid": f"ocds-x-{n:04d}", "id": n, "amount": amount}
+    return {
+        **_row("GAD QUITO", float(amount)),
+        "ocid": f"ocds-x-{n:04d}",
+        "id": n,
+        "amount": amount,
+    }
 
 
 def _page_resp(rows, total, pages):

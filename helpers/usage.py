@@ -97,4 +97,3 @@ def snapshot() -> dict[str, Any]:
         "total_calls": sum(s["calls"] for s in _stats.values()),
         "tools": tools,
     }
-

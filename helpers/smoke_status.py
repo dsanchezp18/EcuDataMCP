@@ -261,9 +261,7 @@ GEOBLOCKED_SOURCES = frozenset(
 # anda.inec.gob.ec 503'd on 2026-09-18's scheduled run and was unreachable/
 # inconsistent (timeout, then 403) minutes later -- a flaky host, not a
 # regression in this repo.
-_HTTPX_SERVER_ERROR_RE = re.compile(
-    r"Server error '5\d\d[^']*' for url 'https?://([^/']+)"
-)
+_HTTPX_SERVER_ERROR_RE = re.compile(r"Server error '5\d\d[^']*' for url 'https?://([^/']+)")
 
 # Only hosts already named by a known-degradation entry above get the 5xx
 # pass. A 5xx from any other host can be a changed endpoint or a request
@@ -300,9 +298,7 @@ def is_transient_network_error(text: str) -> bool:
 
 def _known_5xx_host(host: str) -> bool:
     host = host.casefold().rsplit(":", 1)[0]
-    return any(
-        host == known or host.endswith(f".{known}") for known in _UPSTREAM_5XX_HOSTS
-    )
+    return any(host == known or host.endswith(f".{known}") for known in _UPSTREAM_5XX_HOSTS)
 
 
 def degraded_source(text: str) -> str | None:
@@ -317,9 +313,7 @@ def degraded_source(text: str) -> str | None:
     return None
 
 
-def assess_response(
-    text: str, required: list[str], is_error: bool = False
-) -> SmokeAssessment:
+def assess_response(text: str, required: list[str], is_error: bool = False) -> SmokeAssessment:
     """Classify one MCP tool response for the live smoke workflow.
 
     A known upstream restriction is ``degraded``. Everything else that does
@@ -345,9 +339,7 @@ def assess_response(
     if required and not any(token.casefold() in text.casefold() for token in required):
         if source:
             return SmokeAssessment("degraded", "required fields unavailable", source)
-        return SmokeAssessment(
-            "failed", f"none of {required!r} found: {text[:240]}"
-        )
+        return SmokeAssessment("failed", f"none of {required!r} found: {text[:240]}")
     stripped = text.strip()
     if stripped.startswith(("Error:", "ERROR:")) or '"error"' in stripped[:300]:
         if source:

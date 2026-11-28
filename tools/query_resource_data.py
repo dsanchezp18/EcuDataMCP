@@ -66,9 +66,7 @@ def register_query_resource_data_tool(mcp: MCPServer) -> None:
             except json.JSONDecodeError as e:
                 raise ToolError(f"Error: filters_json no es JSON válido: {e}") from e
             if not isinstance(parsed, dict):
-                raise ToolError(
-                    "Error: filters_json debe ser un objeto JSON (diccionario)."
-                )
+                raise ToolError("Error: filters_json debe ser un objeto JSON (diccionario).")
             filters = parsed
 
         try:
@@ -99,9 +97,7 @@ def register_query_resource_data_tool(mcp: MCPServer) -> None:
         records = result.get("records") or []
         fields = result.get("fields") or []
         total = result.get("total", len(records))
-        headers = [
-            f.get("id") for f in fields if f.get("id") and f.get("id") != "_id"
-        ]
+        headers = [f.get("id") for f in fields if f.get("id") and f.get("id") != "_id"]
         if not headers and records:
             headers = [k for k in records[0] if k != "_id"]
 
@@ -114,9 +110,7 @@ def register_query_resource_data_tool(mcp: MCPServer) -> None:
             "filters": filters,
             "sort": sort or None,
             "headers": headers,
-            "records": [
-                {h: rec.get(h) for h in headers} for rec in records
-            ],
+            "records": [{h: rec.get(h) for h in headers} for rec in records],
         }
 
         if not records:
@@ -132,8 +126,7 @@ def register_query_resource_data_tool(mcp: MCPServer) -> None:
 
         def to_text(data: dict) -> str:
             table_rows = [
-                [str(rec.get(h, ""))[:80] for h in data["headers"]]
-                for rec in data["records"]
+                [str(rec.get(h, ""))[:80] for h in data["headers"]] for rec in data["records"]
             ]
             parts = [
                 f"DataStore query — resource_id: {data['resource_id']}",
@@ -143,9 +136,7 @@ def register_query_resource_data_tool(mcp: MCPServer) -> None:
             if data.get("query"):
                 parts.append(f"Query: {data['query']}")
             if data.get("filters"):
-                parts.append(
-                    f"Filters: {json.dumps(data['filters'], ensure_ascii=False)}"
-                )
+                parts.append(f"Filters: {json.dumps(data['filters'], ensure_ascii=False)}")
             if data.get("sort"):
                 parts.append(f"Sort: {data['sort']}")
             parts.append("")

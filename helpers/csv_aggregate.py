@@ -161,12 +161,8 @@ def _aggregate_decoded(
             **options,
         )
     except UnicodeDecodeError:
-        left = None if deadline_seconds is None else deadline_seconds - (
-            time.monotonic() - started
-        )
-        return aggregate_stream(
-            open_binary(), encoding="cp1252", deadline_seconds=left, **options
-        )
+        left = None if deadline_seconds is None else deadline_seconds - (time.monotonic() - started)
+        return aggregate_stream(open_binary(), encoding="cp1252", deadline_seconds=left, **options)
 
 
 def _pick_delimiter(header_line: str) -> str:
@@ -274,8 +270,7 @@ def aggregate_stream(
         if len(row) < width:
             row = row + [""] * (width - len(row))
         if any(
-            _norm_value(row[position]) not in texts
-            and (parse_number(row[position]) not in numbers)
+            _norm_value(row[position]) not in texts and (parse_number(row[position]) not in numbers)
             for position, texts, numbers in filter_specs
         ):
             continue
@@ -322,7 +317,10 @@ def aggregate_stream(
         "grupos": len(keys),
         "filas_leidas": rows_read,
         "filas_coinciden": rows_matched,
-        "totales": {"filas": rows_matched, **dict(zip(sum_headers, map(float, grand), strict=True))},
+        "totales": {
+            "filas": rows_matched,
+            **dict(zip(sum_headers, map(float, grand), strict=True)),
+        },
         "celdas_vacias": {h: n for h, n in zip(sum_headers, blank, strict=True) if n},
         "celdas_no_numericas": {h: n for h, n in zip(sum_headers, not_numeric, strict=True) if n},
         "columnas": headers,
@@ -352,8 +350,7 @@ def _read_order(
             descending = direction == "desc" if direction else position >= group_count
             return position, descending
     raise ValueError(
-        f"order_by '{order_by}' no es una columna del resultado: "
-        f"{', '.join(output_headers)}."
+        f"order_by '{order_by}' no es una columna del resultado: {', '.join(output_headers)}."
     )
 
 

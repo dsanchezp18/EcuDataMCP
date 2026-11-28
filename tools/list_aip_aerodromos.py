@@ -21,7 +21,9 @@ def register_list_aip_aerodromos_tool(mcp: MCPServer) -> None:
         annotations=READ_ONLY,
     )
     @log_tool
-    async def list_aip_aerodromos(format: Literal["text", "json"] = "text") -> Annotated[CallToolResult, ResultadoListado]:
+    async def list_aip_aerodromos(
+        format: Literal["text", "json"] = "text",
+    ) -> Annotated[CallToolResult, ResultadoListado]:
         """
         List the ICAO designators and names of every aerodrome/helipad with
         a published AIP AD 2.x page, from DGAC's public eAIP

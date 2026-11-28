@@ -58,7 +58,12 @@ def test_parse_feature_types_drops_the_geoserver_demo_workspace():
         "mae_ide:v_fc010_deforestacion_22_24_a",
         "mae_ide:v_ff010_cobertura_vegetal_2024_a",
     ]
-    assert entries[0]["bbox_geografico"] == {"minx": -92.1, "miny": -5.0, "maxx": -75.2, "maxy": 1.4}
+    assert entries[0]["bbox_geografico"] == {
+        "minx": -92.1,
+        "miny": -5.0,
+        "maxx": -75.2,
+        "maxy": 1.4,
+    }
     assert entries[1]["bbox_geografico"] is None
     assert entries[2]["abstract"] == "Mapa de cobertura y uso de la tierra"
 

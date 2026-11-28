@@ -157,12 +157,32 @@ FOOTER = {
 
 MONTHS = {
     "es": [
-        "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
-        "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
     ],
     "en": [
-        "January", "February", "March", "April", "May", "June", "July",
-        "August", "September", "October", "November", "December",
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
     ],
 }
 
@@ -400,10 +420,7 @@ def complete_tool_catalog(
                 "name": name,
                 "description": description.split(". ", 1)[0],
                 "long_description": signature["summary"],
-                "params": [
-                    param_entry(p["name"], signature, None)
-                    for p in signature["params"]
-                ],
+                "params": [param_entry(p["name"], signature, None) for p in signature["params"]],
             }
         )
     category = {
@@ -447,7 +464,9 @@ def atlas_dots(count: int, provinces: list[dict]) -> list[tuple[float, float]]:
         cx, cy = centres[(k * 7) % len(centres)]
         angle = k * 2.399
         radius = 7 + ((k * 13) % 22)
-        dots.append((round(cx + math.cos(angle) * radius, 1), round(cy + math.sin(angle) * radius, 1)))
+        dots.append(
+            (round(cx + math.cos(angle) * radius, 1), round(cy + math.sin(angle) * radius, 1))
+        )
     return dots
 
 
@@ -566,9 +585,7 @@ def render_lang(env: jinja2.Environment, lang: str) -> list[dict]:
     # [] rather than None if sources.json ever reverts to the flat format --
     # fuentes.html/en/fuentes.html iterate this unconditionally, and Jinja
     # raises TypeError on `for x in None` instead of just rendering nothing.
-    source_themes = (
-        sources_raw if sources_raw and "institutions" in sources_raw[0] else []
-    )
+    source_themes = sources_raw if sources_raw and "institutions" in sources_raw[0] else []
     clients = load_json(lang, "clients.json")
     tools = complete_tool_catalog(
         load_json(lang, "tools.json"),
@@ -590,9 +607,7 @@ def render_lang(env: jinja2.Environment, lang: str) -> list[dict]:
     for page in PAGES + EXTRA_PAGES[lang]:
         template = env.get_template(f"{lang}/{page}.html")
         title = PAGE_TITLES[lang][page]
-        description = PAGE_DESCRIPTIONS[lang][page].format(
-            n=tool_count, n_sources=source_count
-        )
+        description = PAGE_DESCRIPTIONS[lang][page].format(n=tool_count, n_sources=source_count)
         # A page only rendered for this language and not (yet) the other one
         # has no counterpart to switch to -- fall back to the other
         # language's homepage instead of linking a 404.
@@ -701,10 +716,7 @@ def write_seo_files():
         urls.append(f"{SITE_URL}/{page}.html")
     for page in PAGES + EXTRA_PAGES["en"]:
         urls.append(f"{SITE_URL}/en/{page}.html")
-    entries = "\n".join(
-        f"  <url>\n    <loc>{u}</loc>\n  </url>"
-        for u in urls
-    )
+    entries = "\n".join(f"  <url>\n    <loc>{u}</loc>\n  </url>" for u in urls)
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

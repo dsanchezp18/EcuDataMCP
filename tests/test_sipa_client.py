@@ -187,9 +187,7 @@ async def test_empty_parse_result_is_not_cached(httpx_mock):
 
 @pytest.mark.asyncio
 async def test_formato_falls_back_to_desconocido_for_extensionless_url():
-    html = _MODULE_HTML_TOLERANT.replace(
-        "precios-productor.xlsx", "precios-productor/descargar"
-    )
+    html = _MODULE_HTML_TOLERANT.replace("precios-productor.xlsx", "precios-productor/descargar")
     archivos = sipa_client._parse_archivos(html, "economico")
 
     assert archivos[0]["formato"] == "DESCONOCIDO"

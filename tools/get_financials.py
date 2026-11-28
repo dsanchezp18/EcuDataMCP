@@ -85,12 +85,8 @@ def register_get_financials_tool(mcp: MCPServer) -> None:
         except ValueError as e:
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.exception(
-                "get_financials failed (expediente_or_ruc=%r)", expediente_or_ruc
-            )
-            raise ToolError(
-                f"Error al consultar los financieros de Supercías: {e}"
-            ) from e
+            logger.exception("get_financials failed (expediente_or_ruc=%r)", expediente_or_ruc)
+            raise ToolError(f"Error al consultar los financieros de Supercías: {e}") from e
 
         if result.get("error") == "ambiguous":
             candidatos = "; ".join(

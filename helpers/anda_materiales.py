@@ -94,9 +94,14 @@ async def get_related_materials(survey_id: str, session: httpx.AsyncClient | Non
                 ) from exc
             raise
         files = parse_material_links(response.text, str(response.url), survey_id, site_base=base)
-        return {"fuente": "INEC ANDA", "url_fuente": url, "id": survey_id,
-                "total": len(files), "archivos": files,
-                "nota": "Enlaces de materiales relacionados; no implica acceso a microdatos ni lectura del contenido."}
+        return {
+            "fuente": "INEC ANDA",
+            "url_fuente": url,
+            "id": survey_id,
+            "total": len(files),
+            "archivos": files,
+            "nota": "Enlaces de materiales relacionados; no implica acceso a microdatos ni lectura del contenido.",
+        }
     finally:
         if own:
             await session.aclose()

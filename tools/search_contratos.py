@@ -50,8 +50,7 @@ def register_search_contratos_tool(mcp: MCPServer) -> None:
         query = (query or "").strip()
         if len(query) < 3:
             raise ToolError(
-                "Error: query debe tener al menos 3 caracteres "
-                "(requisito de la API SERCOP)."
+                "Error: query debe tener al menos 3 caracteres (requisito de la API SERCOP)."
             )
 
         page = max(page, 1)
@@ -113,9 +112,7 @@ def register_search_contratos_tool(mcp: MCPServer) -> None:
                 if item.get("date"):
                     parts.append(f"   Fecha: {item['date']}")
                 parts.append("")
-            parts.append(
-                "Tip: Usa get_contrato_info(ocid='...') para el expediente OCDS completo."
-            )
+            parts.append("Tip: Usa get_contrato_info(ocid='...') para el expediente OCDS completo.")
             return "\n".join(parts)
 
         return render_structured(payload, format, text_builder=to_text)

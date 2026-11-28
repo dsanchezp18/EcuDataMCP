@@ -61,7 +61,9 @@ def register_search_informes_igepn_tool(mcp: MCPServer) -> None:
             if not informes:
                 parts.append("Sin coincidencias. Prueba otro año o amplía la búsqueda.")
             for i, inf in enumerate(informes, 1):
-                parts.append(f"{i}. {inf['nombre']}" + (f" — {inf['volcan']}" if inf.get("volcan") else ""))
+                parts.append(
+                    f"{i}. {inf['nombre']}" + (f" — {inf['volcan']}" if inf.get("volcan") else "")
+                )
                 parts.append(
                     f"   Versión: {inf.get('version', '?')} — Publicado: {inf.get('fecha_publicacion', '?')}"
                 )

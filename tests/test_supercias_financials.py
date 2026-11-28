@@ -34,9 +34,7 @@ def _build_db(path) -> None:
             (2008, 5, 1, 107, None, None, 600.0, 2500.0, None),
         ],
     )
-    conn.execute(
-        "CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)"
-    )
+    conn.execute("CREATE TABLE companias (expediente INTEGER, ruc TEXT, nombre TEXT)")
     conn.executemany(
         "INSERT INTO companias VALUES (?, ?, ?)",
         [
@@ -69,9 +67,7 @@ def isolated_data_dir(tmp_path, monkeypatch):
     # The lock and state files live next to DB_PATH; keep every test away
     # from the real data/ directory (a real failed build there would put
     # these tests in backoff).
-    monkeypatch.setattr(
-        supercias_financials, "DB_PATH", tmp_path / "data" / "financials.sqlite3"
-    )
+    monkeypatch.setattr(supercias_financials, "DB_PATH", tmp_path / "data" / "financials.sqlite3")
     monkeypatch.setattr(supercias_financials, "_build_started_at", None)
     # On Windows the launcher asks WMI first, and a real WMI launch here would
     # start a real build (a 356 MB download) outside pytest's control. The
@@ -204,9 +200,7 @@ def test_build_in_progress_kills_hung_build(monkeypatch):
 
     # On Windows the kill runs `taskkill /PID <pid>`; the fake PID 4242 could be
     # a real process on the machine running the tests, so never let it run.
-    monkeypatch.setattr(
-        supercias_financials.subprocess, "run", lambda *args, **kwargs: None
-    )
+    monkeypatch.setattr(supercias_financials.subprocess, "run", lambda *args, **kwargs: None)
     monkeypatch.setattr(supercias_financials, "_build_process", _HungProcess())
     monkeypatch.setattr(
         supercias_financials,
@@ -278,9 +272,7 @@ def test_kill_build_does_not_use_taskkill_off_windows(monkeypatch):
     assert build.killed
 
 
-@pytest.mark.skipif(
-    sys.platform != "win32", reason="the launcher-plus-child tree is Windows-only"
-)
+@pytest.mark.skipif(sys.platform != "win32", reason="the launcher-plus-child tree is Windows-only")
 def test_kill_build_ends_a_real_process_tree_on_windows():
     parent_code = (
         "import subprocess, sys, time\n"
@@ -321,9 +313,7 @@ def test_missing_db_message_reports_last_failure(tmp_path, no_real_build):
             "ultimo_error": "ConnectError: Supercías caído",
         }
     )
-    with pytest.raises(
-        supercias_financials.FinancialsDbUnavailable, match="Supercías caído"
-    ):
+    with pytest.raises(supercias_financials.FinancialsDbUnavailable, match="Supercías caído"):
         supercias_financials._check_db_fresh(tmp_path / "missing.sqlite3")
 
 
@@ -478,9 +468,7 @@ async def test_search_ranking_filters_by_ciiu(db_path):
 
 async def test_search_ranking_rejects_unknown_order_by(db_path):
     with pytest.raises(ValueError, match="order_by inválido"):
-        await supercias_financials.search_ranking(
-            anio=2025, order_by="DROP TABLE ranking;--"
-        )
+        await supercias_financials.search_ranking(anio=2025, order_by="DROP TABLE ranking;--")
 
 
 async def test_search_ranking_descending_sorts_highest_first(db_path):
@@ -496,7 +484,10 @@ async def test_get_sector_benchmark(db_path):
     assert benchmark is not None
     assert benchmark["descripcion"] == "Manufactura"
     assert benchmark["indicadores"]["roe"] == {
-        "n": 40, "p25": 0.02, "mediana": 0.07, "p75": 0.15,
+        "n": 40,
+        "p25": 0.02,
+        "mediana": 0.07,
+        "p75": 0.15,
     }
     assert "margen_operacional" in benchmark["nota"]
 
@@ -685,9 +676,7 @@ async def test_search_ranking_unloaded_year_lists_available_years(db_path, no_re
     assert "reconstruyendo" not in message
 
 
-async def test_unloaded_year_on_previous_schema_says_rebuild_is_coming(
-    db_path, no_real_build
-):
+async def test_unloaded_year_on_previous_schema_says_rebuild_is_coming(db_path, no_real_build):
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA user_version = 2")
     conn.commit()
@@ -890,15 +879,11 @@ async def test_search_ranking_flags_unreliable_ratio(db_path):
 
     result = await supercias_financials.search_ranking(anio=2025, order_by="roe")
     assert "notas" not in result
-    result = await supercias_financials.search_ranking(
-        anio=2025, order_by="margen_operacional"
-    )
+    result = await supercias_financials.search_ranking(anio=2025, order_by="margen_operacional")
     assert supercias_financials.UNRELIABLE_RATIOS_NOTE in result["notas"]
 
 
-async def test_previous_schema_without_quartiles_still_serves(
-    tmp_path, monkeypatch, no_real_build
-):
+async def test_previous_schema_without_quartiles_still_serves(tmp_path, monkeypatch, no_real_build):
     # A version-3 DB (zeros, no cuartiles_sector) keeps answering while the
     # version-4 rebuild runs; only the sector comparison is missing.
     path = tmp_path / "v3.sqlite3"

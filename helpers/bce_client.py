@@ -94,9 +94,7 @@ async def _get_json(
 ) -> Any:
     own = session is None
     if own:
-        session = httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT
-        )
+        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT)
     assert session is not None
     try:
         resp = await session.get(f"{_BASE_URL}/{path.lstrip('/')}", params=params)
@@ -105,9 +103,7 @@ async def _get_json(
                 detail = resp.json().get("message")
             except Exception:
                 detail = None
-            logger.warning(
-                "BCEData %s devolvió %d: %s", path, resp.status_code, detail
-            )
+            logger.warning("BCEData %s devolvió %d: %s", path, resp.status_code, detail)
             raise ValueError(detail or f"BCEData devolvió HTTP {resp.status_code}")
         try:
             payload = resp.json()
@@ -188,15 +184,11 @@ def _index_tree(tree: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return indexed
 
 
-async def _fetch_bundle(
-    id_grupo: int, session: httpx.AsyncClient | None = None
-) -> dict[str, Any]:
+async def _fetch_bundle(id_grupo: int, session: httpx.AsyncClient | None = None) -> dict[str, Any]:
     cached = _bundle_cache.get(id_grupo)
     if cached is not None:
         return cached
-    bundle, headers = await _get_json(
-        f"bundle/{id_grupo}", session=session, include_headers=True
-    )
+    bundle, headers = await _get_json(f"bundle/{id_grupo}", session=session, include_headers=True)
     if not isinstance(bundle, dict):
         raise TypeError("BCEData /bundle devolvió un formato inesperado")
     _record_revision_observation(f"/bundle/{id_grupo}", bundle, headers)
@@ -210,9 +202,7 @@ _REVISION_KEY_RE = re.compile(
 )
 
 
-def _record_revision_observation(
-    endpoint: str, payload: Any, headers: dict[str, str]
-) -> None:
+def _record_revision_observation(endpoint: str, payload: Any, headers: dict[str, str]) -> None:
     """Keep only explicit source revision markers, never invent one.
 
     BCEData currently returns neither a revision field nor ETag/Last-Modified
@@ -278,9 +268,7 @@ async def _fetch_catalog_snapshot() -> dict[str, Any]:
     tree = await _fetch_tree()
     groups = _index_tree(tree)
 
-    async with httpx.AsyncClient(
-        headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT
-    ) as session:
+    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT) as session:
         bundles = await asyncio.gather(
             *(_fetch_bundle(g["id_grupo"], session=session) for g in groups),
             return_exceptions=True,
@@ -304,9 +292,7 @@ async def _fetch_catalog_snapshot() -> dict[str, Any]:
             series_labels = [
                 row.get("label", "")
                 for row in rows
-                if isinstance(row, dict)
-                and row.get("tipo") == "Series"
-                and row.get("label")
+                if isinstance(row, dict) and row.get("tipo") == "Series" and row.get("label")
             ]
             context = bundle.get("context") or {}
             frecuencias = bundle.get("frecuencias") or []
@@ -327,8 +313,7 @@ async def _fetch_catalog_snapshot() -> dict[str, Any]:
             )
         elif isinstance(bundle, BaseException):
             logger.warning(
-                "No se pudo cargar el bundle del grupo %d para el índice de "
-                "búsqueda: %s",
+                "No se pudo cargar el bundle del grupo %d para el índice de búsqueda: %s",
                 group["id_grupo"],
                 bundle,
             )
@@ -441,7 +426,9 @@ async def _audit_grid_values(groups: list[dict[str, Any]]) -> dict[str, Any]:
                 rows = grid.get("rows") or []
                 if not isinstance(rows, list):
                     raise TypeError("/grid no devolvió una lista de filas")
-                series = [row for row in rows if isinstance(row, dict) and row.get("tipo") == "Series"]
+                series = [
+                    row for row in rows if isinstance(row, dict) and row.get("tipo") == "Series"
+                ]
                 nonempty = sum(
                     1
                     for row in series
@@ -458,9 +445,7 @@ async def _audit_grid_values(groups: list[dict[str, Any]]) -> dict[str, Any]:
             except Exception as exc:
                 return {**item, "ok": False, "error": str(exc)}
 
-    async with httpx.AsyncClient(
-        headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT
-    ) as session:
+    async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, timeout=_TIMEOUT) as session:
         results = await asyncio.gather(
             *(probe(item, session) for item in bounded), return_exceptions=False
         )
@@ -523,14 +508,12 @@ async def audit_catalog(
     if guardar_snapshot or comparar_anterior:
         previous = bce_catalog_store.read_latest_valid()
         if comparar_anterior:
-            result["comparacion"] = bce_catalog_store.compare_snapshots(
-                previous, snapshot
-            )
+            result["comparacion"] = bce_catalog_store.compare_snapshots(previous, snapshot)
         if guardar_snapshot:
             result["snapshot"] = bce_catalog_store.persist_snapshot(snapshot)
             if auditar_grid:
-                result["auditoria_grid"]["archivo_guardado"] = (
-                    bce_catalog_store.persist_grid_audit(result["auditoria_grid"])
+                result["auditoria_grid"]["archivo_guardado"] = bce_catalog_store.persist_grid_audit(
+                    result["auditoria_grid"]
                 )
     return result
 
@@ -551,9 +534,7 @@ def _public_entry(item: dict[str, Any]) -> dict[str, Any]:
     return {key: item[key] for key in _SEARCH_RESULT_FIELDS}
 
 
-async def search_indicadores(
-    query: str = "", limit: int = 20, offset: int = 0
-) -> dict[str, Any]:
+async def search_indicadores(query: str = "", limit: int = 20, offset: int = 0) -> dict[str, Any]:
     """
     Search the BCEData catalog of statistical indicator groups.
 
@@ -587,9 +568,7 @@ async def search_indicadores(
             # e.g. "DESEMPLEO" appears once per region/city, all with
             # identical text. Dedup (order-preserving) so a result doesn't
             # list "DESEMPLEO" nine times for what's really one concept.
-            series_hits = list(
-                dict.fromkeys(s for s in item["series"] if q in _strip(s))
-            )
+            series_hits = list(dict.fromkeys(s for s in item["series"] if q in _strip(s)))
             if not group_hit and not series_hits:
                 continue
             entry = _public_entry(item)
@@ -646,9 +625,7 @@ async def get_indicador(
         }
 
     if frecuencia:
-        match = next(
-            (f for f in frecuencias if f.casefold() == frecuencia.casefold()), None
-        )
+        match = next((f for f in frecuencias if f.casefold() == frecuencia.casefold()), None)
         if match is None:
             disponibles = ", ".join(frecuencias)
             raise ValueError(
@@ -679,9 +656,7 @@ async def get_indicador(
         unidad = match
     unit = unidad or unidades_disponibles[0]
 
-    range_for_freq = (bundle.get("range_by_freq") or {}).get(
-        freq, bundle.get("range") or {}
-    )
+    range_for_freq = (bundle.get("range_by_freq") or {}).get(freq, bundle.get("range") or {})
     d = desde.strip() or range_for_freq.get("minYm", "")
     h = hasta.strip() or range_for_freq.get("maxYm", "")
 

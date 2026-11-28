@@ -143,7 +143,9 @@ def derive_pagination(payload: dict[str, Any]) -> dict[str, Any] | None:
     """
     key = _main_list_key(payload)
     count = len(payload[key]) if key else 0
-    total = next((_int(payload.get(k)) for k in _TOTAL_KEYS if _int(payload.get(k)) is not None), None)
+    total = next(
+        (_int(payload.get(k)) for k in _TOTAL_KEYS if _int(payload.get(k)) is not None), None
+    )
     hay_mas = payload.get("hay_mas") if isinstance(payload.get("hay_mas"), bool) else None
 
     offset = _int(payload.get("offset"))
@@ -196,13 +198,25 @@ def resource_links(payload: dict[str, Any]) -> list[ResourceLink]:
             if not isinstance(item, dict):
                 continue
             url = item.get("url")
-            if not isinstance(url, str) or not url.startswith(("http://", "https://")) or url in seen:
+            if (
+                not isinstance(url, str)
+                or not url.startswith(("http://", "https://"))
+                or url in seen
+            ):
                 continue
             seen.add(url)
-            name = next(
-                (item[k] for k in _FILE_NAME_KEYS if isinstance(item.get(k), str) and item[k].strip()),
-                None,
-            ) or unquote(urlsplit(url).path.rsplit("/", 1)[-1]) or url
+            name = (
+                next(
+                    (
+                        item[k]
+                        for k in _FILE_NAME_KEYS
+                        if isinstance(item.get(k), str) and item[k].strip()
+                    ),
+                    None,
+                )
+                or unquote(urlsplit(url).path.rsplit("/", 1)[-1])
+                or url
+            )
             fmt = str(item.get("format") or item.get("formato") or "").lower().lstrip(".")
             links.append(
                 ResourceLink(

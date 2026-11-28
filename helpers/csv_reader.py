@@ -113,9 +113,7 @@ def strip_geometry_columns(
     drop_set = set(drop_idx)
     dropped_names = [headers[i] for i in drop_idx]
     new_headers = [h for i, h in enumerate(headers) if i not in drop_set]
-    new_rows = [
-        [cell for i, cell in enumerate(row) if i not in drop_set] for row in rows
-    ]
+    new_rows = [[cell for i, cell in enumerate(row) if i not in drop_set] for row in rows]
     return new_headers, new_rows, dropped_names
 
 
@@ -379,9 +377,7 @@ async def post_json_bytes(
     return b"".join(chunks), False
 
 
-async def sniff_content_type(
-    url: str, session: httpx.AsyncClient | None = None
-) -> str | None:
+async def sniff_content_type(url: str, session: httpx.AsyncClient | None = None) -> str | None:
     """Best-effort Content-Type sniff for a resource with no recognizable
     URL extension and no useful declared CKAN format.
 
@@ -392,9 +388,7 @@ async def sniff_content_type(
     """
     own = session is None
     if own:
-        session = httpx.AsyncClient(
-            headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url)
-        )
+        session = httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, proxy=proxy_for(url))
     assert session is not None
     try:
         async with safe_stream(session, url, timeout=_TIMEOUT) as resp:
@@ -589,9 +583,7 @@ async def preview_json(
                 for key in item:
                     if key not in keys:
                         keys.append(key)
-            rows = [
-                [str(item.get(k, ""))[:120] for k in keys] for item in data[:max_rows]
-            ]
+            rows = [[str(item.get(k, ""))[:120] for k in keys] for item in data[:max_rows]]
             keys, rows, dropped_geom = strip_geometry_columns(keys, rows)
             result: dict[str, Any] = {
                 "headers": keys,
@@ -669,9 +661,7 @@ def _select_sheet(names: list[str], sheet: str) -> int:
     if wanted.isdigit() and 1 <= int(wanted) <= len(names):
         return int(wanted) - 1
     listed = "; ".join(f"{i + 1}. {n}" for i, n in enumerate(names))
-    raise ValueError(
-        f"No hay una hoja '{sheet}' en el libro. Hojas disponibles: {listed}."
-    )
+    raise ValueError(f"No hay una hoja '{sheet}' en el libro. Hojas disponibles: {listed}.")
 
 
 def _parse_xlsx_bytes(
@@ -723,9 +713,7 @@ def _parse_xlsx_bytes(
         wb.close()
 
 
-def _parse_xls_bytes(
-    raw: bytes, max_rows: int, truncated: bool, sheet: str = ""
-) -> dict[str, Any]:
+def _parse_xls_bytes(raw: bytes, max_rows: int, truncated: bool, sheet: str = "") -> dict[str, Any]:
     import xlrd
 
     wb = xlrd.open_workbook(file_contents=raw)
@@ -814,9 +802,7 @@ def _parse_xlsb_bytes(
         wb.close()
 
 
-def _parse_ods_bytes(
-    raw: bytes, max_rows: int, truncated: bool, sheet: str = ""
-) -> dict[str, Any]:
+def _parse_ods_bytes(raw: bytes, max_rows: int, truncated: bool, sheet: str = "") -> dict[str, Any]:
     from odf.opendocument import load
     from odf.table import Table, TableCell, TableRow
     from odf.teletype import extractText
@@ -891,9 +877,7 @@ async def preview_xlsx(
     see download_bytes' max_bytes docstring. Worth the larger cap since the
     alternative is a guaranteed failure, not a safety margin.
     """
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         raise ValueError(
             "El archivo .xlsx supera el límite de 20 MB de este preview, así "
@@ -909,9 +893,7 @@ async def preview_xls(
     url: str, max_rows: int = 20, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     """Preview the first sheet of a legacy Excel (.xls) workbook."""
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         raise ValueError(
             "El archivo .xls supera el límite de 20 MB de este preview, así "
@@ -925,9 +907,7 @@ async def preview_xlsb(
     url: str, max_rows: int = 20, session: httpx.AsyncClient | None = None
 ) -> dict[str, Any]:
     """Preview the first sheet of an Excel Binary Workbook (.xlsb)."""
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         # .xlsb is a ZIP container (BIFF12 records instead of XLSX's XML),
         # so it fails the exact same way a truncated .zip does: the central
@@ -962,9 +942,7 @@ async def preview_ods(
     the default cap, only a guaranteed failure.
     """
 
-    raw, truncated = await download_bytes(
-        url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES
-    )
+    raw, truncated = await download_bytes(url, session=session, max_bytes=_MAX_DECOMPRESSED_BYTES)
     if truncated:
         raise ValueError(
             "El archivo .ods supera el límite de 20 MB de este preview, así "
@@ -976,9 +954,7 @@ async def preview_ods(
     return await run_parser_off_loop(_parse_ods_bytes, raw, max_rows, truncated)
 
 
-def _gunzip_capped(
-    raw: bytes, cap: int = _MAX_DECOMPRESSED_BYTES
-) -> tuple[bytes, bool]:
+def _gunzip_capped(raw: bytes, cap: int = _MAX_DECOMPRESSED_BYTES) -> tuple[bytes, bool]:
     """Decompress gzip bytes, stopping once `cap` output bytes are produced."""
     return _inflate_capped(raw, 16 + zlib.MAX_WBITS, cap)
 
@@ -1091,9 +1067,7 @@ async def preview_targz(
                 "este preview y se cortó a la mitad. Descarga el enlace "
                 "directo del recurso (un .tar.gz no se puede leer por partes)."
             ) from e
-        raise ValueError(
-            "El archivo .tar.gz no se pudo leer: está corrupto"
-        ) from e
+        raise ValueError("El archivo .tar.gz no se pudo leer: está corrupto") from e
 
     truncated = truncated or len(inner_raw) > MAX_DOWNLOAD_BYTES
     inner_raw = inner_raw[:MAX_DOWNLOAD_BYTES]
@@ -1157,9 +1131,7 @@ async def preview_zip(
             with zf.open(member_name) as f:
                 inner_raw = f.read(MAX_DOWNLOAD_BYTES + 1)
     except zipfile.BadZipFile as e:
-        raise ValueError(
-            "El archivo .zip no se pudo leer: está corrupto"
-        ) from e
+        raise ValueError("El archivo .zip no se pudo leer: está corrupto") from e
 
     truncated = truncated or len(inner_raw) > MAX_DOWNLOAD_BYTES
     inner_raw = inner_raw[:MAX_DOWNLOAD_BYTES]
@@ -1501,8 +1473,18 @@ async def _read_zip64_eocd(
         _check_partial(status, headers, record_offset)
     if len(record) < 56 or record[:4] != _ZIP64_EOCD_SIGNATURE:
         raise _Zip64Required(eocd_index)
-    (_sig, _size, _made, _needed, _disk, _cd_disk, _entries_disk, total_entries,
-     cd_size, cd_offset) = struct.unpack_from("<4sQHHIIQQQQ", record, 0)
+    (
+        _sig,
+        _size,
+        _made,
+        _needed,
+        _disk,
+        _cd_disk,
+        _entries_disk,
+        total_entries,
+        cd_size,
+        cd_offset,
+    ) = struct.unpack_from("<4sQHHIIQQQQ", record, 0)
     return cd_offset, cd_size, total_entries
 
 
@@ -1594,9 +1576,7 @@ def _parse_central_directory(data: bytes, expected_entries: int) -> list[dict[st
                 "is_dir": name.endswith("/"),
                 "compressed_size": compressed_size,
                 "uncompressed_size": uncompressed_size,
-                "compression": {0: "stored", 8: "deflate"}.get(
-                    compression, str(compression)
-                ),
+                "compression": {0: "stored", 8: "deflate"}.get(compression, str(compression)),
                 # Internal fields for read_zip_member; list_zip_contents
                 # projects them out (_PUBLIC_MEMBER_KEYS).
                 "compression_method": compression,
@@ -1679,9 +1659,7 @@ async def _fetch_central_directory(
     return _parse_central_directory(cd_data, total_entries), total_size, total_entries
 
 
-async def list_zip_contents(
-    url: str, session: httpx.AsyncClient | None = None
-) -> dict[str, Any]:
+async def list_zip_contents(url: str, session: httpx.AsyncClient | None = None) -> dict[str, Any]:
     """
     List a .zip archive's members (name, size, compression) via HTTP Range
     requests, without downloading the archive itself.
@@ -1780,9 +1758,7 @@ async def _parse_table_bytes(
     # max_rows data rows once it is skipped.
     parse_rows = max_rows + (_HEADER_SCAN_ROWS if skip_rows < 0 else skip_rows)
     if ext in _ZIP_SHEET_PARSERS:
-        result = await run_parser_off_loop(
-            _ZIP_SHEET_PARSERS[ext], out, parse_rows, False, sheet
-        )
+        result = await run_parser_off_loop(_ZIP_SHEET_PARSERS[ext], out, parse_rows, False, sheet)
     else:
         if sheet.strip():
             raise ValueError(
@@ -1916,9 +1892,7 @@ async def read_zip_member(
                 "se lee la URL misma."
             )
         name, ext, out, truncated, size = await _read_direct_file(url, session)
-        result = await _parse_table_bytes(
-            name, ext, out, truncated, max_rows, skip_rows, sheet
-        )
+        result = await _parse_table_bytes(name, ext, out, truncated, max_rows, skip_rows, sheet)
         result.update(
             {
                 "member_name": name,
@@ -1948,9 +1922,7 @@ async def read_zip_member(
         info["uncompressed_size"],
         info["local_header_offset"],
     ):
-        raise ValueError(
-            f"'{name}': el .zip está corrupto (tamaño ZIP64 sin su campo extra)."
-        )
+        raise ValueError(f"'{name}': el .zip está corrupto (tamaño ZIP64 sin su campo extra).")
     compressed_size = info["compressed_size"]
 
     ext = _ext_of(name)
@@ -2024,9 +1996,7 @@ async def read_zip_member(
 
     complete = not truncated and len(out) == info["uncompressed_size"]
     if not truncated and not complete:
-        raise ValueError(
-            f"'{name}': el .zip está corrupto (tamaño descomprimido inesperado)."
-        )
+        raise ValueError(f"'{name}': el .zip está corrupto (tamaño descomprimido inesperado).")
     if complete and zlib.crc32(out) != info["crc32"]:
         raise ValueError(f"'{name}': el .zip está corrupto (CRC32 no coincide).")
     if is_sheet and not complete:
@@ -2045,9 +2015,7 @@ async def read_zip_member(
         sizes = (inner_sizes[0], inner_sizes[1])
         ext = _ext_of(read_name)
 
-    result = await _parse_table_bytes(
-        read_name, ext, out, truncated, max_rows, skip_rows, sheet
-    )
+    result = await _parse_table_bytes(read_name, ext, out, truncated, max_rows, skip_rows, sheet)
     result.update(
         {
             "member_name": read_name,
@@ -2060,7 +2028,6 @@ async def read_zip_member(
         # member_name and the sizes describe the inner file that was read.
         result["outer_member"] = name
     return result
-
 
 
 @dataclass(frozen=True)
@@ -2362,11 +2329,7 @@ def _tidy_report_table(table: list[list[str]], skip_rows: int) -> dict[str, Any]
         }
 
     width = max(len(row) for row in body)
-    keep = [
-        i
-        for i in range(width)
-        if any(i < len(row) and row[i].strip() for row in body)
-    ]
+    keep = [i for i in range(width) if any(i < len(row) and row[i].strip() for row in body)]
     trimmed = [[row[i] if i < len(row) else "" for i in keep] for row in body]
     return {
         "headers": trimmed[0],
@@ -2400,9 +2363,7 @@ def format_table(headers: list[str], rows: list[list[str]], max_col_width: int =
             col_widths[i] = max(col_widths[i], len(cell))
 
     def fmt_row(cells: list[str]) -> str:
-        return " | ".join(
-            cell.ljust(col_widths[i]) for i, cell in enumerate(cells[:ncols])
-        )
+        return " | ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(cells[:ncols]))
 
     lines = [fmt_row(display_headers)]
     lines.append("-+-".join("-" * w for w in col_widths))

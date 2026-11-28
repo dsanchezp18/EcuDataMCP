@@ -123,7 +123,10 @@ def test_decode_dsr_matches_ground_truth_read_off_the_live_dashboard():
             "Select": [
                 {"Value": "M0", "Name": "Medidas.Cantidad de Contratos"},
                 {"Value": "G0", "Name": "Calendario_.Mes"},
-                {"Value": "G1", "Name": "public contratos.fecha_inicio_new.Variación.Jerarquía de fechas.Año"},
+                {
+                    "Value": "G1",
+                    "Name": "public contratos.fecha_inicio_new.Variación.Jerarquía de fechas.Año",
+                },
             ]
         },
         "dsr": {
@@ -177,7 +180,9 @@ def test_decode_dsr_matches_ground_truth_read_off_the_live_dashboard():
 
 def test_decode_dsr_null_mask_sets_value_to_none():
     data = {
-        "descriptor": {"Select": [{"Value": "G0", "Name": "campo.a"}, {"Value": "M0", "Name": "campo.b"}]},
+        "descriptor": {
+            "Select": [{"Value": "G0", "Name": "campo.a"}, {"Value": "M0", "Name": "campo.b"}]
+        },
         "dsr": {
             "DS": [
                 {
@@ -243,7 +248,13 @@ async def test_query_indicador_sends_resource_key_header_and_decodes_response(ht
                         "dsr": {
                             "DS": [
                                 {
-                                    "PH": [{"DM0": [{"S": [{"N": "G0", "T": 1, "DN": "D0"}], "C": [0]}]}],
+                                    "PH": [
+                                        {
+                                            "DM0": [
+                                                {"S": [{"N": "G0", "T": 1, "DN": "D0"}], "C": [0]}
+                                            ]
+                                        }
+                                    ],
                                     "ValueDicts": {"D0": ["ene"]},
                                 }
                             ]
@@ -299,7 +310,15 @@ _EMPTY_VISUALCONTAINER_EXPLORATION = {
             {
                 "displayName": "Denuncias",
                 "visualContainers": [
-                    {"id": 1, "x": 0.0, "y": 0.0, "z": 0.0, "width": 0.0, "height": 0.0, "objectName": "abc"}
+                    {
+                        "id": 1,
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0,
+                        "width": 0.0,
+                        "height": 0.0,
+                        "objectName": "abc",
+                    }
                 ],
             }
         ],
@@ -308,7 +327,9 @@ _EMPTY_VISUALCONTAINER_EXPLORATION = {
 
 
 @pytest.mark.asyncio
-async def test_get_indicador_schema_falls_back_to_manual_campos_when_layout_has_no_config(httpx_mock):
+async def test_get_indicador_schema_falls_back_to_manual_campos_when_layout_has_no_config(
+    httpx_mock,
+):
     httpx_mock.add_response(
         url=f"{sut._BASE}/public/reports/{sut._INDICADORES_BY_KEY['denuncias_publico']['resource_key']}/modelsAndExploration",
         json=_EMPTY_VISUALCONTAINER_EXPLORATION,
@@ -389,9 +410,14 @@ async def test_query_indicador_encuentra_empleo_uses_aggregation_and_decodes_row
     )
 
     assert result["filas"] == [
-        {"CONSOLIDADO.Encuentra Empleo": "REGISTRADOS", "Sum(CONSOLIDADO.Número de Personas)": 26033}
+        {
+            "CONSOLIDADO.Encuentra Empleo": "REGISTRADOS",
+            "Sum(CONSOLIDADO.Número de Personas)": 26033,
+        }
     ]
-    request = httpx_mock.get_requests(url=f"{sut._BASE}/public/reports/querydata?synchronous=true")[0]
+    request = httpx_mock.get_requests(url=f"{sut._BASE}/public/reports/querydata?synchronous=true")[
+        0
+    ]
     sent = request.content.decode("utf-8")
     assert '"Function": 0' in sent or '"Function":0' in sent
 
@@ -490,7 +516,10 @@ async def test_judicatura_query_posts_to_its_cluster_with_aggregation_and_filter
                                             {
                                                 "DM0": [
                                                     {
-                                                        "S": [{"N": "G0", "T": 1}, {"N": "M0", "T": 4}],
+                                                        "S": [
+                                                            {"N": "G0", "T": 1},
+                                                            {"N": "M0", "T": 4},
+                                                        ],
                                                         "C": ["ANA", 12],
                                                     }
                                                 ]
@@ -514,7 +543,9 @@ async def test_judicatura_query_posts_to_its_cluster_with_aggregation_and_filter
     )
 
     assert result["filas"] == [{"CUB EST_PROD.Juez": "ANA", "suma(CUB EST_PROD.Tramite)": 12}]
-    request = httpx_mock.get_requests(url=f"{_JUD_BASE}/public/reports/querydata?synchronous=true")[0]
+    request = httpx_mock.get_requests(url=f"{_JUD_BASE}/public/reports/querydata?synchronous=true")[
+        0
+    ]
     assert request.headers["x-powerbi-resourcekey"] == _JUD_KEY
     select = json.loads(request.content)["queries"][0]["Query"]["Commands"][0][
         "SemanticQueryDataShapeCommand"
@@ -548,7 +579,9 @@ def test_select_item_aggregation_becomes_suma_field():
     spec = sut._spec_from_select_item(
         {
             "Aggregation": {
-                "Expression": {"Column": {"Expression": {"SourceRef": {"Source": "a"}}, "Property": "Contador"}},
+                "Expression": {
+                    "Column": {"Expression": {"SourceRef": {"Source": "a"}}, "Property": "Contador"}
+                },
                 "Function": 0,
             }
         },
@@ -556,9 +589,9 @@ def test_select_item_aggregation_becomes_suma_field():
     )
 
     assert spec["kind"] == "aggregation"
-    assert sut._field_label(spec["entity"], spec["property"], spec["kind"], None, spec["function"]) == (
-        "CUB EST_CUB_AUDIENCIAS.Contador [suma]"
-    )
+    assert sut._field_label(
+        spec["entity"], spec["property"], spec["kind"], None, spec["function"]
+    ) == ("CUB EST_CUB_AUDIENCIAS.Contador [suma]")
 
 
 def test_literal_value_escapes_single_quotes_and_defaults_to_string():
@@ -610,7 +643,9 @@ async def test_query_indicador_escapes_filter_quote_and_clamps_limite(httpx_mock
         limite=10_000_000,
     )
 
-    request = httpx_mock.get_requests(url=f"{sut._BASE}/public/reports/querydata?synchronous=true")[0]
+    request = httpx_mock.get_requests(url=f"{sut._BASE}/public/reports/querydata?synchronous=true")[
+        0
+    ]
     body = json.loads(request.content)
     command = body["queries"][0]["Query"]["Commands"][0]["SemanticQueryDataShapeCommand"]
     literal = command["Query"]["Where"][0]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"]
@@ -686,7 +721,9 @@ async def test_query_indicador_flags_truncation_when_window_fills(httpx_mock):
 async def test_untyped_numeric_filter_with_no_rows_adds_hint(httpx_mock):
     _setup_empty_query(httpx_mock)
 
-    result = await sut.query_indicador("contratos", campos=["Calendario_.Mes"], filtros={"Calendario_.Mes": "2024"})
+    result = await sut.query_indicador(
+        "contratos", campos=["Calendario_.Mes"], filtros={"Calendario_.Mes": "2024"}
+    )
 
     assert result["filas"] == []
     assert "numérica" in result["aviso"]
@@ -699,7 +736,9 @@ async def test_typed_filter_emits_typed_literal_and_no_hint(httpx_mock):
     boot = await sut._get_bootstrap(_RESOURCE_KEY, "contratos")
     boot["campos"]["Calendario_.Mes"]["data_type"] = "int"
 
-    result = await sut.query_indicador("contratos", campos=["Calendario_.Mes"], filtros={"Calendario_.Mes": "2024"})
+    result = await sut.query_indicador(
+        "contratos", campos=["Calendario_.Mes"], filtros={"Calendario_.Mes": "2024"}
+    )
 
     assert "aviso" not in result
     assert _where_literal(httpx_mock) == "2024L"
@@ -721,6 +760,7 @@ async def test_query_tool_names_a_timeout_instead_of_an_empty_error(monkeypatch)
 
     with pytest.raises(ToolError, match="ReadTimeout"):
         await server.call_tool("query_sut_indicador", {"indicador": "x", "campos": ["a"]})
+
 
 @pytest.mark.asyncio
 async def test_querydata_retries_read_timeout_then_succeeds(httpx_mock):

@@ -124,9 +124,7 @@ def _parse_archivos(html: str, prefijo: str) -> list[dict[str, Any]]:
             continue  # the page links some files twice; keep the first, labelled one
         seen.add(path)
         url = f"{_BASE}{path}"
-        archivos.append(
-            {"titulo": label, "url": url, "formato": formato_from_url(url)}
-        )
+        archivos.append({"titulo": label, "url": url, "formato": formato_from_url(url)})
     return archivos
 
 

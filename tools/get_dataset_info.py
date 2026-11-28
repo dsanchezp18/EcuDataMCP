@@ -44,9 +44,7 @@ def register_get_dataset_info_tool(mcp: MCPServer) -> None:
             data = await ckan_client.get_dataset(dataset_id, source=source)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise ToolError(
-                    f"Error: Dataset con ID '{dataset_id}' no encontrado."
-                ) from e
+                raise ToolError(f"Error: Dataset con ID '{dataset_id}' no encontrado.") from e
             raise ToolError(f"Error: HTTP {e.response.status_code} - {e}") from e
         except Exception as e:
             raise ToolError(f"Error: {e}") from e
@@ -54,11 +52,7 @@ def register_get_dataset_info_tool(mcp: MCPServer) -> None:
         site = ckan_client.site_url(source).rstrip("/")
         slug = data.get("name", "")
         resources = data.get("resources") or []
-        extras = {
-            e.get("key"): e.get("value")
-            for e in (data.get("extras") or [])
-            if e.get("key")
-        }
+        extras = {e.get("key"): e.get("value") for e in (data.get("extras") or []) if e.get("key")}
         payload = {
             "id": data.get("id"),
             "name": slug,
@@ -73,12 +67,10 @@ def register_get_dataset_info_tool(mcp: MCPServer) -> None:
             if data.get("organization")
             else None,
             "tags": [
-                t.get("display_name", t.get("name", ""))
-                for t in (data.get("tags") or [])[:20]
+                t.get("display_name", t.get("name", "")) for t in (data.get("tags") or [])[:20]
             ],
             "groups": [
-                g.get("title", g.get("display_name", ""))
-                for g in (data.get("groups") or [])
+                g.get("title", g.get("display_name", "")) for g in (data.get("groups") or [])
             ],
             "num_resources": len(resources),
             "metadata_created": data.get("metadata_created"),

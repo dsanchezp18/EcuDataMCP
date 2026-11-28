@@ -156,7 +156,7 @@ def _is_gestionderiesgos_url(url: str) -> bool:
 _EVENT_RE = re.compile(
     r'<a\s+href="(?P<url>https?://[^"]*gestionderiesgos\.gob\.ec/[^"#]+/)">'
     r"(?P<titulo>[^<]+)</a></strong></div>\s*"
-    r'<div[^>]*>\s*<strong>Fecha[^<:]*:</strong>\s*(?P<fecha>.*?)\|'
+    r"<div[^>]*>\s*<strong>Fecha[^<:]*:</strong>\s*(?P<fecha>.*?)\|"
     r"\s*(?:<strong>)?\s*<span[^>]*>\[(?P<estado>[^\]]+)\]",
     re.IGNORECASE | re.DOTALL,
 )
@@ -296,7 +296,9 @@ def _parse_sitrep_event(html: str) -> list[dict[str, Any]]:
         if url in seen:
             continue
         seen.add(url)
-        archivos.append({"grupo": current_grupo, "titulo": data["label"], "url": url, "formato": "PDF"})
+        archivos.append(
+            {"grupo": current_grupo, "titulo": data["label"], "url": url, "formato": "PDF"}
+        )
     return archivos
 
 

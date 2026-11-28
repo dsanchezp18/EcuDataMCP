@@ -64,9 +64,7 @@ async def test_search_contracts_rate_limit(httpx_mock, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_search_contracts_names_regional_block_on_connect_error(
-    httpx_mock, monkeypatch
-):
+async def test_search_contracts_names_regional_block_on_connect_error(httpx_mock, monkeypatch):
     monkeypatch.setattr(sercop_client, "_MAX_RETRIES", 1)
 
     async def _no_sleep(_: float) -> None:

@@ -16,11 +16,11 @@ _INITIAL_HTML = (
 def _row(idx: int, nombre: str, volcan: str, version: str, fecha: str) -> str:
     return (
         f'<li class="ui-dataview-row">'
-        f'<label>Nombre:</label></td><td><label>{nombre}<'
-        f'</label></td></tr><tr><td><label>Volcán:</label></td><td><label>{volcan}<'
-        f'</label></td></tr><tr><td><label>Versión:</label></td><td><label>{version}<'
-        f'</label></td></tr><tr><td><label>Fecha Publicación Informe:</label></td>'
-        f'<td><label>{fecha}<'
+        f"<label>Nombre:</label></td><td><label>{nombre}<"
+        f"</label></td></tr><tr><td><label>Volcán:</label></td><td><label>{volcan}<"
+        f"</label></td></tr><tr><td><label>Versión:</label></td><td><label>{version}<"
+        f"</label></td></tr><tr><td><label>Fecha Publicación Informe:</label></td>"
+        f"<td><label>{fecha}<"
         f'<button id="form:j_idt42:{idx}:j_idt64">Descargar Informe</button>'
         f"</li>"
     )
@@ -102,18 +102,14 @@ async def test_download_informe_non_pdf_response(httpx_mock):
     )
 
     with pytest.raises(ValueError, match="no devolvió un PDF"):
-        await c.download_informe(
-            "Informe Diario 2022-071", grupo="volcanico", anio=2022
-        )
+        await c.download_informe("Informe Diario 2022-071", grupo="volcanico", anio=2022)
 
 
 async def test_default_anio_uses_ecuador_time(httpx_mock, monkeypatch):
     # 03:00 UTC on 1 January is still 22:00 on 31 December in Ecuador
     # (UTC-5), so the default report year must be the previous one.
     frozen_utc = datetime(2026, 1, 1, 3, 0, tzinfo=UTC)
-    monkeypatch.setattr(
-        c, "today_ecuador", lambda: frozen_utc.astimezone(ECUADOR_TZ).date()
-    )
+    monkeypatch.setattr(c, "today_ecuador", lambda: frozen_utc.astimezone(ECUADOR_TZ).date())
     httpx_mock.add_response(method="GET", html=_INITIAL_HTML)
     httpx_mock.add_response(method="POST", text=_TWO_ROWS_XML)
 

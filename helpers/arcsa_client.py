@@ -77,9 +77,7 @@ def _clean(text: str) -> str:
 
 def _is_arcsa_url(url: str) -> bool:
     host = (urlparse(url).hostname or "").lower()
-    return host == "controlsanitario.gob.ec" or host.endswith(
-        ".controlsanitario.gob.ec"
-    )
+    return host == "controlsanitario.gob.ec" or host.endswith(".controlsanitario.gob.ec")
 
 
 # --- Base de Registros Emitidos (categorized download-monitor library) ---
@@ -177,9 +175,7 @@ def _categoria_archivos(html: str, categoria: dict[str, Any]) -> list[dict[str, 
         seen.add(entry_id)
         url = data.group("url")
         if not _is_arcsa_url(url):
-            logger.warning(
-                "ARCSA base-de-datos: descartado link con dominio inesperado (%s).", url
-            )
+            logger.warning("ARCSA base-de-datos: descartado link con dominio inesperado (%s).", url)
             continue
         archivos.append(
             {
@@ -210,9 +206,7 @@ async def _fetch_base_datos_html() -> str:
         )
         content, truncated = await download_bytes(_BASE_DATOS_URL)
         if truncated:
-            raise ValueError(
-                f"La página de {_BASE_DATOS_URL} superó el límite de descarga."
-            )
+            raise ValueError(f"La página de {_BASE_DATOS_URL} superó el límite de descarga.")
         html = content.decode("utf-8", errors="replace")
         # Without the root <ul class="ul-downloads"> the page is a
         # maintenance/anti-bot page or was redesigned: raise (same as

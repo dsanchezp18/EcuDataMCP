@@ -50,12 +50,30 @@ async def test_get_institucion_accepts_single_matching_list_record(monkeypatch):
 
 async def test_list_indicadores_tolerates_row_without_fecha(httpx_mock):
     rows = [
-        {"Código Variable Dinámica": "val_ind_0003", "Indicador": "Riesgo País",
-         "Fecha": "2026-10-01", "Valor": 1.0, "Periodicidad": "D", "Medida": "pb"},
-        {"Código Variable Dinámica": "val_ind_0003", "Indicador": "Riesgo País",
-         "Fecha": None, "Valor": 2.0, "Periodicidad": "D", "Medida": "pb"},
-        {"Código Variable Dinámica": "val_ind_0003", "Indicador": "Riesgo País",
-         "Fecha": "2026-10-03", "Valor": 3.0, "Periodicidad": "D", "Medida": "pb"},
+        {
+            "Código Variable Dinámica": "val_ind_0003",
+            "Indicador": "Riesgo País",
+            "Fecha": "2026-10-01",
+            "Valor": 1.0,
+            "Periodicidad": "D",
+            "Medida": "pb",
+        },
+        {
+            "Código Variable Dinámica": "val_ind_0003",
+            "Indicador": "Riesgo País",
+            "Fecha": None,
+            "Valor": 2.0,
+            "Periodicidad": "D",
+            "Medida": "pb",
+        },
+        {
+            "Código Variable Dinámica": "val_ind_0003",
+            "Indicador": "Riesgo País",
+            "Fecha": "2026-10-03",
+            "Valor": 3.0,
+            "Periodicidad": "D",
+            "Medida": "pb",
+        },
     ]
     httpx_mock.add_response(url=f"{bce._BASE}/datos_formulario.json", json={"x": rows})
     for archivo in bce.list_archivos():

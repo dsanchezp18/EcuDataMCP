@@ -26,9 +26,7 @@ def _make_tool():
 def test_classify_by_extension_wins_over_conflicting_declared_format():
     # Real case found during e2e verification: SRI declares CSV in CKAN but
     # actually serves the resource as .tar.gz.
-    assert (
-        classify_resource_format("CSV", "https://x/sri_activos_2025.tar.gz") == "TARGZ"
-    )
+    assert classify_resource_format("CSV", "https://x/sri_activos_2025.tar.gz") == "TARGZ"
     # Real case found during e2e verification: MPCEIP declares CSV in CKAN
     # but the resource is actually .xlsx.
     assert classify_resource_format("CSV", "https://x/precios_cacao.xlsx") == "XLSX"
@@ -109,15 +107,10 @@ def test_classify_from_content_type_maps_common_mimes():
     assert classify_from_content_type("application/vnd.ms-excel") == "XLS"
     # Real header confirmed live against Registro Civil's defunciones.xlsb.
     assert (
-        classify_from_content_type(
-            "application/vnd.ms-excel.sheet.binary.macroEnabled.12"
-        )
+        classify_from_content_type("application/vnd.ms-excel.sheet.binary.macroEnabled.12")
         == "XLSB"
     )
-    assert (
-        classify_from_content_type("application/vnd.oasis.opendocument.spreadsheet")
-        == "ODS"
-    )
+    assert classify_from_content_type("application/vnd.oasis.opendocument.spreadsheet") == "ODS"
 
 
 def test_classify_from_content_type_unknown_or_missing():
@@ -385,9 +378,7 @@ async def test_extensionless_resource_is_routed_via_sniffed_content_type(monkeyp
         }
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(
-        preview_resource_data_module, "sniff_content_type", fake_sniff_content_type
-    )
+    monkeypatch.setattr(preview_resource_data_module, "sniff_content_type", fake_sniff_content_type)
     monkeypatch.setitem(PREVIEW_DISPATCH, "CSV", fake_preview_csv)
 
     tool = _make_tool()
@@ -410,9 +401,7 @@ async def test_extensionless_resource_falls_back_when_sniff_is_inconclusive(monk
         return "application/octet-stream"
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)
-    monkeypatch.setattr(
-        preview_resource_data_module, "sniff_content_type", fake_sniff_content_type
-    )
+    monkeypatch.setattr(preview_resource_data_module, "sniff_content_type", fake_sniff_content_type)
 
     tool = _make_tool()
     result = await tool(resource_id="abc123", format="json")
@@ -428,8 +417,7 @@ async def test_unsafe_url_error_hides_resolved_ip_from_client(monkeypatch):
 
     async def fake_preview_csv(url, max_rows=20, session=None):
         raise UnsafeUrlError(
-            "El host 'interno.example' resuelve a una IP no pública (10.0.0.7); "
-            "descarga rechazada"
+            "El host 'interno.example' resuelve a una IP no pública (10.0.0.7); descarga rechazada"
         )
 
     monkeypatch.setattr(ckan_client, "get_resource", fake_get_resource)

@@ -111,10 +111,7 @@ def test_ckan_url_rejects_unknown_source():
 def test_site_url_matches_source():
     assert ckan_client.site_url() == "https://www.datosabiertos.gob.ec/"
     assert ckan_client.site_url("cuenca") == "https://cuencaendatos.cuenca.gob.ec/"
-    assert (
-        ckan_client.site_url("latacunga")
-        == "https://datosabiertos.latacunga.gob.ec/"
-    )
+    assert ckan_client.site_url("latacunga") == "https://datosabiertos.latacunga.gob.ec/"
 
 
 async def test_search_datasets_hits_cuenca_endpoint(httpx_mock):

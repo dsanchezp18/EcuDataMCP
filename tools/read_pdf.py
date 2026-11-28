@@ -91,7 +91,7 @@ def register_read_pdf_tool(mcp: MCPServer) -> None:
                 parts.append(
                     f"⚠ Se pidieron más de {MAX_PAGES_PER_CALL} páginas; solo se "
                     f"extrajeron las primeras {MAX_PAGES_PER_CALL}. Llama de nuevo "
-                    "con `pages` apuntando al resto (ej. \"21-40\")."
+                    'con `pages` apuntando al resto (ej. "21-40").'
                 )
             parts.append("")
             for p in data["pages"]:

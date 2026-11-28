@@ -30,8 +30,6 @@ async def retry_on_timeout(call: Callable[[], Awaitable[T]], label: str) -> T:
         except httpx.TimeoutException:
             if attempt == _ATTEMPTS:
                 raise
-            logger.warning(
-                "Timeout en %s (intento %d/%d); reintentando", label, attempt, _ATTEMPTS
-            )
+            logger.warning("Timeout en %s (intento %d/%d); reintentando", label, attempt, _ATTEMPTS)
             await asyncio.sleep(_BACKOFF_SECONDS * attempt)
     raise AssertionError("unreachable")

@@ -131,9 +131,7 @@ def clear_cache():
 
 @pytest.mark.asyncio
 async def test_search_bases_mensuales_anc_specific_year_multiple_months(httpx_mock):
-    httpx_mock.add_response(
-        url=infomies_client._SERIES["anc"]["anios"][2026], html=_ANC_2026_HTML
-    )
+    httpx_mock.add_response(url=infomies_client._SERIES["anc"]["anios"][2026], html=_ANC_2026_HTML)
 
     result = await infomies_client.search_bases_mensuales(serie="anc", anio=2026)
 
@@ -147,9 +145,7 @@ async def test_search_bases_mensuales_anc_specific_year_multiple_months(httpx_mo
 
 @pytest.mark.asyncio
 async def test_search_bases_mensuales_closed_year_has_only_december(httpx_mock):
-    httpx_mock.add_response(
-        url=infomies_client._SERIES["anc"]["anios"][2024], html=_ANC_2024_HTML
-    )
+    httpx_mock.add_response(url=infomies_client._SERIES["anc"]["anios"][2024], html=_ANC_2024_HTML)
 
     result = await infomies_client.search_bases_mensuales(serie="anc", anio=2024)
 
@@ -202,9 +198,7 @@ async def test_search_bases_mensuales_connect_timeout_names_host(httpx_mock, mon
 
 @pytest.mark.asyncio
 async def test_search_bases_mensuales_query_filters_accent_insensitive(httpx_mock):
-    httpx_mock.add_response(
-        url=infomies_client._SERIES["anc"]["anios"][2026], html=_ANC_2026_HTML
-    )
+    httpx_mock.add_response(url=infomies_client._SERIES["anc"]["anios"][2026], html=_ANC_2026_HTML)
 
     result = await infomies_client.search_bases_mensuales(serie="anc", anio=2026, query="junio")
 
@@ -297,9 +291,7 @@ def test_list_zonas_returns_nine_fixed_zones():
 
 @pytest.mark.asyncio
 async def test_search_reportes_boletines_zonales_specific_year(httpx_mock):
-    httpx_mock.add_response(
-        url=infomies_client._RBZ_ANIOS[2026], html=_RBZ_2026_HTML
-    )
+    httpx_mock.add_response(url=infomies_client._RBZ_ANIOS[2026], html=_RBZ_2026_HTML)
 
     result = await infomies_client.search_reportes_boletines_zonales(anio=2026)
 

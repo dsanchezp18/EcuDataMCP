@@ -162,7 +162,8 @@ def _search_tool():
 
 def _mock_catalog(httpx_mock, n):
     httpx_mock.add_response(
-        url=f"{BASE}/api/catalog?ps=50", json={"result": {"found": str(n), "rows": [_row(i) for i in range(1, n + 1)]}}
+        url=f"{BASE}/api/catalog?ps=50",
+        json={"result": {"found": str(n), "rows": [_row(i) for i in range(1, n + 1)]}},
     )
 
 

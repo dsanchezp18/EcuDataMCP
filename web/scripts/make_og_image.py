@@ -3,6 +3,7 @@
 Run: uv run --with pillow python web/scripts/make_og_image.py
 Fonts are system fonts (no network); candidates are tried in order.
 """
+
 import json
 from pathlib import Path
 
@@ -41,20 +42,41 @@ def main():
     img = Image.new("RGB", (1200, 630), BG)
     d = ImageDraw.Draw(img)
 
-    d.text((80, 100), "UNA CAPA DE CONTEXTO PARA DATOS ABIERTOS DE ECUADOR",
-           font=font(MONO, 20), fill=AMBER, anchor="lm")
+    d.text(
+        (80, 100),
+        "UNA CAPA DE CONTEXTO PARA DATOS ABIERTOS DE ECUADOR",
+        font=font(MONO, 20),
+        fill=AMBER,
+        anchor="lm",
+    )
     big = font(SANS_BOLD, 66)
     d.text((80, 198), "Explora datos", font=big, fill=WHITE, anchor="lm")
     d.text((80, 281), "abiertos.", font=big, fill=AMBER, anchor="lm")
     sub = font(SANS, 28)
-    d.text((80, 362), "Conecta tu asistente de IA a datasets, trámites,", font=sub, fill=MUTED, anchor="lm")
-    d.text((80, 404), "contratos públicos, riesgos y compañías de Ecuador.", font=sub, fill=MUTED, anchor="lm")
+    d.text(
+        (80, 362),
+        "Conecta tu asistente de IA a datasets, trámites,",
+        font=sub,
+        fill=MUTED,
+        anchor="lm",
+    )
+    d.text(
+        (80, 404),
+        "contratos públicos, riesgos y compañías de Ecuador.",
+        font=sub,
+        fill=MUTED,
+        anchor="lm",
+    )
 
     for x, y in [(1100, 50), (1020, 90), (1100, 130)]:
         d.ellipse((x - 7, y - 7, x + 7, y + 7), fill=AMBER)
 
-    stats = [(str(n_tools), "tools MCP"), (str(n_sources), "fuentes"),
-             (str(n_inst), "instituciones"), ("0", "API keys")]
+    stats = [
+        (str(n_tools), "tools MCP"),
+        (str(n_sources), "fuentes"),
+        (str(n_inst), "instituciones"),
+        ("0", "API keys"),
+    ]
     num_f, lab_f = font(MONO_BOLD, 38), font(MONO, 22)
     x = 80
     for i, (num, label) in enumerate(stats):

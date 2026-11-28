@@ -116,9 +116,7 @@ def _parse_entries(page_html: str) -> list[dict[str, str]]:
         label = _clean(m.group(2))
         if not label:
             continue
-        entries.append(
-            {"anio": current_year, "label": label, "url": url, "format": "PDF"}
-        )
+        entries.append({"anio": current_year, "label": label, "url": url, "format": "PDF"})
     return entries
 
 
@@ -218,11 +216,37 @@ _SERIES_MIME = (
 # yearly ones included) without paging all ~4,000 files.
 _SERIES_PAGES = 10
 _CODE_RE = re.compile(r"^(\d+(?:[.-]\d+)*)\.?[-_]")
-_NAMED_SERIES = {"informe_series_tel_fija": "Informe series de telefonía fija", "indice_de_valor_agregado_parroquial": "Índice de Valor Agregado Parroquial (IVAP)"}
+_NAMED_SERIES = {
+    "informe_series_tel_fija": "Informe series de telefonía fija",
+    "indice_de_valor_agregado_parroquial": "Índice de Valor Agregado Parroquial (IVAP)",
+}
 _MONTH_TOKENS = {
-    "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
-    "septiembre", "setiembre", "octubre", "noviembre", "diciembre",
-    "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic", "mes",
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "setiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+    "ene",
+    "feb",
+    "mar",
+    "abr",
+    "may",
+    "jun",
+    "jul",
+    "ago",
+    "sep",
+    "oct",
+    "nov",
+    "dic",
+    "mes",
 }
 _series_cache = TtlCache(ttl_seconds=21600.0, max_entries=1, persist="arcotel_series")
 _SERIES_CODE_RE = re.compile(r"\d{1,2}(\.\d{1,2}){1,2}")
@@ -235,7 +259,7 @@ def series_key(filename: str) -> tuple[str, str] | None:
     match = _CODE_RE.match(stem)
     if match:
         code = match.group(1).replace("-", ".").strip(".")
-        rest = stem[match.end():]
+        rest = stem[match.end() :]
     else:
         lowered = stem.lower().replace("-", "_")
         named = next((k for k in _NAMED_SERIES if lowered.startswith(k)), None)
@@ -245,7 +269,11 @@ def series_key(filename: str) -> tuple[str, str] | None:
     words = []
     for token in re.split(r"[-_\s]+", rest):
         low = _strip(token)
-        if not token or low in _MONTH_TOKENS or re.fullmatch(r"(19|20)\d\d|v\d+|f|\d{1,2}|\d{6,8}", low):
+        if (
+            not token
+            or low in _MONTH_TOKENS
+            or re.fullmatch(r"(19|20)\d\d|v\d+|f|\d{1,2}|\d{6,8}", low)
+        ):
             if low in _MONTH_TOKENS or re.fullmatch(r"(19|20)\d\d", low):
                 break
             continue
@@ -298,7 +326,9 @@ async def _fetch_series_fresh() -> list[dict[str, Any]]:
         query = urlencode(
             {"mime_type": mime, "per_page": 100, "page": n, "_fields": "date,source_url"}
         )
-        raw, truncated = await download_bytes(f"{_MEDIA_URL}?{query}", raise_for_status=frozenset({400}))
+        raw, truncated = await download_bytes(
+            f"{_MEDIA_URL}?{query}", raise_for_status=frozenset({400})
+        )
         if truncated:
             raise ValueError("La API de medios de ARCOTEL superó el límite de descarga.")
         data = _json.loads(raw.decode("utf-8", errors="replace"))

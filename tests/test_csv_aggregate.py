@@ -118,7 +118,10 @@ def test_no_group_by_gives_one_total_row():
     result = _agg(_PIPE, sum_columns=["TOTAL_COMPRAS"])
 
     assert result["grupos"] == 1
-    assert result["rows"][0][:2] == [5, pytest.approx(1036053994.91 + 50.25 + 1191057.13 + 2747.51 + 180174.85)]
+    assert result["rows"][0][:2] == [
+        5,
+        pytest.approx(1036053994.91 + 50.25 + 1191057.13 + 2747.51 + 180174.85),
+    ]
 
 
 def test_no_group_and_no_sum_only_counts_rows():
@@ -385,10 +388,14 @@ async def test_tool_text_shows_the_table_the_totals_and_the_warnings(httpx_mock)
     httpx_mock.add_response(url=URL, content=raw)
 
     text = (
-        await _server().call_tool(
-            "aggregate_csv", {"url": URL, "group_by": "g", "sum_columns": "v"}
+        (
+            await _server().call_tool(
+                "aggregate_csv", {"url": URL, "group_by": "g", "sum_columns": "v"}
+            )
         )
-    ).content[0].text
+        .content[0]
+        .text
+    )
 
     assert "Filas leídas: 3" in text
     assert "Celdas vacías" in text

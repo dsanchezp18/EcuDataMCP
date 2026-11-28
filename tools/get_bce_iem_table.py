@@ -61,9 +61,7 @@ def register_get_bce_iem_table_tool(mcp: MCPServer) -> None:
         """
         rows = min(max(rows, 1), 100)
         try:
-            result = await bce_iem_client.get_table(
-                table_id, desde, hasta, rows, boletin_numero
-            )
+            result = await bce_iem_client.get_table(table_id, desde, hasta, rows, boletin_numero)
         except Exception as exc:
             logger.exception("get_bce_iem_table failed (table_id=%r)", table_id)
             raise ToolError(f"Error al leer la tabla {table_id!r} del IEM del BCE: {exc}") from exc
@@ -81,16 +79,14 @@ def register_get_bce_iem_table_tool(mcp: MCPServer) -> None:
                 parts.append("Períodos: " + ", ".join(data["periodos"]))
                 if data["formato"] == "series_matriz":
                     parts.append(
-                        "Columnas descriptivas: "
-                        + " | ".join(data["columnas_descriptivas"])
+                        "Columnas descriptivas: " + " | ".join(data["columnas_descriptivas"])
                     )
                 parts.append("")
                 for block in data["bloques"]:
                     parts.append(block["unidad"])
                     for series in block["series"]:
                         values = " | ".join(
-                            f"{period}: {value}"
-                            for period, value in series["valores"].items()
+                            f"{period}: {value}" for period, value in series["valores"].items()
                         )
                         parts.append(f"{series['nombre']}: {values}")
                     if block["truncada"]:
@@ -103,9 +99,7 @@ def register_get_bce_iem_table_tool(mcp: MCPServer) -> None:
                 for row in data["filas"]:
                     parts.append(" | ".join(row))
                 if data["truncada"]:
-                    parts.append(
-                        f"[Vista truncada: {data['filas_totales']} filas coincidentes]"
-                    )
+                    parts.append(f"[Vista truncada: {data['filas_totales']} filas coincidentes]")
                 return "\n".join(parts)
 
             for sheet in data["hojas"]:
@@ -125,14 +119,19 @@ def register_get_bce_iem_table_tool(mcp: MCPServer) -> None:
             freshness="archivo_oficial_del_boletin",
             schema_name="bce_iem_tabla_v1",
             schema_fields=[
-                "tabla", "formato", "periodos", "bloques", "encabezados", "filas", "hojas",
+                "tabla",
+                "formato",
+                "periodos",
+                "bloques",
+                "encabezados",
+                "filas",
+                "hojas",
             ],
             published_at=(
                 f"{table.get('boletin_anio')}-{table.get('boletin_mes'):02d}"
-                if table.get("boletin_anio") and table.get("boletin_mes") else None
+                if table.get("boletin_anio") and table.get("boletin_mes")
+                else None
             ),
-            cutoff=(
-                ", ".join(result.get("periodos") or []) or None
-            ),
+            cutoff=(", ".join(result.get("periodos") or []) or None),
         )
         return render_structured(result, format, text_builder=to_text)

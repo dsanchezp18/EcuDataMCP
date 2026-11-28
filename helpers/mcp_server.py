@@ -89,7 +89,9 @@ def param_descriptions(doc: str) -> dict[str, str]:
             found[current] = [param["text"]]
         elif current and line.startswith(" " * 8):
             found[current].append(line.strip())
-    return {name: _first_sentence(" ".join(parts)) for name, parts in found.items() if "".join(parts)}
+    return {
+        name: _first_sentence(" ".join(parts)) for name, parts in found.items() if "".join(parts)
+    }
 
 
 def document_parameters(schema: dict[str, Any], doc: str) -> dict[str, Any]:

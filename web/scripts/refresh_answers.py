@@ -83,9 +83,7 @@ ROMAN_QUARTER = {"I": 1, "II": 2, "III": 3, "IV": 4}
 
 
 def strip_accents(text: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn"
-    )
+    return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
 
 
 def norm(text: str) -> str:
@@ -143,7 +141,20 @@ def join_list(items: list[str], lang: str, conj: dict[str, str], oxford: bool = 
 
 
 SMALL_WORDS = {"de", "del", "la", "las", "el", "los", "y", "e", "en", "a", "al", "o", "para"}
-KEEP_UPPER = {"IESS", "EP", "EPA", "ECU", "CNEL", "MSP", "SRI", "GAD", "S.A.", "C.A.", "CIA.", "LTDA."}
+KEEP_UPPER = {
+    "IESS",
+    "EP",
+    "EPA",
+    "ECU",
+    "CNEL",
+    "MSP",
+    "SRI",
+    "GAD",
+    "S.A.",
+    "C.A.",
+    "CIA.",
+    "LTDA.",
+}
 
 
 # Source names come unaccented and in capitals; restore accents for words we have seen.
@@ -166,7 +177,9 @@ def smart_title(text: str) -> str:
         out = w[:1].upper() + w[1:].lower()
         if i > 0 and core.lower() in SMALL_WORDS:
             out = w.lower()
-        words.append(re.sub(r"[A-Za-zÁÉÍÓÚáéíóúñ]+", lambda m: WORD_FIXES.get(m.group(0), m.group(0)), out))
+        words.append(
+            re.sub(r"[A-Za-zÁÉÍÓÚáéíóúñ]+", lambda m: WORD_FIXES.get(m.group(0), m.group(0)), out)
+        )
     return " ".join(words)
 
 
@@ -319,7 +332,9 @@ _CHANNELS = {
 
 
 def _passport_parts(f: dict, lang: str) -> tuple[str, str, str]:
-    chans = join_list([_CHANNELS[lang][c] for c in f["channels"]], lang, {"es": "o", "en": "or"}, True)
+    chans = join_list(
+        [_CHANNELS[lang][c] for c in f["channels"]], lang, {"es": "o", "en": "or"}, True
+    )
     cities = join_list(f["cities"], lang, {"es": "y", "en": "and"})
     return chans, cities, f"{f['hours'][0]} to {f['hours'][1]}"
 
@@ -350,9 +365,13 @@ def transcript_pasaporte(f: dict, lang: str, steps: list[dict]) -> None:
     s1 = find_step(steps, "call", "search_tramites")
     n = f["n_tramites"]
     if lang == "es":
-        s1["result"] = f"{n} trámites" + (" · mayores y menores de 18 años" if f["has_minors"] else "")
+        s1["result"] = f"{n} trámites" + (
+            " · mayores y menores de 18 años" if f["has_minors"] else ""
+        )
     else:
-        s1["result"] = f"{n} procedures" + (" · adults and minors under 18" if f["has_minors"] else "")
+        s1["result"] = f"{n} procedures" + (
+            " · adults and minors under 18" if f["has_minors"] else ""
+        )
     find_step(steps, "call", "get_tramite_info")["args"] = f'tramite_id="{f["tramite_id"]}"'
     if lang == "es":
         prev = " y, si renuevas, el pasaporte anterior" if f["renewal_previous"] else ""
@@ -443,7 +462,9 @@ async def fetch_sismos(call: Caller, ctx: Ctx) -> dict:
         raise RefreshError("search_sismos returned no 'events' field")
     total = int(data.get("total", len(events)))
     if total > len(events):
-        raise RefreshError(f"only {len(events)} of {total} events returned; strongest may be missing")
+        raise RefreshError(
+            f"only {len(events)} of {total} events returned; strongest may be missing"
+        )
     inside = [e for e in events if sismo_in_ecuador(e)]
     inside.sort(key=lambda e: (-float(e["magnitud"]), e["tiempo_utc"]))
     return {
@@ -482,7 +503,11 @@ def render_sismos(f: dict, lang: str, *, bold: bool = False) -> dict:
             if s["distancia"]
             else f"cerca de {s['lugar']}"
         )
-        lead = "El más fuerte en Ecuador fue de" if bold else "El más fuerte en territorio ecuatoriano fue de"
+        lead = (
+            "El más fuerte en Ecuador fue de"
+            if bold
+            else "El más fuerte en territorio ecuatoriano fue de"
+        )
         text = (
             f"{lead} {mag_txt}, {where}, el {fmt_day_month(d, lang)} a las {s['hora']}, "
             f"a {depth} km de profundidad."
@@ -498,7 +523,11 @@ def render_sismos(f: dict, lang: str, *, bold: bool = False) -> dict:
             if s["distancia"]
             else f"near {s['lugar']}"
         )
-        lead = "The strongest in Ecuador was" if bold else "The strongest within Ecuadorian territory was"
+        lead = (
+            "The strongest in Ecuador was"
+            if bold
+            else "The strongest within Ecuadorian territory was"
+        )
         text = (
             f"{lead} {mag_txt}, {where}, on {fmt_day_month(d, lang)} at {s['hora']}, "
             f"at a depth of {depth} km."
@@ -510,10 +539,9 @@ def render_sismos(f: dict, lang: str, *, bold: bool = False) -> dict:
 
 def transcript_sismos(f: dict, lang: str, steps: list[dict]) -> None:
     n = f["total"]
-    find_step(steps, "call", "search_sismos")["result"] = (
-        count_label(n, lang, "evento", "eventos", "event", "events")
-        + (" · catálogo IG-EPN" if lang == "es" else " · IG-EPN catalog")
-    )
+    find_step(steps, "call", "search_sismos")["result"] = count_label(
+        n, lang, "evento", "eventos", "event", "events"
+    ) + (" · catálogo IG-EPN" if lang == "es" else " · IG-EPN catalog")
     ans = find_step(steps, "answer")
     ans["text"] = render_sismos(f, lang, bold=True)["answer"]
     s = f["strongest"]
@@ -616,7 +644,10 @@ FAVORITA_RUC = "1790016919001"
 COMPANY_TYPES = {  # source value -> (ES, EN)
     "ANONIMA": ("Sociedad anónima", "corporation (sociedad anónima)"),
     "LIMITADA": ("Compañía limitada", "limited company (compañía limitada)"),
-    "ECONOMIA MIXTA": ("Compañía de economía mixta", "mixed-economy company (compañía de economía mixta)"),
+    "ECONOMIA MIXTA": (
+        "Compañía de economía mixta",
+        "mixed-economy company (compañía de economía mixta)",
+    ),
 }
 COMPANY_STATUS = {
     "ACTIVA": ("activa", "Active"),
@@ -784,13 +815,15 @@ def render_compras(f: dict, lang: str) -> dict:
 # --------------------------------------------------------------------------
 
 _FECHA = re.compile(r"(\d{1,2})\s*-\s*([a-záéíóúñ]+)\s*-\s*(\d{4})", re.IGNORECASE)
+
+
 def sector_label(raw: str, lang: str) -> str:
     """'BARRIO LA LIBERTAD ... PARROQUIA: PUYO' -> 'barrio La Libertad (Puyo)'."""
     t = re.sub(r"^SECTORES?:\s*", "", (raw or "").strip(), flags=re.IGNORECASE).rstrip(".")
     barrio = re.search(r"BARRIO\s+(.+?)(?:\s+DEL\s+CANT[ÓO]N|,|$)", t, re.IGNORECASE)
-    area = re.search(r"PARROQUIA:?\s+(.+?)(?:\s+DEL\s+CANT[ÓO]N|,|$)", t, re.IGNORECASE) or re.search(
-        r"CANT[ÓO]N:?\s+(.+?)(?:,|$)", t, re.IGNORECASE
-    )
+    area = re.search(
+        r"PARROQUIA:?\s+(.+?)(?:\s+DEL\s+CANT[ÓO]N|,|$)", t, re.IGNORECASE
+    ) or re.search(r"CANT[ÓO]N:?\s+(.+?)(?:,|$)", t, re.IGNORECASE)
     if barrio:
         name = smart_title(barrio.group(1))
         where = f" ({smart_title(area.group(1))})" if area else ""
@@ -816,7 +849,9 @@ def _notice_when(row: dict) -> tuple[date, datetime | None, str] | None:
 
 async def fetch_cortes(call: Caller, ctx: Ctx) -> dict:
     search = await call("search_cortes", distribuidora="eeasa")
-    if not any(a.get("archivo") == "vigentes" for a in search.get("archivos") or []) and search.get("total"):
+    if not any(a.get("archivo") == "vigentes" for a in search.get("archivos") or []) and search.get(
+        "total"
+    ):
         raise RefreshError("search_cortes lists notices but no 'vigentes' file")
     if not search.get("total"):
         return {"count": 0, "examples": [], "url": search.get("url_fuente")}
@@ -866,7 +901,11 @@ def render_cortes(f: dict, lang: str) -> dict:
         wd = WEEKDAYS[lang][d.weekday()]
         where = sector_label(ex["sectores"], lang)
         if lang == "es":
-            day = f"{wd} {d.day}" if prev and (prev.month, prev.year) == (d.month, d.year) else f"{wd} {fmt_day_month(d, lang)}"
+            day = (
+                f"{wd} {d.day}"
+                if prev and (prev.month, prev.year) == (d.month, d.year)
+                else f"{wd} {fmt_day_month(d, lang)}"
+            )
             span = f"de {a} a {b}"
             more = " (más tramos ese día)" if extra else ""
             where_es = f"el {where}" if where.startswith("barrio") else where

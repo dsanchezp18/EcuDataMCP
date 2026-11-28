@@ -30,9 +30,19 @@ _PER_PAGE = 100
 _MAX_PAGES = 5
 
 _MESES = {
-    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
-    "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
-    "noviembre": 11, "diciembre": 12,
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "setiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
 }
 _PERIOD_RE = re.compile(r"(" + "|".join(_MESES) + r")[\s_-]*(20\d\d)")
 
@@ -92,7 +102,9 @@ async def _fetch_boletines_fresh() -> list[dict[str, Any]]:
         )
         raw, truncated = await download_bytes(f"{_MEDIA_URL}?{query}")
         if truncated:
-            raise ValueError("La respuesta de la API de medios de produccion.gob.ec superó el límite.")
+            raise ValueError(
+                "La respuesta de la API de medios de produccion.gob.ec superó el límite."
+            )
         batch = json.loads(raw.decode("utf-8", errors="replace"))
         if not isinstance(batch, list):
             raise TypeError("La API de medios de produccion.gob.ec devolvió un formato inesperado.")

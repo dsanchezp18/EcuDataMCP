@@ -19,7 +19,7 @@ def register_download_resource_tool(mcp: MCPServer) -> None:
         title="Descargar el archivo crudo de un recurso",
         description=(
             "Raw bytes of a CKAN resource, base64-encoded, for formats the preview "
-            "can't parse. Max 5 MB. Use format=\"json\"; text only confirms the "
+            'can\'t parse. Max 5 MB. Use format="json"; text only confirms the '
             "download."
         ),
         annotations=READ_ONLY,

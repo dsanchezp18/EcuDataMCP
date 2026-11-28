@@ -54,7 +54,9 @@ async def search_indicadores(query: str = "", limit: int = 30) -> dict[str, Any]
     """Search the GHO indicator catalog by code or name."""
     catalog = await _fetch_catalog()
     q = _strip(query)
-    matched = [i for i in catalog if not q or q in _strip(i["indicador"]) or q in _strip(i["nombre"])]
+    matched = [
+        i for i in catalog if not q or q in _strip(i["indicador"]) or q in _strip(i["nombre"])
+    ]
     return {
         "total": len(matched),
         "total_catalogo": len(catalog),

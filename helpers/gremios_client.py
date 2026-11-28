@@ -35,7 +35,9 @@ _DRIVE_RE = re.compile(
 )
 _SDM_TITLE_RE = re.compile(r'class="sdm_download_title">(.*?)</div>', re.DOTALL)
 _SDM_LINK_RE = re.compile(r'href="([^"]*sdm_process_download=1[^"]*download_id=(\d+)[^"]*)"')
-_PDF_LINK_RE = re.compile(r'href="(https://www\.aeade\.net/wp-content/uploads/[^"]+\.pdf)"', re.IGNORECASE)
+_PDF_LINK_RE = re.compile(
+    r'href="(https://www\.aeade\.net/wp-content/uploads/[^"]+\.pdf)"', re.IGNORECASE
+)
 
 _cache = TtlCache(ttl_seconds=21600.0, max_entries=4, persist="gremios")
 
@@ -108,7 +110,14 @@ def parse_aeade_anuarios(page: str) -> list[dict[str, Any]]:
         if "anuario" not in name.lower():
             continue  # the page also links the association's statutes
         items.append(
-            _with_period({"titulo": name.rsplit(".", 1)[0].replace("-", " ").replace("_", " "), "url": url, "formato": "PDF", "tipo": "anuario"})
+            _with_period(
+                {
+                    "titulo": name.rsplit(".", 1)[0].replace("-", " ").replace("_", " "),
+                    "url": url,
+                    "formato": "PDF",
+                    "tipo": "anuario",
+                }
+            )
         )
     return items
 
@@ -141,7 +150,11 @@ def _filter(items: list[dict[str, Any]], query: str) -> list[dict[str, Any]]:
     ordered = sorted(items, key=lambda i: i.get("periodo") or "", reverse=True)
     if not q:
         return ordered
-    return [i for i in ordered if q in strip_accents(f"{i['titulo']} {i.get('periodo') or ''} {i.get('tipo') or ''}")]
+    return [
+        i
+        for i in ordered
+        if q in strip_accents(f"{i['titulo']} {i.get('periodo') or ''} {i.get('tipo') or ''}")
+    ]
 
 
 async def search_expordata(query: str = "") -> dict[str, Any]:

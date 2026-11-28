@@ -103,9 +103,7 @@ def parse_date(value: str, *, end: bool) -> date:
             raise ValueError(value)
         return date(year, month, day)
     except ValueError as exc:
-        raise ValueError(
-            f"Fecha '{value}' no válida; usa AAAA, AAAA-MM o AAAA-MM-DD."
-        ) from exc
+        raise ValueError(f"Fecha '{value}' no válida; usa AAAA, AAAA-MM o AAAA-MM-DD.") from exc
 
 
 def resolve_period(desde: str, hasta: str, frecuencia: str) -> tuple[date, date]:
@@ -170,12 +168,18 @@ def build_rows(
         year, month = int(key[:4]), int(key[4:6])
         day = int(key[6:8]) if frecuencia == "diaria" else 1
         period_start = date(year, month, day)
-        period_end = date(year, month, day) if frecuencia == "diaria" else date(
-            year, month, calendar.monthrange(year, month)[1]
+        period_end = (
+            date(year, month, day)
+            if frecuencia == "diaria"
+            else date(year, month, calendar.monthrange(year, month)[1])
         )
         if period_end < start or period_start > stop:
             continue
-        label = f"{key[:4]}-{key[4:6]}-{key[6:8]}" if frecuencia == "diaria" else f"{key[:4]}-{key[4:6]}"
+        label = (
+            f"{key[:4]}-{key[4:6]}-{key[6:8]}"
+            if frecuencia == "diaria"
+            else f"{key[:4]}-{key[4:6]}"
+        )
         row: dict[str, Any] = {"periodo": label}
         for clave in claves:
             row[clave] = _value(parameter.get(VARIABLES[clave][0], {}).get(key))
@@ -208,7 +212,9 @@ def summarize(rows: list[dict[str, Any]], claves: list[str], frecuencia: str) ->
                     for r in rows
                     if r["lluvia"] is not None
                 ]
-                item["acumulado_mm"] = round(sum(v * d for v, d in zip(values, days, strict=True)), 1)
+                item["acumulado_mm"] = round(
+                    sum(v * d for v, d in zip(values, days, strict=True)), 1
+                )
         summary[clave] = item
     return summary
 
@@ -229,7 +235,9 @@ async def _fetch_fresh(url: str) -> dict[str, Any]:
         return cached
     raw, truncated = await download_bytes(url, raise_for_status=frozenset({422}))
     if truncated:
-        raise ValueError("La respuesta de NASA POWER superó el límite de descarga; acota el período.")
+        raise ValueError(
+            "La respuesta de NASA POWER superó el límite de descarga; acota el período."
+        )
     try:
         payload = json.loads(raw.decode("utf-8", errors="replace"))
     except json.JSONDecodeError as exc:
@@ -281,7 +289,14 @@ async def get_clima(
         "format": "JSON",
     }
     url = f"{_API}/{'daily' if daily else 'monthly'}/point?" + urlencode(query)
-    logger.info("Consultando NASA POWER %s en %.3f,%.3f (%s a %s)", frecuencia, latitud, longitud, start, stop)
+    logger.info(
+        "Consultando NASA POWER %s en %.3f,%.3f (%s a %s)",
+        frecuencia,
+        latitud,
+        longitud,
+        start,
+        stop,
+    )
     payload = await _fetch(url)
 
     parameter = (payload.get("properties") or {}).get("parameter") or {}
@@ -305,7 +320,12 @@ async def get_clima(
         "hasta": stop.isoformat(),
         "ultimo_periodo_con_dato": last,
         "variables": [
-            {"clave": c, "parametro": VARIABLES[c][0], "nombre": VARIABLES[c][2], "unidad": VARIABLES[c][1]}
+            {
+                "clave": c,
+                "parametro": VARIABLES[c][0],
+                "nombre": VARIABLES[c][2],
+                "unidad": VARIABLES[c][1],
+            }
             for c in claves
         ],
         "total_registros": len(rows),

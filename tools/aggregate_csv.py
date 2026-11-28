@@ -136,9 +136,7 @@ def register_aggregate_csv_tool(mcp: MCPServer) -> None:
             )
         except UnsafeUrlError as e:
             logger.warning("aggregate_csv rechazó la URL %s: %s", url, e)
-            raise ToolError(
-                "URL rechazada por seguridad: el destino no es público"
-            ) from e
+            raise ToolError("URL rechazada por seguridad: el destino no es público") from e
         except ValueError as e:
             raise ToolError(str(e)) from e
         except Exception as e:

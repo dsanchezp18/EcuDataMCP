@@ -148,11 +148,7 @@ def register_search_anda_tool(mcp: MCPServer) -> None:
                     **anda_client.access_summary(
                         r, accesses.get(str(r.get("id"))) if modo != "no" else None
                     ),
-                    **(
-                        {"nota_acceso": _UNVERIFIED_HINT}
-                        if str(r.get("id")) in unverified
-                        else {}
-                    ),
+                    **({"nota_acceso": _UNVERIFIED_HINT} if str(r.get("id")) in unverified else {}),
                     "url": r.get("url"),
                 }
                 for r in shown
