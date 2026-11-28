@@ -22,7 +22,7 @@ import itertools
 import json
 import time
 from collections import defaultdict
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from urllib.parse import urlsplit
@@ -34,6 +34,7 @@ from helpers.csv_reader import (
     iter_zip_member,
     locate_zip_member,
     run_parser_off_loop,
+    zip_work_slots,
 )
 from helpers.text_utils import strip_accents
 
@@ -131,6 +132,43 @@ def _detect_encoding(raw: bytes) -> str:
     return "utf-8-sig"
 
 
+def _aggregate_decoded(
+    open_binary: Callable[[], io.BufferedIOBase],
+    encoding: str,
+    *,
+    deadline_seconds: float | None = None,
+    **options: Any,
+) -> dict[str, Any]:
+    """aggregate_stream, read again as Windows-1252 when the file is not UTF-8.
+
+    The head decides the first guess, but a Windows-1252 file can be plain
+    ASCII for its first 64 KB and name "CAÑAR" after that. Decoded as UTF-8
+    with replacement, that group came back as "CA�AR" and a filter on
+    "CAÑAR" matched nothing, so UTF-8 is read strictly and the first byte that
+    is not UTF-8 starts the read over. Both reads share one time limit.
+    """
+    if encoding == "cp1252":
+        return aggregate_stream(
+            open_binary(), encoding=encoding, deadline_seconds=deadline_seconds, **options
+        )
+    started = time.monotonic()
+    try:
+        return aggregate_stream(
+            open_binary(),
+            encoding=encoding,
+            errors="strict",
+            deadline_seconds=deadline_seconds,
+            **options,
+        )
+    except UnicodeDecodeError:
+        left = None if deadline_seconds is None else deadline_seconds - (
+            time.monotonic() - started
+        )
+        return aggregate_stream(
+            open_binary(), encoding="cp1252", deadline_seconds=left, **options
+        )
+
+
 def _pick_delimiter(header_line: str) -> str:
     best = max(_DELIMITERS, key=header_line.count)
     return best if header_line.count(best) else ","
@@ -162,9 +200,9 @@ def aggregate_bytes(
     skip_rows: int = 0,
 ) -> dict[str, Any]:
     """Group the rows of a delimited text file held in memory; see `aggregate_stream`."""
-    return aggregate_stream(
-        io.BytesIO(raw),
-        encoding=_detect_encoding(raw),
+    return _aggregate_decoded(
+        lambda: io.BytesIO(raw),
+        _detect_encoding(raw),
         group_by=group_by,
         sum_columns=sum_columns,
         filters=filters,
@@ -185,6 +223,7 @@ def aggregate_stream(
     limit: int = 50,
     skip_rows: int = 0,
     deadline_seconds: float | None = None,
+    errors: str = "replace",
 ) -> dict[str, Any]:
     """Group the rows of a delimited text file and total its numeric columns.
 
@@ -193,10 +232,11 @@ def aggregate_stream(
     the first line after `skip_rows` physical lines. Blank cells and cells that
     are not numbers are left out of the totals and counted in the result.
     `deadline_seconds` stops a read that takes longer, for a file too big to
-    finish in a reasonable time.
+    finish in a reasonable time. `errors="strict"` raises UnicodeDecodeError on
+    a byte that is not `encoding` instead of replacing it.
     """
     deadline = None if deadline_seconds is None else time.monotonic() + deadline_seconds
-    stream = io.TextIOWrapper(binary, encoding=encoding, errors="replace", newline="")
+    stream = io.TextIOWrapper(binary, encoding=encoding, errors=errors, newline="")
     for _ in range(max(skip_rows, 0)):
         stream.readline()
     header_line = stream.readline()
@@ -378,12 +418,15 @@ def aggregate_span(
 
     Blocking: run it in a thread. Nothing but the group totals is kept.
     """
-    binary = io.BufferedReader(
-        _ChunkStream(iter_zip_member(span)), buffer_size=_STREAM_BUFFER_BYTES
-    )
-    return aggregate_stream(
-        binary,
-        encoding=_detect_encoding(binary.peek(65536)[:65536]),
+
+    def open_binary() -> io.BufferedReader:
+        return io.BufferedReader(
+            _ChunkStream(iter_zip_member(span)), buffer_size=_STREAM_BUFFER_BYTES
+        )
+
+    return _aggregate_decoded(
+        open_binary,
+        _detect_encoding(open_binary().peek(65536)[:65536]),
         group_by=group_by,
         sum_columns=sum_columns,
         filters=filters,
@@ -405,31 +448,34 @@ async def _aggregate_member(
     limit: int,
     skip_rows: int,
 ) -> dict[str, Any]:
-    span = await locate_zip_member(
-        url,
-        member,
-        max_compressed=ZIP_MAX_COMPRESSED_BYTES,
-        max_uncompressed=ZIP_MAX_UNCOMPRESSED_BYTES,
-    )
-    try:
-        result = await asyncio.wait_for(
-            asyncio.to_thread(
-                aggregate_span,
-                span,
-                group_by=group_by,
-                sum_columns=sum_columns,
-                filters=filters,
-                order_by=order_by,
-                limit=limit,
-                skip_rows=skip_rows,
-            ),
-            timeout=ZIP_PARSE_SECONDS + 15,
+    # The member's bytes sit in a temporary file from the download to the end
+    # of the read, so the slot is held for both: two members at a time.
+    async with zip_work_slots("member"):
+        span = await locate_zip_member(
+            url,
+            member,
+            max_compressed=ZIP_MAX_COMPRESSED_BYTES,
+            max_uncompressed=ZIP_MAX_UNCOMPRESSED_BYTES,
         )
-    except TimeoutError as exc:
-        raise ValueError(
-            f"El archivo tardó más de {int(ZIP_PARSE_SECONDS)} s en leerse; es demasiado "
-            "grande para sumarlo aquí."
-        ) from exc
+        try:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    aggregate_span,
+                    span,
+                    group_by=group_by,
+                    sum_columns=sum_columns,
+                    filters=filters,
+                    order_by=order_by,
+                    limit=limit,
+                    skip_rows=skip_rows,
+                ),
+                timeout=ZIP_PARSE_SECONDS + 15,
+            )
+        except TimeoutError as exc:
+            raise ValueError(
+                f"El archivo tardó más de {int(ZIP_PARSE_SECONDS)} s en leerse; es demasiado "
+                "grande para sumarlo aquí."
+            ) from exc
     result["miembro"] = span.name
     result["bytes_leidos"] = span.uncompressed_size
     result["bytes_comprimidos"] = span.compressed_size

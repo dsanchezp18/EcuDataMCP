@@ -43,8 +43,9 @@ def register_list_zip_contents_tool(mcp: MCPServer) -> None:
         Reads only the End Of Central Directory record and the central
         directory via HTTP Range requests, so it works for archives far
         larger than the 5 MB preview_resource_data/download_resource cap -- e.g. INEC
-        or censo microdata ZIPs of multiple hundred MB. Requires the server
-        to honor Range requests; fails with a clear error otherwise. ZIP64
+        or censo microdata ZIPs of multiple hundred MB. A server that ignores
+        Range is handled too: the .zip is downloaded whole (up to 400 MB, held
+        for five minutes), which is slower. ZIP64
         archives (past 4 GB or 65535 entries) are supported. This tool only
         lists metadata; to read one member's rows, pass its name to
         read_zip_member, which fetches only that member's bytes.

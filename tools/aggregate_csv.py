@@ -94,7 +94,10 @@ def register_aggregate_csv_tool(mcp: MCPServer) -> None:
         1252) from the file. Numbers may use a decimal comma ("1234,56") or a
         point; a lone comma is a decimal mark, so "1,234" reads as 1.234. Blank
         cells and cells that are not numbers are left out of the totals and
-        counted in `celdas_vacias` and `celdas_no_numericas`.
+        counted in `celdas_vacias` and `celdas_no_numericas`. A filter value
+        that reads as a number also matches cells equal to it as a number, so
+        "1" matches "01" and a code "0101" also matches "101": filter codes
+        with leading zeros on a text column next to them when both exist.
 
         Example, SRI sales by province in 2025 (search_archivos with
         fuente="sri_datasets" and query="ventas" lists the yearly files):

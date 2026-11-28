@@ -50,8 +50,9 @@ def register_read_zip_member_tool(mcp: MCPServer) -> None:
         preview_resource_data/download_resource (e.g. INEC's tabulados ZIPs).
 
         Limits:
-        - The server must honor HTTP Range (answer 206); otherwise it fails
-          with a clear error.
+        - A server that ignores HTTP Range is handled too: the .zip is
+          downloaded whole (up to 400 MB, held for five minutes), which is
+          slower; a bigger one is refused.
         - CSV/TSV/TXT members of any size are read from their first bytes: the
           output stops at 5 MB decompressed and is marked truncated, and no
           more than 5 MB of the member is downloaded (a 400 MB microdata CSV

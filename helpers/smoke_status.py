@@ -222,6 +222,20 @@ _DEGRADED_SOURCES = (
         "archivos de sri_datasets",
         "readerror",
     ),
+    (
+        # Seen on the runner 2026-11-27 (westus) and 11-28 (eastus2): every call
+        # to the Ministry of Environment's GeoServer ended in a ConnectTimeout,
+        # in both passes, after passing from three other Azure regions on
+        # 11-23, 11-25 and 11-26. From a home connection in Ecuador on 11-28
+        # port 8080 of ide.ambiente.gob.ec did not complete the TCP handshake
+        # (20 s, twice) while port 80 of the same host answered in 0.4 s. The
+        # GeoServer port was down for everyone: an outage, not a geo block, so
+        # it is not in GEOBLOCKED_SOURCES. Any other error from maate (a 4xx, a
+        # layer that is gone, a parse error) stays a failure.
+        "maate_geoserver_down",
+        "de maate:",
+        "connecttimeout",
+    ),
 )
 
 # Sources blocked by country or datacenter IP. Without a LatAm egress

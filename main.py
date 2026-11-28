@@ -6,6 +6,7 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
 from helpers import usage
+from helpers.build_info import get_commit
 from helpers.env_config import (
     get_mcp_auth_token,
     get_mcp_host,
@@ -38,6 +39,7 @@ setup_logging()
 
 SERVER_START_TIME = datetime.now(UTC)
 VERSION = get_version()
+COMMIT = get_commit()
 
 logger = logging.getLogger(MAIN_LOGGER_NAME)
 
@@ -118,6 +120,9 @@ def with_health_endpoint(
                         "status": "ok",
                         "uptime_since": SERVER_START_TIME.isoformat(),
                         "version": VERSION,
+                        # Two hosts can serve the same version from different
+                        # commits; null on an install without a checkout.
+                        "commit": COMMIT,
                         # Tools this host hides on purpose (HIDE_TOOLS /
                         # HIDE_GEOBLOCKED): the smoke test skips them instead
                         # of reporting "Unknown tool" as a regression.

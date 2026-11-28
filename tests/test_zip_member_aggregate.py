@@ -396,3 +396,157 @@ async def test_the_tool_without_member_still_refuses_a_zip_url():
 
     with pytest.raises(Exception, match="member"):
         await server.call_tool("aggregate_csv", {"url": URL})
+
+
+# -- a Windows-1252 file whose first accent comes after the 64 KB head ---------
+
+
+def _late_accent() -> bytes:
+    head = "PROVINCIA,TOTAL\n" + "AZUAY,1\n" * 9000  # about 72 KB of ASCII
+    return (head + "CAÑAR,5\nCAÑAR,7\n").encode("cp1252")
+
+
+def test_a_cp1252_file_with_a_late_accent_keeps_its_group_names():
+    result = csv_aggregate.aggregate_bytes(
+        _late_accent(), group_by=["PROVINCIA"], sum_columns=["TOTAL"], filters={}
+    )
+
+    assert sorted(row[0] for row in result["rows"]) == ["AZUAY", "CAÑAR"]
+    assert result["filas_leidas"] == 9002
+
+
+def test_a_filter_on_an_accented_value_matches_a_late_cp1252_row():
+    result = csv_aggregate.aggregate_bytes(
+        _late_accent(), group_by=[], sum_columns=["TOTAL"], filters={"PROVINCIA": ["CAÑAR"]}
+    )
+
+    assert result["filas_coinciden"] == 2
+    assert result["totales"]["TOTAL"] == 12
+
+
+def test_a_zip_member_in_cp1252_with_a_late_accent_is_read_again():
+    result = csv_aggregate.aggregate_span(
+        _span(_late_accent()), group_by=["PROVINCIA"], sum_columns=["TOTAL"], filters={}
+    )
+
+    assert sorted(row[0] for row in result["rows"]) == ["AZUAY", "CAÑAR"]
+
+
+def test_a_utf8_file_with_a_late_accent_is_still_utf8():
+    raw = _late_accent().decode("cp1252").encode("utf-8")
+
+    result = csv_aggregate.aggregate_bytes(
+        raw, group_by=["PROVINCIA"], sum_columns=["TOTAL"], filters={}
+    )
+
+    assert sorted(row[0] for row in result["rows"]) == ["AZUAY", "CAÑAR"]
+
+
+# -- temporary files: one fetch per member, a ceiling on members in flight ------
+
+
+async def test_two_calls_for_the_same_member_share_one_range_fetch(httpx_mock, monkeypatch):
+    _serve(httpx_mock, _make_zip({MEMBER: _rows(500)}))
+    real_fetch = csv_reader._spool_member_data
+    real_shared = csv_reader._shared_member_spool
+    release = asyncio.Event()
+    fetches = waiting = 0
+
+    # Only a fetch still in flight is shared, so the first one is held until
+    # the second call is waiting on it; a file this small would otherwise be
+    # done before the second call asked.
+    async def held(*args):
+        nonlocal fetches
+        fetches += 1
+        await release.wait()
+        return await real_fetch(*args)
+
+    async def counted(*args):
+        nonlocal waiting
+        waiting += 1
+        return await real_shared(*args)
+
+    monkeypatch.setattr(csv_reader, "_spool_member_data", held)
+    monkeypatch.setattr(csv_reader, "_shared_member_spool", counted)
+
+    calls = [
+        asyncio.ensure_future(
+            csv_reader.locate_zip_member(
+                URL, MEMBER, max_compressed=10**9, max_uncompressed=10**9
+            )
+        )
+        for _ in range(2)
+    ]
+    while waiting < 2:
+        await asyncio.sleep(0.01)
+    release.set()
+    first, second = await asyncio.gather(*calls)
+
+    assert fetches == 1
+    assert first.source is second.source
+    assert csv_reader._spools_in_flight == {}
+    # Each call reads the directory and the local header; the data comes once.
+    assert len(httpx_mock.get_requests()) == 5
+
+
+async def test_a_failed_member_fetch_is_not_kept_for_the_next_call(httpx_mock, monkeypatch):
+    _serve(httpx_mock, _make_zip({MEMBER: _rows(500)}))
+    real = csv_reader._spool_member_data
+    calls = 0
+
+    async def fails_once(*args):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise ValueError("El .zip está corrupto (datos incompletos).")
+        return await real(*args)
+
+    monkeypatch.setattr(csv_reader, "_spool_member_data", fails_once)
+
+    with pytest.raises(ValueError, match="corrupto"):
+        await _aggregate()
+    result = await _aggregate()
+
+    assert result["filas_leidas"] == 500
+
+
+async def test_only_as_many_members_are_summed_at_once_as_there_are_slots(httpx_mock, monkeypatch):
+    monkeypatch.setattr(csv_reader, "ZIP_WORK_SLOTS", 1)
+    _serve(httpx_mock, _make_zip({MEMBER: _rows(500)}))
+    real = csv_aggregate.aggregate_span
+    active = most = 0
+
+    def counted(span, **kwargs):
+        nonlocal active, most
+        active += 1
+        most = max(most, active)
+        try:
+            return real(span, **kwargs)
+        finally:
+            active -= 1
+
+    monkeypatch.setattr(csv_aggregate, "aggregate_span", counted)
+
+    results = await asyncio.gather(
+        _aggregate(group_by=["PROVINCIA"]), _aggregate(group_by=["ESTADO"]), _aggregate(group_by=[])
+    )
+
+    assert most == 1
+    assert [r["filas_leidas"] for r in results] == [500, 500, 500]
+
+
+def test_range_reads_start_with_the_legacy_cipher_client_on_hosts_that_need_it(monkeypatch):
+    built: list[object] = []
+    real = httpx.AsyncClient
+
+    def spy(*args, **kwargs):
+        built.append(kwargs.get("verify"))
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(csv_reader.httpx, "AsyncClient", spy)
+
+    csv_reader._plain_client("https://info.desarrollohumano.gob.ec/x.zip")
+    csv_reader._plain_client("https://example.com/x.zip")
+
+    assert not isinstance(built[0], bool)  # an SSLContext at SECLEVEL=1
+    assert built[1] is True

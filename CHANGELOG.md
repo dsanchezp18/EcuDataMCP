@@ -1,5 +1,50 @@
 # Changelog
 
+## Unreleased
+
+88 tools in the default profile (none new). Fixes from a review of 0.15.3.
+
+- **`aggregate_csv` no longer misreads a Windows-1252 file whose first accented
+  character comes after the first 64 KB.** The encoding was decided on the head
+  of the file and the rest was decoded as UTF-8 with invalid bytes replaced, so
+  a file with 72 KB of ASCII rows and then `CAÑAR` returned the group
+  `CA\ufffdAR`, and a filter on `CAÑAR` matched none of its rows, without a
+  warning. UTF-8 is now read strictly and the first byte that is not UTF-8
+  starts the read over as Windows-1252, inside the same time limit; a zip
+  member is decompressed again from its temporary file.
+- **Temporary files for big .zips have a ceiling.** On a host that honors Range,
+  two simultaneous calls for the same member downloaded it twice, and eight
+  concurrent requests could each hold a 300 or 400 MB file. Calls for the same
+  member now share one download, at most two members are summed at a time and
+  at most two whole-zip downloads run at a time; the rest wait their turn.
+- **Temporary-file reads and writes no longer run on the event loop.** A whole
+  download is handed to its file about 1 MB at a time in a worker thread, and
+  slices of a .zip that is on disk are read in one, so a 400 MB download does
+  not hold up other requests.
+- **`/health` reports the commit.** Two servers on the same version can run
+  different commits (the hosted instances follow a branch and one is updated by
+  hand). `commit` comes from `ECUADOR_MCP_COMMIT`, Render's `RENDER_GIT_COMMIT`
+  or `git rev-parse HEAD`, and is `null` on an install without a checkout.
+- **Range reads use the legacy-cipher TLS client on the hosts that need it**, as
+  whole downloads already did, so a .zip on such a host is not refused at the
+  handshake.
+- **`get_clima_nasa_power`: the GEOS-IT warning no longer quotes dated figures.**
+  NASA revises those days when MERRA-2 arrives, so the note now says what is
+  provisional and why the series jumps; the measurements are in RESEARCH (50th
+  pass). Checked 2026-11-28: November is still GEOS-IT only.
+- **Smoke test: the Ministry of Environment's GeoServer outage is degraded, not
+  a failure.** Port 8080 of `ide.ambiente.gob.ec` stopped accepting connections
+  on 2026-11-27 and 11-28, from the runners and from a home connection in
+  Ecuador, while port 80 answered. Other `maate` errors and the IGM stay
+  failures.
+- **Docs.** `list_zip_contents` and `read_zip_member` no longer say the server
+  must honor Range (since 0.15.2 a .zip from such a host is downloaded whole),
+  in the tools and on the site in both languages; `aggregate_csv` says how a
+  numeric filter compares codes with leading zeros; tool counts corrected to 88
+  in AGENTS.md and DEPLOYMENT.md; `ECUADOR_MCP_COMMIT` and
+  `ECUADOR_MCP_SUPERCIAS_YEARS` added to the environment table; ROADMAP's
+  pending list brought up to date.
+
 ## 0.15.3 — 2026-11-27
 
 88 tools in the default profile (none new). `aggregate_csv` takes a new `member`
